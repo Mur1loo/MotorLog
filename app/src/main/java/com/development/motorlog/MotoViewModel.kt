@@ -32,4 +32,11 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             carregarMotos()
         }
     }
+
+    fun atualizarMoto(moto: Moto) {
+        viewModelScope.launch {
+            dao.atualizar(moto)
+            carregarMotos()
+        }
+    }
 }

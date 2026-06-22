@@ -1,5 +1,6 @@
 package com.development.motorlog
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +21,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 fun GaragemScreen(
     viewModel: MotoViewModel = viewModel(),
     modifier: Modifier,
-    onAdicionar: () -> Unit
+    onAdicionar: () -> Unit,
+    onEditarMoto: (Moto) -> Unit
 ) {
 
     val motos = viewModel.motos
@@ -35,7 +37,7 @@ fun GaragemScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(motos) { moto ->
-                MotoCard(moto)
+                MotoCard(moto, {onEditarMoto(moto)})
             }
 
         }
@@ -44,8 +46,9 @@ fun GaragemScreen(
 }
 
 @Composable
-fun MotoCard(moto: Moto) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+fun MotoCard(moto: Moto, onClick: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = moto.modelo, fontWeight = FontWeight.Bold)
             Text(text = moto.placa)

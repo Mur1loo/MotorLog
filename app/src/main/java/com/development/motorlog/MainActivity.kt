@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.tooling.preview.Preview
 import com.development.motorlog.ui.theme.MotorLogTheme
 
@@ -27,14 +28,28 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
                     var telaAtual by remember { mutableStateOf("Garagem") }
+                    var motoSelecionada by remember { mutableStateOf<Moto?>(null) }
 
                     when(telaAtual) {
                         "Garagem" -> { GaragemScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onAdicionar = {telaAtual = "Cadastro"})}
+                            onAdicionar = {telaAtual = "Cadastro"},
+                            onEditarMoto = {moto ->
+                                motoSelecionada = moto
+                                telaAtual = "Editar"})}
                         "Cadastro" -> {CadastroScreen(
                             modifier = Modifier.padding(innerPadding),
                             onSalvar = {telaAtual = "Garagem"})}
+                        "Editar" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null){
+                                EditarKmScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    onSalvar = {telaAtual = "Garagem"},
+                                    moto = motoSel
+                                )}
+                            }
+
                     }
 
                 }

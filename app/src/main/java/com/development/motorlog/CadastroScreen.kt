@@ -23,7 +23,6 @@ fun CadastroScreen(
     modifier: Modifier = Modifier,
     onSalvar: () -> Unit
 ) {
-    // --- ESTADO DO FORMULÁRIO: um pra cada campo (tudo String enquanto
     var modelo by remember { mutableStateOf("") }
     var placa by remember { mutableStateOf("") }
     var ano by remember { mutableStateOf("") }
