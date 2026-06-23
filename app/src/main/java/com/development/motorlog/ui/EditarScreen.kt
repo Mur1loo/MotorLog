@@ -1,14 +1,17 @@
-package com.development.motorlog
+package com.development.motorlog.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.data.Moto
 
 
 @Composable
@@ -24,12 +28,16 @@ fun EditarKmScreen(
     modifier: Modifier = Modifier,
     moto: Moto,
     viewModel: MotoViewModel = viewModel(),
-    onSalvar: () -> Unit
+    registroViewModel: RegistroViewModel = viewModel(),
+    onSalvar: () -> Unit,
+    onRegistrarTroca: () -> Unit
 ) {
     var km by remember { mutableStateOf(moto.kilometragem.toString()) }
+    val recomendacoes = registroViewModel.recomendacoes
 
+    LaunchedEffect(moto) { registroViewModel.carregarRecomendacoes(moto) }
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp),
+        modifier = modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("Editar km — ${moto.modelo}", fontWeight = FontWeight.Bold)
@@ -52,6 +60,23 @@ fun EditarKmScreen(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Salvar km")
+        }
+        Button(
+            onClick = { onRegistrarTroca() },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Registrar troca de peça")
+        }
+
+        Text("Próximas trocas", fontWeight = FontWeight.Bold)
+        if (recomendacoes.isEmpty()) {
+            Text("Nenhuma troca registrada ainda.")
+        } else {
+            recomendacoes.forEach { rec ->
+                val status = if (rec.kmRestante >= 0) "faltam ${rec.kmRestante} km"
+                else "vencido há ${rec.kmRestante*-1} km"
+                Text("${rec.pecaNome} — $status")
+            }
         }
     }
 }

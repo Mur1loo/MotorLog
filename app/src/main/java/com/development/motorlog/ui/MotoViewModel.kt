@@ -1,4 +1,4 @@
-package com.development.motorlog
+package com.development.motorlog.ui
 
 import android.app.Application
 import androidx.compose.runtime.mutableStateOf
@@ -6,6 +6,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import com.development.motorlog.data.AppDatabase
+import com.development.motorlog.data.Moto
 
 import kotlinx.coroutines.launch
 

@@ -1,4 +1,4 @@
-package com.development.motorlog
+package com.development.motorlog.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.data.Moto
 
 @Composable
 fun GaragemScreen(

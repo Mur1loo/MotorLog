@@ -1,4 +1,4 @@
-package com.development.motorlog
+package com.development.motorlog.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.data.Moto
 
 @Composable
 fun CadastroScreen(
@@ -73,9 +74,10 @@ fun CadastroScreen(
 
                         val novaMoto: Moto = Moto(
                             modelo = modelo,
-                                        anoFabricacao = newAno,
-                                        placa = placa,
-                                        kilometragem = newKm)
+                            anoFabricacao = newAno,
+                            placa = placa,
+                            kilometragem = newKm
+                        )
                         viewModel.inserirMoto(novaMoto)
 
                         onSalvar()

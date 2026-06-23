@@ -1,4 +1,4 @@
-package com.development.motorlog
+package com.development.motorlog.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
