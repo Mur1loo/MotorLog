@@ -17,10 +17,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.StatusTroca
 
 
 @Composable
@@ -73,9 +75,18 @@ fun EditarKmScreen(
             Text("Nenhuma troca registrada ainda.")
         } else {
             recomendacoes.forEach { rec ->
-                val status = if (rec.kmRestante >= 0) "faltam ${rec.kmRestante} km"
-                else "vencido há ${rec.kmRestante*-1} km"
-                Text("${rec.pecaNome} — $status")
+                val cor = when(rec.statusTroca) {
+                    StatusTroca.OK -> Color.Green
+                    StatusTroca.PERTO -> Color.Yellow
+                    StatusTroca.VENCIDA -> Color.Red
+                    StatusTroca.NUNCA_TROCADA -> Color.Gray
+                }
+                val texto = when (rec.statusTroca) {
+                    StatusTroca.NUNCA_TROCADA -> "sem histórico — registre a 1ª troca"
+                    StatusTroca.VENCIDA       -> "vencido há ${-(rec.kmRestante ?: 0)} km"
+                    else                      -> "faltam ${rec.kmRestante ?: 0} km"
+                }
+                Text("${rec.pecaNome} — $texto", color = cor)
             }
         }
     }

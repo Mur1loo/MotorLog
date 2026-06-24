@@ -24,6 +24,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
+import java.text.Normalizer
+
+private fun semAcento(texto: String): String =
+    Normalizer.normalize(texto, Normalizer.Form.NFD)
+        .replace(Regex("\\p{Mn}+"), "")
 
 @Composable
 fun RegistroScreen(
@@ -35,12 +40,14 @@ fun RegistroScreen(
     val pecas = viewModel.pecas
     var pecaSelecionada by remember { mutableStateOf<Peca?>(null) }
     var km by remember { mutableStateOf("") }
+    var busca by remember { mutableStateOf("") }
 
     Column(
         modifier = modifier.fillMaxSize().
             padding(16.dp).
-            verticalScroll(rememberScrollState()).
-            imePadding(),
+            imePadding().
+            verticalScroll(rememberScrollState()),
+
         verticalArrangement = Arrangement.spacedBy(12.dp),
 
     ) {
@@ -48,10 +55,23 @@ fun RegistroScreen(
 
         Text("Escolha a peça:")
 
+        OutlinedTextField(
+            value = busca,
+            onValueChange = { novo -> busca = novo },
+            label = { Text("Buscar peça") },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        val pecasFiltradas = pecas.filter { peca ->
+            semAcento(peca.nome).contains(semAcento(busca), ignoreCase = true)
+        }
+
         if (pecas.isEmpty()) {
             Text("Carregando peças...")
+        } else if (pecasFiltradas.isEmpty()) {
+            Text("Nenhuma peça encontrada")
         } else {
-            pecas.forEach { peca ->
+            pecasFiltradas.forEach { peca ->
                 Button(onClick = { pecaSelecionada = peca }) { Text(peca.nome) }
             }
         }

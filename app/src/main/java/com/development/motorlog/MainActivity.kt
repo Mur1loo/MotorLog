@@ -2,6 +2,7 @@ package com.development.motorlog
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,13 @@ class MainActivity : ComponentActivity() {
 
                     var telaAtual by remember { mutableStateOf("Garagem") }
                     var motoSelecionada by remember { mutableStateOf<Moto?>(null) }
+
+                    BackHandler(enabled = telaAtual != "Garagem") {
+                        telaAtual = when (telaAtual) {
+                            "Registro" -> "Editar"
+                            else -> "Garagem"
+                        }
+                    }
 
                     when(telaAtual) {
                         "Garagem" -> {
