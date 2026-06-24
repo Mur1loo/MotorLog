@@ -14,9 +14,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.development.motorlog.data.Moto
+import com.development.motorlog.ui.AtualizarKmScreen
 import com.development.motorlog.ui.CadastroScreen
-import com.development.motorlog.ui.EditarKmScreen
 import com.development.motorlog.ui.GaragemScreen
+import com.development.motorlog.ui.PainelScreen
 import com.development.motorlog.ui.RegistroScreen
 import com.development.motorlog.ui.theme.MotorLogTheme
 
@@ -33,7 +34,8 @@ class MainActivity : ComponentActivity() {
 
                     BackHandler(enabled = telaAtual != "Garagem") {
                         telaAtual = when (telaAtual) {
-                            "Registro" -> "Editar"
+                            "Registro" -> "Painel"
+                            "AtualizarKm" -> "Painel"
                             else -> "Garagem"
                         }
                     }
@@ -45,7 +47,7 @@ class MainActivity : ComponentActivity() {
                                 onAdicionar = { telaAtual = "Cadastro" },
                                 onEditarMoto = { moto ->
                                     motoSelecionada = moto
-                                    telaAtual = "Editar"
+                                    telaAtual = "Painel"
                                 })
                         }
                         "Cadastro" -> {
@@ -53,14 +55,27 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 onSalvar = { telaAtual = "Garagem" })
                         }
-                        "Editar" -> {
+                        "Painel" -> {
                             val motoSel = motoSelecionada
                             if (motoSel != null){
-                                EditarKmScreen(
+                                PainelScreen(
                                     modifier = Modifier.padding(innerPadding),
-                                    onSalvar = { telaAtual = "Garagem" },
                                     moto = motoSel,
+                                    onAtualizarKm = { telaAtual = "AtualizarKm" },
                                     onRegistrarTroca = { telaAtual = "Registro" }
+                                )
+                            }
+                        }
+                        "AtualizarKm" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null){
+                                AtualizarKmScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    moto = motoSel,
+                                    onSalvar = { motoNova ->
+                                        motoSelecionada = motoNova
+                                        telaAtual = "Painel"
+                                    }
                                 )
                             }
                         }
