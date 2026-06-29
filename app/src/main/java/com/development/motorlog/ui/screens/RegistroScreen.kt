@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,12 +19,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
+import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import java.text.Normalizer
 
@@ -43,62 +45,64 @@ fun RegistroScreen(
     var busca by remember { mutableStateOf("") }
 
     Column(
-        modifier = modifier.fillMaxSize().
-            padding(16.dp).
-            imePadding().
-            verticalScroll(rememberScrollState()),
-
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .imePadding()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-
     ) {
-        Text("Registrar troca — ${moto.modelo}", fontWeight = FontWeight.Bold)
-
-        Text("Escolha a peça:")
-
+        SectionLabel("Peça")
         OutlinedTextField(
             value = busca,
-            onValueChange = { novo -> busca = novo },
+            onValueChange = { busca = it },
             label = { Text("Buscar peça") },
             modifier = Modifier.fillMaxWidth(),
         )
 
-        val pecasFiltradas = pecas.filter { peca ->
-            semAcento(peca.nome).contains(semAcento(busca), ignoreCase = true)
+        val pecasFiltradas = pecas.filter {
+            semAcento(it.nome).contains(semAcento(busca), ignoreCase = true)
         }
 
         if (pecas.isEmpty()) {
-            Text("Carregando peças...")
+            Text("Carregando peças...", color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else if (pecasFiltradas.isEmpty()) {
-            Text("Nenhuma peça encontrada")
+            Text("Nenhuma peça encontrada", color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             pecasFiltradas.forEach { peca ->
-                Button(onClick = { pecaSelecionada = peca }) { Text(peca.nome) }
+                val selecionada = peca.id == pecaSelecionada?.id
+                if (selecionada) {
+                    Button(
+                        onClick = { pecaSelecionada = peca },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(peca.nome) }
+                } else {
+                    OutlinedButton(
+                        onClick = { pecaSelecionada = peca },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(peca.nome) }
+                }
             }
         }
-        Text("Selecionada: ${pecaSelecionada?.nome ?: "nenhuma"}")
 
+        SectionLabel("Quilometragem")
         OutlinedTextField(
             value = km,
-            onValueChange = { novo -> km = novo },
+            onValueChange = { km = it },
             label = { Text("Km da troca") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Button(
             onClick = {
                 val novoKm = km.toIntOrNull() ?: return@Button
                 val peca = pecaSelecionada ?: return@Button
-                val novoRegistro = Registro(
-                    motoId = moto.id,
-                    pecaId = peca.id,
-                    kmTroca = novoKm,
-                    servicoId = null
+                viewModel.inserirRegistro(
+                    Registro(motoId = moto.id, pecaId = peca.id, kmTroca = novoKm, servicoId = null)
                 )
-                viewModel.inserirRegistro(novoRegistro)
                 onSalvar()
-
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Salvar troca")
         }

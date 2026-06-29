@@ -16,6 +16,7 @@ fun calcularRecomendacoes(
 
         if (ultimaTroca == null) {
             Recomendacao(
+                pecaId = peca.id,
                 pecaNome = peca.nome,
                 kmProximaTroca = null,
                 kmRestante = null,
@@ -29,6 +30,7 @@ fun calcularRecomendacoes(
                 else -> StatusTroca.OK
             }
             Recomendacao(
+                pecaId = peca.id,
                 pecaNome = peca.nome,
                 kmProximaTroca = proxima,
                 kmRestante = proxima - kmAtual,

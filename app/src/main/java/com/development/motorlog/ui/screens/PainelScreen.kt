@@ -1,6 +1,7 @@
 package com.development.motorlog.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,9 +38,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
+import com.development.motorlog.data.Peca
+import com.development.motorlog.data.Servico
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import com.development.motorlog.ui.util.formatarData
+import com.development.motorlog.ui.theme.MlOk
+import com.development.motorlog.ui.theme.MlOver
+import com.development.motorlog.ui.theme.MlSoon
+import com.development.motorlog.ui.theme.MlTextFaint
 
 
 @Composable
@@ -50,10 +58,13 @@ fun PainelScreen(
     onRegistrarTroca: () -> Unit,
     onRegistrarServico: () -> Unit,
     onVerHistorico: () -> Unit,
-    onExcluirMoto: () -> Unit
+    onExcluirMoto: () -> Unit,
+    onEditarPeca: (Peca) -> Unit,
+    onAbrirServico: (Servico) -> Unit
 ) {
     val recomendacoes = registroViewModel.recomendacoes
     val servicos = registroViewModel.servicos
+    val pecas = registroViewModel.pecas
     // no painel só interessam as peças JÁ com registro (sem as "nunca trocadas")
     val proximasTrocas = recomendacoes.filter { it.statusTroca != StatusTroca.NUNCA_TROCADA }
     var confirmarExclusao by remember { mutableStateOf(false) }
@@ -69,44 +80,47 @@ fun PainelScreen(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(moto.modelo, fontWeight = FontWeight.Bold, fontSize = 22.sp)
-
-        // ── Card hero: km em destaque + ações ──────────────────
-        Card(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
+        // ── HERO: km em destaque + ação protagonista ──────────
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                "QUILOMETRAGEM ATUAL",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.6.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("${moto.kilometragem}", fontSize = 52.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(6.dp))
                 Text(
-                    "QUILOMETRAGEM ATUAL",
-                    fontSize = 12.sp,
+                    "km",
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
-                Text(
-                    "${moto.kilometragem} km",
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Button(
-                    onClick = { onAtualizarKm() },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Atualizar km") }
-                OutlinedButton(
-                    onClick = { onRegistrarTroca() },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Registrar troca de peça") }
-                OutlinedButton(
-                    onClick = { onRegistrarServico() },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Registrar serviço") }
-                OutlinedButton(
-                    onClick = { onVerHistorico() },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text("Histórico de serviços") }
             }
+            Button(
+                onClick = { onAtualizarKm() },
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+            ) { Text("Atualizar agora", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        }
+
+        // ── tiles: gasto + nº de serviços ──
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            PainelStat("GASTO TOTAL", "R$ ${servicos.sumOf { it.custo }}", Modifier.weight(1f))
+            PainelStat("SERVIÇOS", "${servicos.size}", Modifier.weight(1f))
+        }
+
+        // ── ações secundárias ──
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { onRegistrarTroca() }, modifier = Modifier.weight(1f)) { Text("Troca") }
+            OutlinedButton(onClick = { onRegistrarServico() }, modifier = Modifier.weight(1f)) { Text("Serviço") }
+            OutlinedButton(onClick = { onVerHistorico() }, modifier = Modifier.weight(1f)) { Text("Histórico") }
         }
 
         // ── Card: próximas trocas ──────────────────────────────
@@ -128,10 +142,10 @@ fun PainelScreen(
                 } else {
                     proximasTrocas.forEach { rec ->
                         val cor = when (rec.statusTroca) {
-                            StatusTroca.OK -> Color(0xFF2E7D32)
-                            StatusTroca.PERTO -> Color(0xFFF9A825)
-                            StatusTroca.VENCIDA -> Color(0xFFD32F2F)
-                            StatusTroca.NUNCA_TROCADA -> Color(0xFF9E9E9E)
+                            StatusTroca.OK -> MlOk
+                            StatusTroca.PERTO -> MlSoon
+                            StatusTroca.VENCIDA -> MlOver
+                            StatusTroca.NUNCA_TROCADA -> MlTextFaint
                         }
                         val texto = when (rec.statusTroca) {
                             StatusTroca.NUNCA_TROCADA -> "sem histórico"
@@ -139,7 +153,11 @@ fun PainelScreen(
                             else -> "faltam ${rec.kmRestante ?: 0} km"
                         }
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    pecas.find { it.id == rec.pecaId }?.let { onEditarPeca(it) }
+                                },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Box(
@@ -180,7 +198,9 @@ fun PainelScreen(
                 } else {
                     ultimosServicos.forEach { servico ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onAbrirServico(servico) },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
@@ -219,5 +239,21 @@ fun PainelScreen(
             },
             onCancelar = { confirmarExclusao = false },
         )
+    }
+}
+
+@Composable
+private fun PainelStat(rotulo: String, valor: String, modifier: Modifier = Modifier) {
+    Card(modifier = modifier) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                rotulo,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.8.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(valor, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }

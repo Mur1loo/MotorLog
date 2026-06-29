@@ -29,6 +29,9 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     var servicos by mutableStateOf<List<Servico>>(emptyList())
         private set
 
+    var registrosDoServico by mutableStateOf<List<Registro>>(emptyList())
+        private set
+
     init {
         carregarPecas()
     }
@@ -143,6 +146,12 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     fun carregarServicos(moto: Moto){
         viewModelScope.launch {
             servicos = servicoDao.query(moto.id)
+        }
+    }
+
+    fun carregarRegistrosDoServico(servicoId: Long){
+        viewModelScope.launch {
+            registrosDoServico = registroDao.listarPorServico(servicoId)
         }
     }
 

@@ -8,16 +8,24 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
+import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.screens.AtualizarKmScreen
 import com.development.motorlog.ui.screens.CadastroScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
@@ -27,33 +35,70 @@ import com.development.motorlog.ui.screens.GerenciarPecasScreen
 import com.development.motorlog.ui.screens.HistoricoScreen
 import com.development.motorlog.ui.screens.PainelScreen
 import com.development.motorlog.ui.screens.RegistroScreen
+import com.development.motorlog.ui.screens.RevisaoDetailScreen
 import com.development.motorlog.ui.theme.MotorLogTheme
 import com.development.motorlog.ui.viewModels.MotoViewModel
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MotorLogTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                var telaAtual by rememberSaveable { mutableStateOf("Garagem") }
+                var motoSelecionada by remember { mutableStateOf<Moto?>(null) }
+                var pecaSelecionada by remember { mutableStateOf<Peca?>(null)}
+                var servicoSelecionado by remember { mutableStateOf<Servico?>(null) }
+                // de qual tela o usuário abriu o detalhe/edição (pra voltar pro lugar certo)
+                var origemDetalhe by rememberSaveable { mutableStateOf("Garagem") }
+                val motoViewModel: MotoViewModel = viewModel()
 
-                    var telaAtual by rememberSaveable { mutableStateOf("Garagem") }
-                    var motoSelecionada by remember { mutableStateOf<Moto?>(null) }
-                    var pecaSelecionada by remember { mutableStateOf<Peca?>(null)}
-                    val motoViewModel: MotoViewModel = viewModel()
-
-                    BackHandler(enabled = telaAtual != "Garagem") {
-                        telaAtual = when (telaAtual) {
-                            "Registro" -> "Painel"
-                            "AtualizarKm" -> "Painel"
-                            "EditarPeca" -> "GerenciarPecas"
-                            "RegistrarServico" -> "Painel"
-                            "Historico" -> "Painel"
-                            else -> "Garagem"
-                        }
+                val irParaTras: () -> Unit = {
+                    telaAtual = when (telaAtual) {
+                        "Registro" -> "Painel"
+                        "AtualizarKm" -> "Painel"
+                        "EditarPeca" -> origemDetalhe
+                        "RegistrarServico" -> "Painel"
+                        "Historico" -> "Painel"
+                        "RevisaoDetail" -> origemDetalhe
+                        else -> "Garagem"
                     }
+                }
 
+                val titulo = when (telaAtual) {
+                    "Cadastro" -> "Nova moto"
+                    "Painel" -> motoSelecionada?.modelo ?: "Painel"
+                    "AtualizarKm" -> "Atualizar km"
+                    "Registro" -> "Registrar troca"
+                    "RegistrarServico" -> "Registrar serviço"
+                    "Historico" -> "Histórico"
+                    "RevisaoDetail" -> servicoSelecionado?.tipoServico ?: "Serviço"
+                    "GerenciarPecas" -> "Peças"
+                    "EditarPeca" -> if (pecaSelecionada != null) "Editar peça" else "Nova peça"
+                    else -> "Garagem"
+                }
+
+                BackHandler(enabled = telaAtual != "Garagem") { irParaTras() }
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        TopAppBar(
+                            title = { Text(titulo) },
+                            navigationIcon = {
+                                if (telaAtual != "Garagem") {
+                                    IconButton(onClick = irParaTras) {
+                                        Text("←", fontSize = 24.sp)
+                                    }
+                                }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.background,
+                            ),
+                        )
+                    },
+                ) { innerPadding ->
                     when(telaAtual) {
                         "Garagem" -> {
                             GaragemScreen(
@@ -85,6 +130,16 @@ class MainActivity : ComponentActivity() {
                                     onExcluirMoto = {
                                         motoViewModel.deletarMoto(motoSel)
                                         telaAtual = "Garagem"
+                                    },
+                                    onEditarPeca = { peca ->
+                                        pecaSelecionada = peca
+                                        origemDetalhe = "Painel"
+                                        telaAtual = "EditarPeca"
+                                    },
+                                    onAbrirServico = { servico ->
+                                        servicoSelecionado = servico
+                                        origemDetalhe = "Painel"
+                                        telaAtual = "RevisaoDetail"
                                     }
                                 )
                             }
@@ -127,7 +182,25 @@ class MainActivity : ComponentActivity() {
                             if (motoSel != null){
                                 HistoricoScreen(
                                     moto = motoSel,
-                                    modifier = Modifier.padding(innerPadding)
+                                    modifier = Modifier.padding(innerPadding),
+                                    onAbrirServico = { servico ->
+                                        servicoSelecionado = servico
+                                        origemDetalhe = "Historico"
+                                        telaAtual = "RevisaoDetail"
+                                    }
+                                )
+                            }
+                        }
+                        "RevisaoDetail" -> {
+                            val servicoSel = servicoSelecionado
+                            if (servicoSel != null){
+                                RevisaoDetailScreen(
+                                    servico = servicoSel,
+                                    modifier = Modifier.padding(innerPadding),
+                                    onExcluido = {
+                                        servicoSelecionado = null
+                                        telaAtual = origemDetalhe
+                                    }
                                 )
                             }
                         }
@@ -136,9 +209,11 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 onSalvarPeca = {
                                     pecaSelecionada = null
+                                    origemDetalhe = "GerenciarPecas"
                                     telaAtual = "EditarPeca"},
                                 onEditarPeca = { peca ->
                                     pecaSelecionada = peca
+                                    origemDetalhe = "GerenciarPecas"
                                     telaAtual = "EditarPeca"}
                             )
                         }
@@ -148,7 +223,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 onSalvar = {
                                     pecaSelecionada = null
-                                    telaAtual = "GerenciarPecas"
+                                    telaAtual = origemDetalhe
                                     }
                             )
                         }

@@ -13,10 +13,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,18 +21,17 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Servico
-import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 @Composable
 fun HistoricoScreen(
     moto: Moto,
+    onAbrirServico: (Servico) -> Unit,
     registroViewModel: RegistroViewModel = viewModel(),
     modifier: Modifier = Modifier,
 ) {
     val servicos = registroViewModel.servicos
-    var servicoParaExcluir by remember { mutableStateOf<Servico?>(null) }
 
     // carrega (e recarrega ao trocar de moto) — efeito 1x ao entrar
     LaunchedEffect(moto) { registroViewModel.carregarServicos(moto) }
@@ -50,8 +45,6 @@ fun HistoricoScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Histórico de serviços", fontWeight = FontWeight.Bold, fontSize = 22.sp)
-
         if (ordenados.isEmpty()) {
             Text(
                 "Nenhum serviço registrado ainda.",
@@ -68,28 +61,16 @@ fun HistoricoScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(ordenados) { servico ->
-                    ServicoCard(servico = servico, onExcluir = { servicoParaExcluir = servico })
+                    ServicoCard(servico = servico, onClick = { onAbrirServico(servico) })
                 }
             }
         }
     }
-
-    val alvo = servicoParaExcluir
-    if (alvo != null) {
-        ConfirmarExclusaoDialog(
-            texto = "Excluir o serviço \"${alvo.tipoServico}\"?",
-            onConfirmar = {
-                registroViewModel.deletarServico(alvo)
-                servicoParaExcluir = null
-            },
-            onCancelar = { servicoParaExcluir = null },
-        )
-    }
 }
 
 @Composable
-private fun ServicoCard(servico: Servico, onExcluir: () -> Unit) {
-    Card(onClick = onExcluir, modifier = Modifier.fillMaxWidth()) {
+private fun ServicoCard(servico: Servico, onClick: () -> Unit) {
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
