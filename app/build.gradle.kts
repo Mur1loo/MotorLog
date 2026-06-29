@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+ksp {
+    arg("room.schemaLocation","$projectDir/schemas")
+}
+
 android {
     namespace = "com.development.motorlog"
     compileSdk {
@@ -11,6 +15,7 @@ android {
             minorApiLevel = 1
         }
     }
+
 
     defaultConfig {
         applicationId = "com.development.motorlog"
@@ -24,6 +29,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("debug")
             optimization {
                 enable = false
             }

@@ -1,4 +1,4 @@
-package com.development.motorlog.ui
+package com.development.motorlog.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,8 +19,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.util.formatarData
 
 
 @Composable
@@ -39,11 +47,21 @@ fun PainelScreen(
     moto: Moto,
     registroViewModel: RegistroViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
-    onRegistrarTroca: () -> Unit
+    onRegistrarTroca: () -> Unit,
+    onRegistrarServico: () -> Unit,
+    onVerHistorico: () -> Unit,
+    onExcluirMoto: () -> Unit
 ) {
     val recomendacoes = registroViewModel.recomendacoes
+    val servicos = registroViewModel.servicos
+    // no painel só interessam as peças JÁ com registro (sem as "nunca trocadas")
+    val proximasTrocas = recomendacoes.filter { it.statusTroca != StatusTroca.NUNCA_TROCADA }
+    var confirmarExclusao by remember { mutableStateOf(false) }
 
-    LaunchedEffect(moto) { registroViewModel.carregarRecomendacoes(moto) }
+    LaunchedEffect(moto) {
+        registroViewModel.carregarRecomendacoes(moto)
+        registroViewModel.carregarServicos(moto)
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -80,6 +98,14 @@ fun PainelScreen(
                     onClick = { onRegistrarTroca() },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Registrar troca de peça") }
+                OutlinedButton(
+                    onClick = { onRegistrarServico() },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Registrar serviço") }
+                OutlinedButton(
+                    onClick = { onVerHistorico() },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Histórico de serviços") }
             }
         }
 
@@ -97,10 +123,10 @@ fun PainelScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                if (recomendacoes.isEmpty()) {
+                if (proximasTrocas.isEmpty()) {
                     Text("Nenhuma troca registrada ainda.")
                 } else {
-                    recomendacoes.forEach { rec ->
+                    proximasTrocas.forEach { rec ->
                         val cor = when (rec.statusTroca) {
                             StatusTroca.OK -> Color(0xFF2E7D32)
                             StatusTroca.PERTO -> Color(0xFFF9A825)
@@ -134,5 +160,64 @@ fun PainelScreen(
                 }
             }
         }
+
+        // ── Card: atividade recente (preview dos últimos serviços) ──
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Text(
+                    "ATIVIDADE RECENTE",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                val ultimosServicos = servicos.sortedByDescending { it.data }.take(3)
+                if (ultimosServicos.isEmpty()) {
+                    Text("Nenhum serviço registrado ainda.")
+                } else {
+                    ultimosServicos.forEach { servico ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(servico.tipoServico, fontWeight = FontWeight.Medium)
+                                Text(
+                                    "${formatarData(servico.data)} · ${servico.kilometragem} km",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Text(
+                                "R$ ${servico.custo}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        TextButton(
+            onClick = { confirmarExclusao = true },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Excluir moto", color = MaterialTheme.colorScheme.error)
+        }
+    }
+
+    if (confirmarExclusao) {
+        ConfirmarExclusaoDialog(
+            texto = "Excluir esta moto e todo o histórico dela? Esta ação não pode ser desfeita.",
+            onConfirmar = {
+                confirmarExclusao = false
+                onExcluirMoto()
+            },
+            onCancelar = { confirmarExclusao = false },
+        )
     }
 }

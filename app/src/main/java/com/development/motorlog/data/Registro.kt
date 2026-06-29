@@ -15,6 +15,11 @@ import androidx.room.PrimaryKey
         parentColumns = ["id"],
         childColumns = ["pecaId"],
         onDelete = ForeignKey.CASCADE
+    ), ForeignKey(
+        entity = Servico::class,
+        parentColumns = ["id"],
+        childColumns = ["servicoId"],
+        onDelete = ForeignKey.SET_NULL
     )]
 )
 data class Registro(
@@ -22,4 +27,6 @@ data class Registro(
     val motoId: Long,
     val pecaId: Long,
     val kmTroca: Int,
+    val servicoId: Long?,
+    val preco: Int = 0,
 )

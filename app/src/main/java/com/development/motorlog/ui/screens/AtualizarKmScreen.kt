@@ -1,4 +1,4 @@
-package com.development.motorlog.ui
+package com.development.motorlog.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
+import com.development.motorlog.ui.viewModels.MotoViewModel
 
 @Composable
 fun AtualizarKmScreen(

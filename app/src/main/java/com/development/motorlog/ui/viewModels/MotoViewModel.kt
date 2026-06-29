@@ -1,4 +1,4 @@
-package com.development.motorlog.ui
+package com.development.motorlog.ui.viewModels
 
 import android.app.Application
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +38,13 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     fun atualizarMoto(moto: Moto) {
         viewModelScope.launch {
             dao.atualizar(moto)
+            carregarMotos()
+        }
+    }
+
+    fun deletarMoto(moto: Moto) {
+        viewModelScope.launch {
+            dao.deletar(moto)
             carregarMotos()
         }
     }

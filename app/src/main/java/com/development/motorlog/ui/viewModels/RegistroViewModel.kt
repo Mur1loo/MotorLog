@@ -1,4 +1,4 @@
-package com.development.motorlog.ui
+package com.development.motorlog.ui.viewModels
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
+import com.development.motorlog.data.Servico
 import kotlinx.coroutines.launch
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.Recomendacao
@@ -17,12 +18,16 @@ import com.development.motorlog.domain.calcularRecomendacoes
 class RegistroViewModel(application: Application): AndroidViewModel(application) {
     private val registroDao = AppDatabase.getDatabase(application).registroDao()
     private val pecaDao = AppDatabase.getDatabase(application).pecaDao()
+    private val servicoDao = AppDatabase.getDatabase(application).servicoDao()
 
     var pecas by mutableStateOf<List<Peca>>(emptyList())
         private set
 
     var recomendacoes by mutableStateOf<List<Recomendacao>>(emptyList())
-        private set                                     // ① o cadeado
+        private set
+
+    var servicos by mutableStateOf<List<Servico>>(emptyList())
+        private set
 
     init {
         carregarPecas()
@@ -129,10 +134,61 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
+    fun inserirServico(servico: Servico){
+        viewModelScope.launch {
+            servicoDao.inserir(servico = servico)
+        }
+    }
+
+    fun carregarServicos(moto: Moto){
+        viewModelScope.launch {
+            servicos = servicoDao.query(moto.id)
+        }
+    }
+
+    // insere o serviço e, com o id gerado, grava uma troca (Registro) por peça trocada
+    fun inserirServicoComPecas(servico: Servico, pecasComPreco: Map<Long, Int>){
+        viewModelScope.launch {
+            val servicoId = servicoDao.inserir(servico)
+            pecasComPreco.forEach { (pecaId, preco) ->
+                registroDao.inserirRegistro(
+                    Registro(
+                        motoId = servico.motoId,
+                        pecaId = pecaId,
+                        kmTroca = servico.kilometragem,
+                        servicoId = servicoId,
+                        preco = preco
+                    )
+                )
+            }
+        }
+    }
+
     fun inserirPeca(peca: Peca){
         viewModelScope.launch {
             pecaDao.inserir(peca = peca)
             pecas = pecaDao.listarPecas()
+        }
+    }
+
+    fun atualizarPeca(peca: Peca){
+        viewModelScope.launch {
+            pecaDao.atualizar(peca = peca)
+            pecas = pecaDao.listarPecas()
+        }
+    }
+
+    fun deletarPeca(peca: Peca){
+        viewModelScope.launch {
+            pecaDao.deletar(peca = peca)
+            pecas = pecaDao.listarPecas()
+        }
+    }
+
+    fun deletarServico(servico: Servico){
+        viewModelScope.launch {
+            servicoDao.remover(servico = servico)
+            servicos = servicoDao.query(servico.motoId)
         }
     }
 }

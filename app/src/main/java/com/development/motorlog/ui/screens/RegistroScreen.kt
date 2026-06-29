@@ -1,6 +1,5 @@
-package com.development.motorlog.ui
+package com.development.motorlog.ui.screens
 
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
+import com.development.motorlog.ui.viewModels.RegistroViewModel
 import java.text.Normalizer
 
 private fun semAcento(texto: String): String =
@@ -91,7 +91,8 @@ fun RegistroScreen(
                 val novoRegistro = Registro(
                     motoId = moto.id,
                     pecaId = peca.id,
-                    kmTroca = novoKm
+                    kmTroca = novoKm,
+                    servicoId = null
                 )
                 viewModel.inserirRegistro(novoRegistro)
                 onSalvar()
