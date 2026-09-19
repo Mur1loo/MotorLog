@@ -60,7 +60,9 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         LembreteWorker.agendar(this)
-        if (intent.getBooleanExtra(LembreteWorker.EXTRA_RODAR_AGORA, false)) LembreteWorker.rodarAgora(this)
+        // só na criação de verdade (não em cada rotação)
+        val primeiraCriacao = savedInstanceState == null
+        if (primeiraCriacao && intent.getBooleanExtra(LembreteWorker.EXTRA_RODAR_AGORA, false)) LembreteWorker.rodarAgora(this)
         // vindo da notificação: abre direto o Painel daquela moto
         val motoDaNotificacao = intent.getLongExtra(LembreteWorker.EXTRA_MOTO_ID, -1L).takeIf { it > 0 }
         setContent {
@@ -124,8 +126,15 @@ class MainActivity : ComponentActivity() {
                 // Android 13+: notificação exige permissão em runtime. Pede uma vez, ao abrir.
                 val pedirPermissao = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
                 LaunchedEffect(Unit) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !LembreteWorker.podeNotificar(this@MainActivity)) {
+                    if (primeiraCriacao && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !LembreteWorker.podeNotificar(this@MainActivity)) {
                         pedirPermissao.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+                // moto que não existe mais (ex.: notificação antiga de moto excluída): volta pra Garagem
+                LaunchedEffect(motoId, motoViewModel.motos) {
+                    if (motoId != null && motoViewModel.motos.isNotEmpty() && motoSelecionada == null) {
+                        motoId = null
+                        telaAtual = "Garagem"
                     }
                 }
 

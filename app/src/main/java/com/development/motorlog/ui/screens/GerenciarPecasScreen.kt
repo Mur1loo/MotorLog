@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Peca
 import com.development.motorlog.ui.util.contemSemAcento
+import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 @Composable
@@ -83,7 +84,7 @@ private fun PecaCard(peca: Peca, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(peca.nome, fontWeight = FontWeight.Medium)
                 Text(
-                    "a cada ${peca.intervaloKm} km",
+                    "a cada ${formatarKm(peca.intervaloKm)}",
                     fontSize = 12.5.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

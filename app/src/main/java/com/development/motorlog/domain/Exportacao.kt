@@ -16,7 +16,7 @@ fun montarExportacao(
 ): String {
     val nomeMoto = motos.associate { it.id to "${it.modelo} ${it.placa}".trim() }
     val nomePeca = pecas.associate { it.id to it.nome }
-    fun limpo(s: String) = s.replace(';', ',').replace('\n', ' ')
+    fun limpo(s: String) = s.replace(';', ',').replace('\r', ' ').replace('\n', ' ')
 
     return buildString {
         appendLine("MotorLog")

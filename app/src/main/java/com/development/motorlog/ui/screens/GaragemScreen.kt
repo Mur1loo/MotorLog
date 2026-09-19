@@ -41,9 +41,8 @@ import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.ui.components.Pill
-import com.development.motorlog.ui.theme.MlOk
-import com.development.motorlog.ui.theme.MlOver
-import com.development.motorlog.ui.theme.MlSoon
+import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.ui.theme.cor
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.hojeUtcMillis
@@ -91,7 +90,7 @@ fun GaragemScreen(
                 StatCard("KM NA FROTA", formatarNumero(totalKm), Modifier.weight(1.6f))
                 StatCard(
                     "VENCIDAS", "$totalVencidas", Modifier.weight(1.1f),
-                    corValor = if (totalVencidas > 0) MlOver else MlOk,
+                    corValor = if (totalVencidas > 0) StatusTroca.VENCIDA.cor() else StatusTroca.OK.cor(),
                 )
             }
         }
@@ -200,7 +199,7 @@ fun MotoCard(moto: Moto, alertas: ResumoAlertas?, onClick: () -> Unit) {
                         Text(
                             "há $diasSemKm dias",
                             fontSize = 12.sp,
-                            color = MlSoon,
+                            color = StatusTroca.PERTO.cor(),
                             modifier = Modifier.padding(bottom = 1.dp),
                         )
                     }
@@ -208,9 +207,9 @@ fun MotoCard(moto: Moto, alertas: ResumoAlertas?, onClick: () -> Unit) {
                 if (alertas != null) {
                     Spacer(Modifier.height(6.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (alertas.vencidas > 0) Pill("${alertas.vencidas} vencida${if (alertas.vencidas > 1) "s" else ""}", MlOver)
-                        if (alertas.perto > 0) Pill("${alertas.perto} perto de vencer", MlSoon)
-                        if (!alertas.temAlerta) Pill("Em dia", MlOk)
+                        if (alertas.vencidas > 0) Pill("${alertas.vencidas} vencida${if (alertas.vencidas > 1) "s" else ""}", StatusTroca.VENCIDA.cor())
+                        if (alertas.perto > 0) Pill("${alertas.perto} perto de vencer", StatusTroca.PERTO.cor())
+                        if (!alertas.temAlerta) Pill("Em dia", StatusTroca.OK.cor())
                     }
                 }
             }

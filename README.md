@@ -8,7 +8,7 @@ Projeto de aprendizado de desenvolvimento mobile (Kotlin/Android nativo), em evo
 
 ## Status
 
-MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v8) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
+MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v9) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
 
 ## Funcionalidades
 

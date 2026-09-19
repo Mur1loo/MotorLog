@@ -37,7 +37,7 @@ fun FormPecaScreen(
     var nome by rememberSaveable { mutableStateOf(peca?.nome ?: "") }
     var intervalo by rememberSaveable { mutableStateOf( peca?.intervaloKm?.toString() ?: "")}
     var erro by remember { mutableStateOf<String?>(null) }
-    var confirmarExclusao by remember { mutableStateOf(false) }
+    var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier.fillMaxSize().padding(16.dp).imePadding(),

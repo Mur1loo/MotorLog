@@ -25,7 +25,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
-import com.development.motorlog.data.Registro
 import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.viewModels.RegistroViewModel
@@ -97,9 +96,7 @@ fun RegistroScreen(
             onClick = {
                 val novoKm = km.toIntOrNull() ?: return@Button
                 val peca = pecaSelecionada ?: return@Button
-                viewModel.inserirRegistro(
-                    Registro(motoId = moto.id, pecaId = peca.id, kmTroca = novoKm, servicoId = null)
-                )
+                viewModel.registrarTroca(moto, peca, novoKm)
                 onSalvar()
             },
             enabled = pecaSelecionada != null && km.toIntOrNull() != null,

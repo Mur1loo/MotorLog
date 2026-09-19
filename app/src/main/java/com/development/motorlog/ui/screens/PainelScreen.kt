@@ -33,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.components.RegistrarTrocaDialog
+import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.components.StatusDot
 import com.development.motorlog.ui.theme.cor
 import androidx.compose.ui.Alignment
@@ -49,7 +50,6 @@ import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.domain.estimarDiasAteTroca
-import com.development.motorlog.ui.theme.MlSoon
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import com.development.motorlog.ui.util.formatarData
@@ -79,7 +79,7 @@ fun PainelScreen(
     val pecas = registroViewModel.pecas
     // no painel só interessam as peças JÁ com registro (sem as "nunca trocadas")
     val proximasTrocas = recomendacoes.filter { it.statusTroca != StatusTroca.NUNCA_TROCADA }
-    var confirmarExclusao by remember { mutableStateOf(false) }
+    var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
     var trocandoPecaId by rememberSaveable { mutableStateOf<Long?>(null) }
     val trocandoPeca = trocandoPecaId?.let { id -> pecas.find { it.id == id } }
 
@@ -127,7 +127,7 @@ fun PainelScreen(
                     else -> "Atualizado há $diasSemKm dias"
                 },
                 fontSize = 13.sp,
-                color = if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) MlSoon
+                color = if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) StatusTroca.PERTO.cor()
                         else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(
@@ -164,14 +164,7 @@ fun PainelScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "PRÓXIMAS TROCAS",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
+                    SectionLabel("Próximas trocas", Modifier.weight(1f))
                     Text(
                         "Ver todas",
                         fontSize = 12.5.sp,
@@ -193,7 +186,7 @@ fun PainelScreen(
                         val dias = estimarDiasAteTroca(rec.kmRestante, ritmoKmMes)
                         val texto = when (rec.statusTroca) {
                             StatusTroca.NUNCA_TROCADA -> "sem histórico"
-                            StatusTroca.VENCIDA -> "vencido há ${formatarKm(-(rec.kmRestante ?: 0))}"
+                            StatusTroca.VENCIDA -> if (rec.kmRestante == 0) "vence agora" else "vencido há ${formatarKm(-(rec.kmRestante ?: 0))}"
                             else -> "faltam ${formatarKm(rec.kmRestante ?: 0)}" + if (dias != null) " · ${descreverDias(dias)}" else ""
                         }
                         Row(
@@ -223,14 +216,7 @@ fun PainelScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "ÚLTIMAS VISITAS À OFICINA",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.5.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
+                    SectionLabel("Últimas visitas à oficina", Modifier.weight(1f))
                     Text(
                         "Histórico",
                         fontSize = 12.5.sp,

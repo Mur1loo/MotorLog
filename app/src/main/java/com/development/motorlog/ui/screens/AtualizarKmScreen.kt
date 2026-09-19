@@ -59,7 +59,7 @@ fun AtualizarKmScreen(
         mutableStateOf(TextFieldValue(texto, selection = TextRange(0, texto.length)))
     }
     // km menor que o atual quase sempre é erro de digitação; pede um 2º toque pra confirmar
-    var confirmarMenor by remember { mutableStateOf(false) }
+    var confirmarMenor by rememberSaveable { mutableStateOf(false) }
     val foco = remember { FocusRequester() }
 
     val novoKm = campo.text.toIntOrNull()

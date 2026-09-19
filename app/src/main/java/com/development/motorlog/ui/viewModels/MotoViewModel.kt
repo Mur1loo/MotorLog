@@ -17,6 +17,7 @@ import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.domain.resumirAlertas
 import com.development.motorlog.ui.util.hojeUtcMillis
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MotoViewModel(application : Application) : AndroidViewModel(application = application) {
@@ -42,8 +43,13 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
         carregarMotos()
     }
 
+    // cargas disparadas em sequência (init, entrar na Garagem, depois de cada escrita): a anterior é
+    // cancelada pra uma leitura antiga não sobrescrever estados com dados pré-escrita
+    private var carga: Job? = null
+
     fun carregarMotos() {
-        viewModelScope.launch {
+        carga?.cancel()
+        carga = viewModelScope.launch {
             val lista = dao.listarTodas()
             val pecas = pecaDao.listarPecas()
             alertas = lista.associate { moto ->

@@ -69,7 +69,7 @@ fun FormServicoScreen(
     var km by rememberSaveable { mutableStateOf((servico?.kilometragem ?: moto.kilometragem).toString()) }
     // data: o VALOR (Long em millis) — nasce "hoje". mostrarPicker: o calendário está ABERTO?
     var data by rememberSaveable { mutableLongStateOf(servico?.data ?: hojeUtcMillis()) }
-    var mostrarPicker by remember { mutableStateOf(false) }
+    var mostrarPicker by rememberSaveable { mutableStateOf(false) }
     var busca by rememberSaveable { mutableStateOf("") }
     var erro by remember { mutableStateOf<String?>(null) }
 
@@ -231,8 +231,8 @@ fun FormServicoScreen(
                 )
                 // texto do preço -> Int (vazio/invalid vira 0)
                 val pecasComPreco = selecionadas.mapValues { it.value.toIntOrNull() ?: 0 }
-                if (servico != null) viewModel.atualizarServicoComPecas(novo, pecasComPreco)
-                else viewModel.inserirServicoComPecas(novo, pecasComPreco)
+                if (servico != null) viewModel.atualizarServicoComPecas(moto, novo, pecasComPreco)
+                else viewModel.inserirServicoComPecas(moto, novo, pecasComPreco)
                 onSalvar()
             }
         ) {

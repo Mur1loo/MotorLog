@@ -31,7 +31,8 @@ fun montarLembrete(
     val partes = buildList {
         if (alertas.vencidas > 0) {
             val nomes = recomendacoes.filter { it.statusTroca == StatusTroca.VENCIDA }.map { it.pecaNome }
-            add(if (nomes.size == 1) "${nomes[0]} vencido" else "${nomes.size} trocas vencidas (${nomes.take(2).joinToString()}…)".replace("…)", if (nomes.size > 2) "…)" else ")"))
+            val sufixo = if (nomes.size > 2) "…" else ""
+            add(if (nomes.size == 1) "${nomes[0]} vencido" else "${nomes.size} trocas vencidas (${nomes.take(2).joinToString()}$sufixo)")
         }
         if (alertas.perto > 0) add(if (alertas.perto == 1) "1 troca perto de vencer" else "${alertas.perto} trocas perto de vencer")
         if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) add("faz $diasSemKm dias que o km não é atualizado")

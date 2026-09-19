@@ -41,16 +41,17 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     }
 
     fun carregarRecomendacoes(moto: Moto) {
-        viewModelScope.launch {
-            val pecasAtuais = pecaDao.listarPecas()
-            val registros = registroDao.listarRegistros(moto.id)
+        viewModelScope.launch { recalcular(moto) }
+    }
 
-            recomendacoes = calcularRecomendacoes(
-                kmAtual = moto.kilometragem,
-                pecas = pecasAtuais,
-                registros = registros
-            )
-        }
+    // Toda escrita que muda recomendação chama isto na MESMA coroutine, depois do commit:
+    // a tela seguinte pode ler o banco antes do insert terminar, mas este recálculo vem depois.
+    private suspend fun recalcular(moto: Moto) {
+        recomendacoes = calcularRecomendacoes(
+            kmAtual = moto.kilometragem,
+            pecas = pecaDao.listarPecas(),
+            registros = registroDao.listarRegistros(moto.id),
+        )
     }
 
 
@@ -135,17 +136,11 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
-    fun inserirRegistro(registro: Registro){
-        viewModelScope.launch {
-            registroDao.inserirRegistro(registro = registro)
-        }
-    }
-
-    // "Troquei agora": troca avulsa de uma peça + recomendações recalculadas na sequência
+    // Troca avulsa de uma peça ("Troquei agora" e a tela Troquei uma peça) + recálculo na sequência
     fun registrarTroca(moto: Moto, peca: Peca, km: Int) {
         viewModelScope.launch {
             registroDao.inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = km, servicoId = null))
-            carregarRecomendacoes(moto)
+            recalcular(moto)
         }
     }
 
@@ -162,16 +157,17 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     }
 
     fun carregarTrocasAvulsas(moto: Moto) {
-        viewModelScope.launch {
-            trocasAvulsas = registroDao.listarRegistros(moto.id).filter { it.servicoId == null }
-        }
+        viewModelScope.launch { trocasAvulsas = listarAvulsas(moto) }
     }
+
+    private suspend fun listarAvulsas(moto: Moto) =
+        registroDao.listarRegistros(moto.id).filter { it.servicoId == null }
 
     fun deletarTrocaAvulsa(registro: Registro, moto: Moto) {
         viewModelScope.launch {
             registroDao.deletar(registro)
-            carregarTrocasAvulsas(moto)
-            carregarRecomendacoes(moto)
+            trocasAvulsas = listarAvulsas(moto)
+            recalcular(moto)
         }
     }
 
@@ -181,8 +177,9 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
-    // insere o serviço e, com o id gerado, grava uma troca (Registro) por peça trocada
-    fun inserirServicoComPecas(servico: Servico, pecasComPreco: Map<Long, Int>){
+    // insere o serviço e, com o id gerado, grava uma troca (Registro) por peça trocada;
+    // recarrega serviços e recomendações antes de devolver (o Painel lê esses estados)
+    fun inserirServicoComPecas(moto: Moto, servico: Servico, pecasComPreco: Map<Long, Int>){
         viewModelScope.launch {
             val servicoId = servicoDao.inserir(servico)
             pecasComPreco.forEach { (pecaId, preco) ->
@@ -196,12 +193,14 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
                     )
                 )
             }
+            servicos = servicoDao.query(moto.id)
+            recalcular(moto)
         }
     }
 
     // Edição do serviço: atualiza a visita e sincroniza as trocas ligadas a ela
     // (remove as desmarcadas, atualiza preço/km das que ficaram, cria as novas).
-    fun atualizarServicoComPecas(servico: Servico, pecasComPreco: Map<Long, Int>) {
+    fun atualizarServicoComPecas(moto: Moto, servico: Servico, pecasComPreco: Map<Long, Int>) {
         viewModelScope.launch {
             servicoDao.atualizar(servico)
             val atuais = registroDao.listarPorServico(servico.id)
@@ -218,6 +217,7 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
             }
             servicos = servicoDao.query(servico.motoId)
             registrosDoServico = registroDao.listarPorServico(servico.id)
+            recalcular(moto)
         }
     }
 

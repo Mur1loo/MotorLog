@@ -58,7 +58,7 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val notificacao = NotificationCompat.Builder(ctx, CANAL)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notificacao)
             .setContentTitle("MotorLog")
             .setContentText(texto)
             .setStyle(NotificationCompat.BigTextStyle().bigText(texto))

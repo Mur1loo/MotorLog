@@ -48,6 +48,12 @@ class AlertasTest {
     }
 
     @Test
+    fun `duas vencidas listam as duas sem reticencias`() {
+        val texto = montarLembrete("Crosser", 10 * dia, 10 * dia, listOf(rec("Óleo", StatusTroca.VENCIDA), rec("Vela", StatusTroca.VENCIDA)))
+        assertEquals("Crosser: 2 trocas vencidas (Óleo, Vela)", texto)
+    }
+
+    @Test
     fun `varias vencidas resume com contagem`() {
         val texto = montarLembrete("Crosser", 10 * dia, 10 * dia, listOf(rec("Óleo", StatusTroca.VENCIDA), rec("Vela", StatusTroca.VENCIDA), rec("Pneu", StatusTroca.VENCIDA)))
         assertEquals("Crosser: 3 trocas vencidas (Óleo, Vela…)", texto)

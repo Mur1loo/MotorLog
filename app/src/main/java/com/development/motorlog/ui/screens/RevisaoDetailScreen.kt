@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
+import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarReais
@@ -42,7 +44,7 @@ fun RevisaoDetailScreen(
 ) {
     val registros = registroViewModel.registrosDoServico
     val pecas = registroViewModel.pecas
-    var confirmarExclusao by remember { mutableStateOf(false) }
+    var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(servico) { registroViewModel.carregarRegistrosDoServico(servico.id) }
 
@@ -74,13 +76,7 @@ fun RevisaoDetailScreen(
                 modifier = Modifier.fillMaxWidth().padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(
-                    "PEÇAS TROCADAS",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                SectionLabel("Peças trocadas")
                 if (registros.isEmpty()) {
                     Text("Nenhuma peça registrada neste serviço.")
                 } else {

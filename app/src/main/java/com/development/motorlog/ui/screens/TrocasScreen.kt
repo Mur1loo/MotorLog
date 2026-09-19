@@ -99,8 +99,8 @@ fun TrocasScreen(
                 }
             }
         }
-        if (recomendacoes.isEmpty()) {
-            item { Text("Carregando…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (pecas.isEmpty()) {
+            item { Text("Carregando peças…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         item { Spacer(Modifier.height(8.dp)) }
     }
@@ -174,6 +174,7 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick
                         val dias = estimarDiasAteTroca(restante, ritmoKmMes)
                         Text(
                             when {
+                                restante == 0 -> "vence agora"
                                 restante < 0 -> "km em atraso"
                                 dias != null -> "km · ${descreverDias(dias)}"
                                 else -> "km restantes"

@@ -12,6 +12,8 @@ import org.junit.runner.RunWith
 
 // Sobe um banco na versão antiga (a partir de schemas/N.json), semeia dados, roda as migrations
 // reais do AppDatabase e valida o schema final contra o JSON exportado pelo Room.
+// schemas/5.json foi RECONSTRUÍDO à mão a partir do 6.json (exportSchema só ligou na v6); o
+// identityHash dele é sintético — o helper só usa createSql/setupQueries (DECISOES D3).
 // Roda no emulador: ANDROID_SERIAL=emulator-5554 ./gradlew connectedDebugAndroidTest
 @RunWith(AndroidJUnit4::class)
 class MigrationTest {
