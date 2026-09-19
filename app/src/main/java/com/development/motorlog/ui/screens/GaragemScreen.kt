@@ -1,5 +1,6 @@
 package com.development.motorlog.ui.screens
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -103,10 +105,23 @@ fun GaragemScreen(
             }
         }
 
-        OutlinedButton(
-            onClick = onEditarPeca,
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Gerenciar peças") }
+        val contexto = LocalContext.current
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onEditarPeca, modifier = Modifier.weight(1f)) { Text("Gerenciar peças") }
+            OutlinedButton(
+                onClick = {
+                    viewModel.exportar { csv ->
+                        val enviar = Intent(Intent.ACTION_SEND)
+                            .setType("text/plain")
+                            .putExtra(Intent.EXTRA_SUBJECT, "MotorLog — exportação")
+                            .putExtra(Intent.EXTRA_TEXT, csv)
+                        contexto.startActivity(Intent.createChooser(enviar, "Exportar dados"))
+                    }
+                },
+                enabled = motos.isNotEmpty(),
+                modifier = Modifier.weight(1f),
+            ) { Text("Exportar dados") }
+        }
     }
 }
 

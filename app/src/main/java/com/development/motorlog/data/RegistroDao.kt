@@ -21,6 +21,9 @@ interface RegistroDao {
     @Query("Select * FROM Registro WHERE motoId = :motoId")
     suspend fun listarRegistros(motoId: Long): List<Registro>
 
+    @Query("SELECT * FROM Registro")
+    suspend fun listarTodos(): List<Registro>
+
     @Query("SELECT * FROM Registro WHERE servicoId = :servicoId")
     suspend fun listarPorServico(servicoId: Long): List<Registro>
 }

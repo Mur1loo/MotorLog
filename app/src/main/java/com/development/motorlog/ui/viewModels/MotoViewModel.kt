@@ -12,6 +12,8 @@ import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.calcularRitmoKmMes
+import com.development.motorlog.domain.montarExportacao
+import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.domain.resumirAlertas
 import com.development.motorlog.ui.util.hojeUtcMillis
 
@@ -23,6 +25,7 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     private val historicoDao = AppDatabase.getDatabase(application).historicoKmDao()
     private val pecaDao = AppDatabase.getDatabase(application).pecaDao()
     private val registroDao = AppDatabase.getDatabase(application).registroDao()
+    private val servicoDao = AppDatabase.getDatabase(application).servicoDao()
 
     var motos by mutableStateOf<List<Moto>>(emptyList())
         private set
@@ -51,6 +54,21 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             val hoje = hojeUtcMillis()
             ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicoDao.listarPorMoto(moto.id), hoje) }
             motos = lista
+        }
+    }
+
+    // Tudo que há no banco, em CSV, pra compartilhar (backup legível fora do celular)
+    fun exportar(aoPronto: (String) -> Unit) {
+        viewModelScope.launch {
+            aoPronto(
+                montarExportacao(
+                    motos = dao.listarTodas(),
+                    pecas = pecaDao.listarPecas(),
+                    registros = registroDao.listarTodos(),
+                    servicos = servicoDao.listarTodos(),
+                    formatarData = ::formatarData,
+                )
+            )
         }
     }
 

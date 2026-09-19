@@ -18,6 +18,9 @@ interface ServicoDao {
     @Delete
     suspend fun remover(servico: Servico)
 
+    @Query("SELECT * FROM Servico")
+    suspend fun listarTodos(): List<Servico>
+
     @Query(value = "SELECT * FROM Servico WHERE motoId = :motoId")
     suspend fun query(motoId: Long): List<Servico>
 }
