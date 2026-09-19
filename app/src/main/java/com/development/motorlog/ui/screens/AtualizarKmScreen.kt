@@ -27,7 +27,7 @@ fun AtualizarKmScreen(
     modifier: Modifier = Modifier,
     moto: Moto,
     viewModel: MotoViewModel = viewModel(),
-    onSalvar: (Moto) -> Unit,
+    onSalvar: () -> Unit,
 ) {
     var km by rememberSaveable { mutableStateOf(moto.kilometragem.toString()) }
 
@@ -49,9 +49,8 @@ fun AtualizarKmScreen(
         Button(
             onClick = {
                 val novoKm = km.toIntOrNull() ?: return@Button
-                val motoAtualizada = moto.copy(kilometragem = novoKm)
-                viewModel.atualizarMoto(motoAtualizada)
-                onSalvar(motoAtualizada)
+                viewModel.atualizarMoto(moto.copy(kilometragem = novoKm))
+                onSalvar()
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
