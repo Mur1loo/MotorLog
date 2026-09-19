@@ -18,6 +18,7 @@ import com.development.motorlog.ui.util.lerData
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.calcularRitmoKmMes
+import com.development.motorlog.domain.kmRodadosNoApp
 import com.development.motorlog.domain.montarExportacao
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.domain.resumirAlertas
@@ -50,6 +51,10 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     var ritmos by mutableStateOf<Map<Long, Int?>>(emptyMap())
         private set
 
+    // motoId -> km rodados desde o 1º registro no app (base do custo por km)
+    var kmRodados by mutableStateOf<Map<Long, Int>>(emptyMap())
+        private set
+
     init {
         carregarMotos()
     }
@@ -69,7 +74,9 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
                 )
             }
             val hoje = hojeUtcMillis()
-            ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicoDao.listarPorMoto(moto.id), hoje) }
+            val historicos = lista.associate { moto -> moto.id to historicoDao.listarPorMoto(moto.id) }
+            ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicos.getValue(moto.id), hoje) }
+            kmRodados = lista.associate { moto -> moto.id to kmRodadosNoApp(historicos.getValue(moto.id), moto.kilometragem) }
             motos = lista
             carregou = true
         }

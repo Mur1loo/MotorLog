@@ -246,6 +246,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
                                     ritmoKmMes = motoViewModel.ritmos[motoSel.id],
+                                    kmRodados = motoViewModel.kmRodados[motoSel.id] ?: 0,
                                     onAtualizarKm = { mostrarKm = true },
                                     onRegistrarTroca = { telaAtual = "Registro" },
                                     onRegistrarServico = { telaAtual = "RegistrarServico" },

@@ -31,3 +31,7 @@ private val numeroBr: NumberFormat = NumberFormat.getIntegerInstance(Locale.forL
 fun formatarNumero(n: Int): String = numeroBr.format(n)
 fun formatarKm(km: Int): String = "${formatarNumero(km)} km"
 fun formatarReais(valor: Int): String = "R$ ${formatarNumero(valor)}"
+
+private val reaisComCentavos: NumberFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
+// 0.4217 -> "R$ 0,42" (custo por km precisa dos centavos)
+fun formatarReaisCentavos(valor: Double): String = reaisComCentavos.format(valor).replace('\u00A0', ' ')

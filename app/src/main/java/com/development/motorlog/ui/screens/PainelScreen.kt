@@ -42,6 +42,9 @@ import com.development.motorlog.data.Servico
 import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.custoPorKm
+import com.development.motorlog.domain.gastoNoMes
+import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.domain.estimarDiasAteTroca
@@ -66,6 +69,7 @@ import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.formatarReais
+import com.development.motorlog.ui.util.formatarReaisCentavos
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
@@ -77,6 +81,7 @@ fun PainelScreen(
     modifier: Modifier = Modifier,
     moto: Moto,
     ritmoKmMes: Int?,
+    kmRodados: Int,
     registroViewModel: RegistroViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
     onRegistrarTroca: () -> Unit,
@@ -104,7 +109,12 @@ fun PainelScreen(
     LaunchedEffect(moto) {
         registroViewModel.carregarRecomendacoes(moto)
         registroViewModel.carregarServicos(moto)
+        registroViewModel.carregarTrocasAvulsas(moto)
     }
+    val hoje = hojeUtcMillis()
+    val total = gastoTotal(servicos, registroViewModel.trocasAvulsas)
+    val porKm = custoPorKm(total, kmRodados)
+    val noMes = gastoNoMes(servicos, hoje)
 
     Column(
         modifier = modifier
@@ -168,7 +178,7 @@ fun PainelScreen(
                 unidade = if (proxima?.kmRestante != null && proxima.kmRestante >= 0) "km" else null,
                 icone = R.drawable.ic_ml_wrench,
                 cor = proxima?.statusTroca?.cor() ?: MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1.3f),
+                modifier = Modifier.weight(1.2f),
                 onClick = onVerTrocas,
             ) {
                 if (proxima?.kmUltimaTroca != null && proxima.kmProximaTroca != null && proxima.kmProximaTroca > proxima.kmUltimaTroca) {
@@ -186,8 +196,18 @@ fun PainelScreen(
                     Text("nenhuma registrada", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            StatTile("Gasto", formatarReais(servicos.sumOf { it.custo }), Modifier.weight(1f), icone = R.drawable.ic_ml_dollar)
-            StatTile("Visitas", servicos.size.toString(), Modifier.weight(0.85f), icone = R.drawable.ic_ml_doc, onClick = onVerHistorico)
+            // dois tiles bastam: "Visitas" era redundante com a aba Histórico (o Gasto já leva pra lá)
+            StatTile("Gasto · ${servicos.size} visita${if (servicos.size == 1) "" else "s"}", formatarReais(total), Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, onClick = onVerHistorico) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    if (porKm != null) "${formatarReaisCentavos(porKm)} por km" else "— por km (rode mais)",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    "${formatarReais(noMes)} este mês",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
 
         // ── ações secundárias: na língua do motoboy ──
