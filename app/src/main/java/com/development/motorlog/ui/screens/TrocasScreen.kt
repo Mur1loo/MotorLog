@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,6 +35,9 @@ import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.estimarDiasAteTroca
+import com.development.motorlog.R
+import com.development.motorlog.ui.components.BarraDeProgresso
+import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
 import com.development.motorlog.ui.components.MlCard
@@ -74,6 +77,7 @@ fun TrocasScreen(
     // peça do diálogo "Troquei agora" (id → sobrevive ao giro)
     var trocandoPecaId by rememberSaveable { mutableStateOf<Long?>(null) }
     val trocandoPeca = trocandoPecaId?.let { id -> pecas.find { it.id == id } }
+    var confirmarEstimativa by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(moto) { registroViewModel.carregarRecomendacoes(moto) }
 
@@ -105,6 +109,22 @@ fun TrocasScreen(
                     recolhido = recolhido,
                 )
             }
+            if (!recolhido && grupo.status == StatusTroca.NUNCA_TROCADA) {
+                item(key = "estimar") {
+                    val semRegistro = itens.filter { !it.ehRevisao }
+                    MlCard(pad = 14.dp, cor = MaterialTheme.colorScheme.surfaceContainerHigh, borda = androidx.compose.ui.graphics.Color.Transparent) {
+                        Text("Não lembra quando trocou?", style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Marque estas ${semRegistro.size} peças como trocadas hoje, aos ${formatarKm(moto.kilometragem)}. " +
+                                "Eu passo a contar o intervalo a partir daí, e você corrige as que lembrar tocando nelas.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        BotaoSecundario("Marcar todas como trocadas agora", { confirmarEstimativa = true }, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_check, enabled = semRegistro.isNotEmpty())
+                    }
+                }
+            }
             if (!recolhido) {
                 items(itens, key = { it.pecaId }) { rec ->
                     TrocaCard(rec, kmAtual = moto.kilometragem, ritmoKmMes = ritmoKmMes) { if (rec.ehRevisao) onRegistrarServico() else trocandoPecaId = rec.pecaId }
@@ -115,6 +135,31 @@ fun TrocasScreen(
             item { Text("Carregando peças…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         item { Spacer(Modifier.height(8.dp)) }
+    }
+
+    if (confirmarEstimativa) {
+        val semRegistro = porStatus[StatusTroca.NUNCA_TROCADA].orEmpty().filter { !it.ehRevisao }
+        AlertDialog(
+            onDismissRequest = { confirmarEstimativa = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            title = { Text("Marcar ${semRegistro.size} peças como trocadas?", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Text(
+                    "Todas ficam registradas como trocadas aos ${formatarKm(moto.kilometragem)}. As que você trocou há mais tempo vão " +
+                        "aparecer 'em dia' até você corrigir — é uma estimativa pra começar, não a verdade.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarEstimativa = false
+                    val pecasAlvo = semRegistro.mapNotNull { rec -> pecas.find { it.id == rec.pecaId } }
+                    registroViewModel.registrarTrocasEmLote(moto, pecasAlvo, moto.kilometragem)
+                    mostrarSemRegistro = false
+                }) { Text("Marcar todas") }
+            },
+            dismissButton = { TextButton(onClick = { confirmarEstimativa = false }) { Text("Cancelar") } },
+        )
     }
 
     if (trocandoPeca != null) {
@@ -204,14 +249,7 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick
         if (ultima != null && proxima != null && proxima > ultima) {
             Spacer(Modifier.height(10.dp))
             val pctUsado = ((kmAtual - ultima).toFloat() / (proxima - ultima)).coerceIn(0f, 1f)
-            LinearProgressIndicator(
-                progress = { pctUsado },
-                modifier = Modifier.fillMaxWidth().height(7.dp),
-                color = cor,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                gapSize = 0.dp,
-                drawStopIndicator = {},
-            )
+            BarraDeProgresso(pctUsado, cor)
             Spacer(Modifier.height(5.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("trocou aos ${formatarNumero(ultima)}", style = MaterialTheme.typography.labelSmall, color = MlTextFaint)

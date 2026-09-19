@@ -1,5 +1,11 @@
 package com.development.motorlog.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -60,7 +66,14 @@ fun Odometer(km: Int, modifier: Modifier = Modifier, tamanho: TamanhoOdometro = 
                 ) {
                     // linha do "tambor" no meio da célula
                     Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.07f)))
-                    Text(ch.toString(), style = chakra(tamanho.fonte.sp), color = Color.White)
+                    // o dígito "rola" como num odômetro de verdade quando o km muda
+                    AnimatedContent(
+                        targetState = ch,
+                        transitionSpec = {
+                            (slideInVertically { -it } + fadeIn()) togetherWith (slideOutVertically { it } + fadeOut())
+                        },
+                        label = "digito",
+                    ) { d -> Text(d.toString(), style = chakra(tamanho.fonte.sp), color = Color.White) }
                 }
             }
         }

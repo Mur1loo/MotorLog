@@ -144,6 +144,16 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
+    // "Não lembro quando troquei": várias peças registradas de uma vez no km atual (estimativa inicial)
+    fun registrarTrocasEmLote(moto: Moto, pecas: List<Peca>, km: Int) {
+        viewModelScope.launch {
+            pecas.forEach { peca ->
+                registroDao.inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = km, servicoId = null))
+            }
+            recalcular(moto)
+        }
+    }
+
     // Troca avulsa de uma peça ("Troquei agora" e a tela Troquei uma peça) + recálculo na sequência
     fun registrarTroca(moto: Moto, peca: Peca, km: Int) {
         viewModelScope.launch {

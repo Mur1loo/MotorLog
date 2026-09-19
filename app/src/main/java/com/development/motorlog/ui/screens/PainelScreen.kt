@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,6 +49,7 @@ import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.ui.components.AcaoDeSecao
+import com.development.motorlog.ui.components.BarraDeProgresso
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
@@ -185,11 +185,7 @@ fun PainelScreen(
                 if (proxima?.kmUltimaTroca != null && proxima.kmProximaTroca != null && proxima.kmProximaTroca > proxima.kmUltimaTroca) {
                     Spacer(Modifier.height(8.dp))
                     val pct = ((moto.kilometragem - proxima.kmUltimaTroca).toFloat() / (proxima.kmProximaTroca - proxima.kmUltimaTroca)).coerceIn(0f, 1f)
-                    LinearProgressIndicator(
-                        progress = { pct }, modifier = Modifier.fillMaxWidth().height(6.dp),
-                        color = proxima.statusTroca.cor(), trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        gapSize = 0.dp, drawStopIndicator = {},
-                    )
+                    BarraDeProgresso(pct, proxima.statusTroca.cor(), altura = 6.dp)
                     Spacer(Modifier.height(5.dp))
                     Text(proxima.pecaNome, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 } else if (proxima == null) {
