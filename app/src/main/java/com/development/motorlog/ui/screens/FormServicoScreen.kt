@@ -3,6 +3,7 @@ package com.development.motorlog.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -43,6 +45,9 @@ import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+
+// o que um motoboy faz na oficina, do mais ao menos frequente; texto livre continua valendo
+private val TIPOS_SUGERIDOS = listOf("Revisão", "Troca de óleo", "Pneu", "Freios", "Relação", "Elétrica", "Alinhamento", "Outro")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,10 +92,21 @@ fun FormServicoScreen(
         modifier.fillMaxSize().padding(16.dp).imePadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // sugestões: 1 toque em vez de digitar no trânsito, e o histórico agrupa ("Revisão" ≠ "revisao")
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy((-6).dp)) {
+            TIPOS_SUGERIDOS.forEach { tipo ->
+                FilterChip(
+                    selected = tipoServico == tipo,
+                    onClick = { tipoServico = tipo },
+                    label = { Text(tipo) },
+                )
+            }
+        }
         OutlinedTextField(
             value = tipoServico,
             onValueChange = { tipoServico = it },
             label = { Text("Tipo de serviço") },
+            singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
