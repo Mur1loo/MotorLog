@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -105,21 +106,21 @@ fun FormServicoScreen(
         OutlinedTextField(
             value = tipoServico,
             onValueChange = { tipoServico = it },
-            label = { Text("Tipo de serviço") },
+            label = { Text("O que foi feito?") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
             value = custo,
             onValueChange = { custo = it },
-            label = { Text("Custo (R$)") },
+            label = { Text("Quanto pagou? (R$)") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
             value = local,
             onValueChange = { local = it },
-            label = { Text("Oficina") },
+            label = { Text("Nome da oficina") },
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
@@ -140,7 +141,7 @@ fun FormServicoScreen(
 
         // ── Peças trocadas neste serviço (opcional) ──
         Text(
-            "Peças trocadas (opcional) · ${selecionadas.size} selecionada(s)",
+            "Peças trocadas lá (opcional) · ${selecionadas.size} marcada(s)",
             fontWeight = FontWeight.Medium,
         )
         OutlinedTextField(
@@ -189,7 +190,7 @@ fun FormServicoScreen(
         }
 
         Button(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             onClick = {
                 val custoInt = custo.toIntOrNull()
                 val kmInt = km.toIntOrNull()

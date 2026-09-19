@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import com.development.motorlog.data.Peca
+import com.development.motorlog.ui.util.formatarKm
 
 // "Troquei agora": registra a troca de UMA peça sem sair da tela. km nasce com o atual da moto.
 // onEditarPeca é a saída secundária pra quem queria mexer no intervalo.
@@ -36,7 +37,7 @@ fun RegistrarTrocaDialog(
         text = {
             Column {
                 Text(
-                    "A próxima vence ${peca.intervaloKm} km depois do km informado.",
+                    "A próxima vence ${formatarKm(peca.intervaloKm)} depois do km informado.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(

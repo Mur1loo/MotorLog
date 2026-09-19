@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.ui.components.SectionLabel
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.viewModels.MotoViewModel
 
 // atalhos de km: um dia de trabalho de motoboy fica entre 100 e 300 km
@@ -49,7 +51,7 @@ fun AtualizarKmScreen(
     modifier: Modifier = Modifier,
     moto: Moto,
     viewModel: MotoViewModel = viewModel(),
-    onSalvar: () -> Unit,
+    onSalvar: (kmSalvo: Int) -> Unit,
 ) {
     // nasce com o km atual já selecionado: digitar substitui, sem precisar apagar
     var campo by rememberSaveable(stateSaver = TextFieldValue.Saver) {
@@ -70,7 +72,7 @@ fun AtualizarKmScreen(
             return
         }
         viewModel.atualizarKm(moto, km)
-        onSalvar()
+        onSalvar(km)
     }
 
     LaunchedEffect(Unit) { foco.requestFocus() }
@@ -80,7 +82,7 @@ fun AtualizarKmScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         SectionLabel("Quilometragem atual")
-        Text("${moto.kilometragem} km", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(formatarKm(moto.kilometragem), color = MaterialTheme.colorScheme.onSurfaceVariant)
 
         OutlinedTextField(
             value = campo,
@@ -95,10 +97,10 @@ fun AtualizarKmScreen(
                 when {
                     novoKm == null && campo.text.isNotEmpty() -> Text("Digite só números")
                     delta == null || delta == 0 -> Text("Some o que rodou ou digite o valor do painel")
-                    delta > 0 -> Text("+$delta km desde a última atualização", color = MaterialTheme.colorScheme.primary)
+                    delta > 0 -> Text("+${formatarKm(delta)} desde a última atualização", color = MaterialTheme.colorScheme.primary)
                     else -> Text(
                         if (confirmarMenor) "Toque em Salvar de novo pra confirmar o km menor."
-                        else "Menor que o km atual (${moto.kilometragem}). Confira o painel.",
+                        else "Menor que o km atual (${formatarNumero(moto.kilometragem)}). Confira o painel da moto.",
                     )
                 }
             },

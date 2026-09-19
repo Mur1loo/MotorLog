@@ -8,11 +8,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -47,6 +53,9 @@ import com.development.motorlog.ui.theme.MlSoon
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import com.development.motorlog.ui.util.formatarData
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarNumero
+import com.development.motorlog.ui.util.formatarReais
 
 
 @Composable
@@ -99,7 +108,7 @@ fun PainelScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("${moto.kilometragem}", fontSize = 52.sp, fontWeight = FontWeight.Bold)
+                Text(formatarNumero(moto.kilometragem), fontSize = 52.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.width(6.dp))
                 Text(
                     "km",
@@ -129,16 +138,23 @@ fun PainelScreen(
 
         // ── tiles: ritmo + gasto + nº de serviços ──
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            PainelStat("RITMO", if (ritmoKmMes != null) "$ritmoKmMes" else "—", Modifier.weight(1.1f), unidade = "km/mês")
-            PainelStat("GASTO TOTAL", "R$ ${servicos.sumOf { it.custo }}", Modifier.weight(1.1f))
+            PainelStat("RITMO", if (ritmoKmMes != null) formatarNumero(ritmoKmMes) else "—", Modifier.weight(1.1f), unidade = "km/mês")
+            PainelStat("GASTO TOTAL", formatarReais(servicos.sumOf { it.custo }), Modifier.weight(1.1f))
             PainelStat("SERVIÇOS", "${servicos.size}", Modifier.weight(0.8f))
         }
 
-        // ── ações secundárias ──
+        // ── ações secundárias: na língua do motoboy, com alvo de toque ≥ 48dp ──
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { onRegistrarTroca() }, modifier = Modifier.weight(1f)) { Text("Troca") }
-            OutlinedButton(onClick = { onRegistrarServico() }, modifier = Modifier.weight(1f)) { Text("Serviço") }
-            OutlinedButton(onClick = { onVerHistorico() }, modifier = Modifier.weight(1f)) { Text("Histórico") }
+            OutlinedButton(onClick = { onRegistrarTroca() }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                Icon(Icons.Default.Build, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Troquei uma peça")
+            }
+            OutlinedButton(onClick = { onRegistrarServico() }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                Icon(Icons.Default.Home, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Fui à oficina")
+            }
         }
 
         // ── Card: próximas trocas ──────────────────────────────
@@ -161,12 +177,15 @@ fun PainelScreen(
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable { onVerTrocas() },
+                        modifier = Modifier.clickable { onVerTrocas() }.padding(4.dp),
                     )
                 }
 
                 if (proximasTrocas.isEmpty()) {
-                    Text("Nenhuma troca registrada ainda.")
+                    Text(
+                        "Toque em \"Troquei uma peça\" pra registrar a primeira. A partir daí eu aviso quando cada uma vence.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 } else {
                     // no painel só as mais urgentes; a lista completa fica em "Ver todas"
                     proximasTrocas.take(5).forEach { rec ->
@@ -174,8 +193,8 @@ fun PainelScreen(
                         val dias = estimarDiasAteTroca(rec.kmRestante, ritmoKmMes)
                         val texto = when (rec.statusTroca) {
                             StatusTroca.NUNCA_TROCADA -> "sem histórico"
-                            StatusTroca.VENCIDA -> "vencido há ${-(rec.kmRestante ?: 0)} km"
-                            else -> "faltam ${rec.kmRestante ?: 0} km" + if (dias != null) " · ${descreverDias(dias)}" else ""
+                            StatusTroca.VENCIDA -> "vencido há ${formatarKm(-(rec.kmRestante ?: 0))}"
+                            else -> "faltam ${formatarKm(rec.kmRestante ?: 0)}" + if (dias != null) " · ${descreverDias(dias)}" else ""
                         }
                         Row(
                             modifier = Modifier
@@ -203,16 +222,29 @@ fun PainelScreen(
                 modifier = Modifier.fillMaxWidth().padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Text(
-                    "ATIVIDADE RECENTE",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "ÚLTIMAS VISITAS À OFICINA",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        "Histórico",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { onVerHistorico() }.padding(4.dp),
+                    )
+                }
                 val ultimosServicos = servicos.sortedByDescending { it.data }.take(3)
                 if (ultimosServicos.isEmpty()) {
-                    Text("Nenhum serviço registrado ainda.")
+                    Text(
+                        "Quando for à oficina, registre aqui: custo, peças trocadas e data ficam guardados.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 } else {
                     ultimosServicos.forEach { servico ->
                         Row(
@@ -224,13 +256,13 @@ fun PainelScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(servico.tipoServico, fontWeight = FontWeight.Medium)
                                 Text(
-                                    "${formatarData(servico.data)} · ${servico.kilometragem} km",
+                                    "${formatarData(servico.data)} · ${formatarKm(servico.kilometragem)}",
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             Text(
-                                "R$ ${servico.custo}",
+                                formatarReais(servico.custo),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                             )

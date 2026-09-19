@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -45,13 +46,13 @@ fun FormPecaScreen(
         OutlinedTextField(
             value = nome,
             onValueChange = { novo -> nome = novo },
-            label = { Text("Peça") },
+            label = { Text("Nome da peça") },
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
             value = intervalo,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Intervalo de troca (km)") },
+            label = { Text("Troca a cada quantos km?") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             onValueChange = { novo -> intervalo = novo }
         )
@@ -60,7 +61,7 @@ fun FormPecaScreen(
             Text("${erro}", color = MaterialTheme.colorScheme.error)
         }
         Button(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             onClick = {
                 val newIntervalo = intervalo.toIntOrNull()
 
@@ -82,7 +83,7 @@ fun FormPecaScreen(
                 viewModel.inserirPeca(novaPeca)
                 onSalvar()
             }) {
-            Text("Salvar a Peça")
+            Text(if (peca != null) "Salvar alterações" else "Salvar peça")
         }
 
         if (peca != null) {

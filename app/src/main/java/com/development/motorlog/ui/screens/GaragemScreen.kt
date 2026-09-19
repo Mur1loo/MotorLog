@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,6 +44,8 @@ import com.development.motorlog.ui.components.Pill
 import com.development.motorlog.ui.theme.MlOk
 import com.development.motorlog.ui.theme.MlOver
 import com.development.motorlog.ui.theme.MlSoon
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.MotoViewModel
 
@@ -85,7 +88,7 @@ fun GaragemScreen(
             // ── stats da frota ──
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 StatCard("MOTOS", motos.size.toString(), Modifier.weight(1f))
-                StatCard("KM NA FROTA", "$totalKm", Modifier.weight(1.6f))
+                StatCard("KM NA FROTA", formatarNumero(totalKm), Modifier.weight(1.6f))
                 StatCard(
                     "VENCIDAS", "$totalVencidas", Modifier.weight(1.1f),
                     corValor = if (totalVencidas > 0) MlOver else MlOk,
@@ -107,7 +110,7 @@ fun GaragemScreen(
 
         val contexto = LocalContext.current
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onEditarPeca, modifier = Modifier.weight(1f)) { Text("Gerenciar peças") }
+            OutlinedButton(onClick = onEditarPeca, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("Peças e intervalos") }
             OutlinedButton(
                 onClick = {
                     viewModel.exportar { csv ->
@@ -119,7 +122,7 @@ fun GaragemScreen(
                     }
                 },
                 enabled = motos.isNotEmpty(),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp),
             ) { Text("Exportar dados") }
         }
     }
@@ -188,7 +191,7 @@ fun MotoCard(moto: Moto, alertas: ResumoAlertas?, onClick: () -> Unit) {
                 Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        "${moto.kilometragem} km",
+                        formatarKm(moto.kilometragem),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.primary,

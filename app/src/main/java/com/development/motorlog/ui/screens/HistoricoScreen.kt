@@ -30,6 +30,8 @@ import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.formatarData
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarReais
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 // Histórico da moto: serviços (oficina) + trocas avulsas (feitas por fora). Tocar num serviço abre o
@@ -64,7 +66,7 @@ fun HistoricoScreen(
             SectionLabel("Serviços na oficina")
             Text(
                 if (ordenados.isEmpty()) "Nenhum serviço registrado ainda."
-                else "${ordenados.size} serviço(s) · total R$ ${ordenados.sumOf { it.custo }}",
+                else "${ordenados.size} serviço(s) · total ${formatarReais(ordenados.sumOf { it.custo })}",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -89,7 +91,7 @@ fun HistoricoScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(nome, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                    Text("${troca.kmTroca} km", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                    Text(formatarKm(troca.kmTroca), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 }
             }
         }
@@ -98,7 +100,7 @@ fun HistoricoScreen(
     if (excluindo != null) {
         val nome = pecas.find { it.id == excluindo.pecaId }?.nome ?: "esta peça"
         ConfirmarExclusaoDialog(
-            texto = "Excluir a troca de $nome aos ${excluindo.kmTroca} km? A recomendação volta a valer pela troca anterior.",
+            texto = "Excluir a troca de $nome aos ${formatarKm(excluindo.kmTroca)}? A recomendação volta a valer pela troca anterior.",
             onConfirmar = {
                 registroViewModel.deletarTrocaAvulsa(excluindo, moto)
                 excluindoId = null
@@ -121,7 +123,7 @@ private fun ServicoCard(servico: Servico, onClick: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(servico.tipoServico, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("R$ ${servico.custo}", fontWeight = FontWeight.Bold)
+                Text(formatarReais(servico.custo), fontWeight = FontWeight.Bold)
             }
             Text(
                 "${formatarData(servico.data)} · ${servico.local}",
@@ -129,7 +131,7 @@ private fun ServicoCard(servico: Servico, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
-                "${servico.kilometragem} km",
+                formatarKm(servico.kilometragem),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

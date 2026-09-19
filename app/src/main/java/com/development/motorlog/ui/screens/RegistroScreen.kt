@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -57,7 +58,7 @@ fun RegistroScreen(
         OutlinedTextField(
             value = busca,
             onValueChange = { busca = it },
-            label = { Text("Buscar peça") },
+            label = { Text("Qual peça você trocou?") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -86,7 +87,7 @@ fun RegistroScreen(
         OutlinedTextField(
             value = km,
             onValueChange = { km = it },
-            label = { Text("Km da troca") },
+            label = { Text("Km na hora da troca") },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
@@ -102,7 +103,7 @@ fun RegistroScreen(
                 onSalvar()
             },
             enabled = pecaSelecionada != null && km.toIntOrNull() != null,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
         ) {
             Text(if (pecaSelecionada == null) "Escolha a peça" else "Salvar troca: ${pecaSelecionada.nome}")
         }

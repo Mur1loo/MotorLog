@@ -20,11 +20,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -43,6 +46,7 @@ import com.development.motorlog.ui.screens.RegistroScreen
 import com.development.motorlog.ui.screens.RevisaoDetailScreen
 import com.development.motorlog.ui.screens.TrocasScreen
 import com.development.motorlog.ui.theme.MotorLogTheme
+import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
@@ -98,17 +102,24 @@ class MainActivity : ComponentActivity() {
                     "EditarServico" -> "Editar serviço"
                     "Painel" -> motoSelecionada?.modelo ?: "Painel"
                     "AtualizarKm" -> "Atualizar km"
-                    "Registro" -> "Registrar troca"
-                    "RegistrarServico" -> "Registrar serviço"
+                    "Registro" -> "Troquei uma peça"
+                    "RegistrarServico" -> "Fui à oficina"
                     "Historico" -> "Histórico"
-                    "Trocas" -> "Trocas por km"
+                    "Trocas" -> "Quando troca cada peça"
                     "RevisaoDetail" -> servicoSelecionado?.tipoServico ?: "Serviço"
-                    "GerenciarPecas" -> "Peças"
+                    "GerenciarPecas" -> "Peças e intervalos"
                     "EditarPeca" -> if (pecaId != null) "Editar peça" else "Nova peça"
                     else -> "Garagem"
                 }
 
                 BackHandler(enabled = telaAtual != "Garagem") { irParaTras() }
+
+                // feedback imediato depois de salvar (pilar de UX: nunca silêncio)
+                val snackbar = remember { SnackbarHostState() }
+                var mensagem by remember { mutableStateOf<String?>(null) }
+                LaunchedEffect(mensagem) {
+                    mensagem?.let { snackbar.showSnackbar(it); mensagem = null }
+                }
 
                 // Android 13+: notificação exige permissão em runtime. Pede uma vez, ao abrir.
                 val pedirPermissao = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -120,6 +131,7 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    snackbarHost = { SnackbarHost(snackbar) },
                     topBar = {
                         TopAppBar(
                             title = { Text(titulo) },
@@ -152,7 +164,7 @@ class MainActivity : ComponentActivity() {
                         "Cadastro" -> {
                             CadastroScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onSalvar = { telaAtual = "Garagem" })
+                                onSalvar = { mensagem = "Moto cadastrada. Toque nela pra ver o painel."; telaAtual = "Garagem" })
                         }
                         "EditarMoto" -> {
                             val motoSel = motoSelecionada
@@ -160,7 +172,7 @@ class MainActivity : ComponentActivity() {
                                 CadastroScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
-                                    onSalvar = { telaAtual = "Painel" })
+                                    onSalvar = { mensagem = "Dados da moto salvos."; telaAtual = "Painel" })
                             }
                         }
                         "EditarServico" -> {
@@ -171,7 +183,7 @@ class MainActivity : ComponentActivity() {
                                     moto = motoSel,
                                     servico = servicoSel,
                                     modifier = Modifier.padding(innerPadding),
-                                    onSalvar = { telaAtual = "RevisaoDetail" }
+                                    onSalvar = { mensagem = "Serviço atualizado."; telaAtual = "RevisaoDetail" }
                                 )
                             }
                         }
@@ -213,7 +225,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
                                     // a lista do MotoViewModel recarrega sozinha; o Painel lê dela
-                                    onSalvar = { telaAtual = "Painel" }
+                                    onSalvar = { km -> mensagem = "Km atualizado: ${formatarKm(km)}"; telaAtual = "Painel" }
                                 )
                             }
                         }
@@ -223,7 +235,7 @@ class MainActivity : ComponentActivity() {
                                 RegistroScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
-                                    onSalvar = { telaAtual = "Painel" }
+                                    onSalvar = { mensagem = "Troca registrada. Já recalculei a próxima."; telaAtual = "Painel" }
                                 )
                             }
                         }
@@ -233,7 +245,7 @@ class MainActivity : ComponentActivity() {
                                 FormServicoScreen(
                                     moto = motoSel,
                                     modifier = Modifier.padding(innerPadding),
-                                    onSalvar = { telaAtual = "Painel" }
+                                    onSalvar = { mensagem = "Serviço salvo no histórico."; telaAtual = "Painel" }
                                 )
                             }
                         }
@@ -304,6 +316,7 @@ class MainActivity : ComponentActivity() {
                                     peca = pecaSelecionada,
                                     modifier = Modifier.padding(innerPadding),
                                     onSalvar = {
+                                        mensagem = "Peça salva."
                                         pecaId = null
                                         telaAtual = origemDetalhe
                                     }

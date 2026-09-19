@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -53,7 +54,7 @@ fun CadastroScreen(
         OutlinedTextField(
             value = modelo,
             onValueChange = { modelo = it },
-            label = { Text("Modelo") },
+            label = { Text("Modelo (ex.: Fan 160, Crosser)") },
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
@@ -75,7 +76,7 @@ fun CadastroScreen(
             OutlinedTextField(
                 value = km,
                 onValueChange = { km = it },
-                label = { Text("Km atual") },
+                label = { Text("Km que aparece no painel") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -108,7 +109,7 @@ fun CadastroScreen(
                 }
                 onSalvar()
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
         ) {
             Text(if (moto != null) "Salvar alterações" else "Salvar moto")
         }

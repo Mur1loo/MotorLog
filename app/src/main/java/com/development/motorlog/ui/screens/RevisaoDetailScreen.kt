@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +28,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.util.formatarData
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarReais
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 @Composable
@@ -61,7 +64,7 @@ fun RevisaoDetailScreen(
             ) {
                 LinhaInfo("Data", formatarData(servico.data))
                 LinhaInfo("Oficina", servico.local)
-                LinhaInfo("Quilometragem", "${servico.kilometragem} km")
+                LinhaInfo("Quilometragem", formatarKm(servico.kilometragem))
             }
         }
 
@@ -89,7 +92,7 @@ fun RevisaoDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(nome, modifier = Modifier.weight(1f))
-                            Text("R$ ${registro.preco}", fontWeight = FontWeight.Medium)
+                            Text(formatarReais(registro.preco), fontWeight = FontWeight.Medium)
                         }
                     }
                 }
@@ -102,19 +105,19 @@ fun RevisaoDetailScreen(
                 modifier = Modifier.fillMaxWidth().padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                LinhaInfo("Peças", "R$ $totalPecas")
-                LinhaInfo("Mão de obra", "R$ $maoDeObra")
+                LinhaInfo("Peças", formatarReais(totalPecas))
+                LinhaInfo("Mão de obra", formatarReais(maoDeObra))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text("Total", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("R$ ${servico.custo}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(formatarReais(servico.custo), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
 
-        OutlinedButton(onClick = onEditar, modifier = Modifier.fillMaxWidth()) { Text("Editar serviço") }
+        OutlinedButton(onClick = onEditar, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text("Editar serviço") }
         TextButton(
             onClick = { confirmarExclusao = true },
             modifier = Modifier.fillMaxWidth(),

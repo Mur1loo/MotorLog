@@ -39,6 +39,8 @@ import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.ui.components.RegistrarTrocaDialog
 import com.development.motorlog.ui.components.StatusDot
 import com.development.motorlog.ui.theme.cor
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 // "Trocas por km" — variante 'grupos' do protótipo (RecsGrupos): 3 grupos por urgência que mapeiam
@@ -50,7 +52,7 @@ private val GRUPOS = listOf(
     Grupo(StatusTroca.VENCIDA, "Vencidas", "troque assim que possível"),
     Grupo(StatusTroca.PERTO, "Perto de vencer", "planeje a troca"),
     Grupo(StatusTroca.OK, "Mais adiante", "tudo sob controle"),
-    Grupo(StatusTroca.NUNCA_TROCADA, "Sem registro", "toque numa peça pra registrar a primeira troca"),
+    Grupo(StatusTroca.NUNCA_TROCADA, "Nunca registrei a troca", "toque numa peça pra registrar a primeira troca"),
 )
 
 @Composable
@@ -154,7 +156,7 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick
                     Text(rec.pecaNome, fontWeight = FontWeight.Bold, fontSize = 14.5.sp)
                     if (ultima != null && proxima != null) {
                         Text(
-                            "a cada ${proxima - ultima} km",
+                            "troca a cada ${formatarKm(proxima - ultima)}",
                             fontSize = 11.5.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -163,7 +165,7 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick
                 if (restante != null) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            "${if (restante < 0) -restante else restante}",
+                            formatarNumero(if (restante < 0) -restante else restante),
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.5.sp,
                             color = cor,
@@ -196,8 +198,8 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick
                 )
                 Spacer(Modifier.height(5.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("$ultima", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("troca aos $proxima", fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
+                    Text("trocou aos ${formatarNumero(ultima)}", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("vence aos ${formatarNumero(proxima)}", fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
