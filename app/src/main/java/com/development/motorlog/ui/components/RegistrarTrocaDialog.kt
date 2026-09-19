@@ -1,11 +1,10 @@
 package com.development.motorlog.ui.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -14,7 +13,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.development.motorlog.R
 import com.development.motorlog.data.Peca
 import com.development.motorlog.ui.util.formatarKm
 
@@ -33,22 +33,17 @@ fun RegistrarTrocaDialog(
 
     AlertDialog(
         onDismissRequest = onCancelar,
-        title = { Text("Troquei: ${peca.nome}") },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text("Troquei: ${peca.nome}", style = MaterialTheme.typography.titleLarge) },
         text = {
             Column {
                 Text(
                     "A próxima vence ${formatarKm(peca.intervaloKm)} depois do km informado.",
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                OutlinedTextField(
-                    value = km,
-                    onValueChange = { km = it },
-                    label = { Text("Km da troca") },
-                    singleLine = true,
-                    isError = kmInt == null,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Spacer(Modifier.height(12.dp))
+                MlTextField(km, { km = it }, "Km da troca", icone = R.drawable.ic_ml_gauge, numerico = true, erro = kmInt == null)
                 TextButton(onClick = onEditarPeca) { Text("Editar peça / intervalo") }
             }
         },

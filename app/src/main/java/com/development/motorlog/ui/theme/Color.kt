@@ -2,7 +2,7 @@ package com.development.motorlog.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Paleta do protótipo (MotorLog_design2) — tema dark, accent laranja
+// Paleta do protótipo (MotorLog_design2/theme.jsx) — tema dark, accent laranja
 val MlBg = Color(0xFF0E1014)
 val MlBgElev = Color(0xFF14171D)
 val MlSurface = Color(0xFF181B22)
@@ -12,10 +12,16 @@ val MlText = Color(0xFFF3F5F8)
 val MlTextMuted = Color(0xFF9AA3B0)
 val MlTextFaint = Color(0xFF5E6675)
 val MlBorder = Color(0xFF272C36)
+val MlBorderHi = Color(0xFF333A46)
+val MlOdoBg = Color(0xFF05070A)      // fundo dos dígitos do odômetro
 val MlAccent = Color(0xFFFF6A2B)
 val MlOnAccent = Color(0xFF1A0A00)
 
-// status (semânticas, versão dark)
+// status (semânticas, versão dark) — fg; o bg é a mesma cor com alpha (Pill/IconBox)
 val MlOk = Color(0xFF5FD08A)
 val MlSoon = Color(0xFFFFC24B)
 val MlOver = Color(0xFFFF6B6B)
+
+// accent por moto (ACCENTS do protótipo). Sem campo no banco: escolhido pelo id da moto.
+val MlAccentsMoto = listOf(MlAccent, Color(0xFF23E0C8), Color(0xFFB6FF3D), Color(0xFFFF3B3B))
+fun accentDaMoto(motoId: Long): Color = MlAccentsMoto[(motoId % MlAccentsMoto.size).toInt()]

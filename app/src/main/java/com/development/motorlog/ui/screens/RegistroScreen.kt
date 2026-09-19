@@ -2,35 +2,45 @@ package com.development.motorlog.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.R
 import com.development.motorlog.data.Moto
+import com.development.motorlog.data.Peca
+import com.development.motorlog.ui.components.IconBox
+import com.development.motorlog.ui.components.MlCard
+import com.development.motorlog.ui.components.MlTextField
+import com.development.motorlog.ui.components.RodapeDeForm
 import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.contemSemAcento
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
-// Troca avulsa. Busca + lista rolável no meio; km e Salvar sempre visíveis embaixo
-// (antes ficavam depois dos ~50 botões — era preciso rolar tudo pra salvar).
+// "Troquei uma peça": busca + lista de peças em cards (ícone, nome, intervalo), km fixo embaixo
+// e o Salvar no rodapé — sempre visíveis, mesmo com a lista longa.
 @Composable
 fun RegistroScreen(
     moto: Moto,
@@ -45,64 +55,58 @@ fun RegistroScreen(
     var km by rememberSaveable { mutableStateOf(moto.kilometragem.toString()) }
     var busca by rememberSaveable { mutableStateOf("") }
     val pecaSelecionada = pecas.find { it.id == pecaSelecionadaId }
+    val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .imePadding(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        SectionLabel("Peça")
-        OutlinedTextField(
-            value = busca,
-            onValueChange = { busca = it },
-            label = { Text("Qual peça você trocou?") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
-
-        if (pecas.isEmpty()) {
-            Text("Carregando peças...", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        } else if (pecasFiltradas.isEmpty()) {
-            Text("Nenhuma peça encontrada", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(pecasFiltradas, key = { it.id }) { peca ->
-                if (peca.id == pecaSelecionadaId) {
-                    Button(onClick = { pecaSelecionadaId = peca.id }, modifier = Modifier.fillMaxWidth()) { Text(peca.nome) }
-                } else {
-                    OutlinedButton(onClick = { pecaSelecionadaId = peca.id }, modifier = Modifier.fillMaxWidth()) { Text(peca.nome) }
-                }
+    Column(modifier = modifier.fillMaxSize().imePadding()) {
+        Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
+            SectionLabel("Qual peça?")
+            MlTextField(busca, { busca = it }, "Buscar peça", icone = R.drawable.ic_ml_wrench)
+            Spacer(Modifier.height(10.dp))
+            if (pecas.isEmpty()) {
+                Text("Carregando peças…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            } else if (pecasFiltradas.isEmpty()) {
+                Text("Nenhuma peça com esse nome. Você pode criar em \"Peças e intervalos\".", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(pecasFiltradas, key = { it.id }) { peca ->
+                    LinhaPeca(peca, selecionada = peca.id == pecaSelecionadaId) { pecaSelecionadaId = peca.id }
+                }
+                item { Spacer(Modifier.height(4.dp)) }
+            }
+            Spacer(Modifier.height(8.dp))
+            SectionLabel("Quilometragem")
+            MlTextField(km, { km = it }, "Km na hora da troca", icone = R.drawable.ic_ml_gauge, numerico = true, erro = km.toIntOrNull() == null)
+            Spacer(Modifier.height(10.dp))
         }
-
-        SectionLabel("Quilometragem")
-        OutlinedTextField(
-            value = km,
-            onValueChange = { km = it },
-            label = { Text("Km na hora da troca") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Button(
+        RodapeDeForm(
+            textoBotao = if (pecaSelecionada == null) "Escolha a peça" else "Salvar: ${pecaSelecionada.nome}",
             onClick = {
-                val novoKm = km.toIntOrNull() ?: return@Button
-                val peca = pecaSelecionada ?: return@Button
+                val novoKm = km.toIntOrNull() ?: return@RodapeDeForm
+                val peca = pecaSelecionada ?: return@RodapeDeForm
                 viewModel.registrarTroca(moto, peca, novoKm)
                 onSalvar()
             },
             enabled = pecaSelecionada != null && km.toIntOrNull() != null,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-        ) {
-            Text(if (pecaSelecionada == null) "Escolha a peça" else "Salvar troca: ${pecaSelecionada.nome}")
+            icone = R.drawable.ic_ml_check,
+        )
+    }
+}
+
+// Linha de peça selecionável (borda accent quando escolhida)
+@Composable
+fun LinhaPeca(peca: Peca, selecionada: Boolean, onClick: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    MlCard(
+        onClick = onClick, pad = 10.dp,
+        borda = if (selecionada) accent else MaterialTheme.colorScheme.outline,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconBox(iconeDaPeca(peca.nome), cor = if (selecionada) accent else null)
+            Column(Modifier.weight(1f)) {
+                Text(peca.nome, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("troca a cada ${formatarKm(peca.intervaloKm)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (selecionada) Icon(painterResource(R.drawable.ic_ml_check), contentDescription = "Selecionada", tint = accent, modifier = Modifier.size(20.dp))
         }
     }
 }

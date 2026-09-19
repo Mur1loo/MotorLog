@@ -1,6 +1,5 @@
 package com.development.motorlog.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -8,23 +7,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -38,11 +31,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.R
 import com.development.motorlog.data.Moto
+import com.development.motorlog.ui.components.IconBox
+import com.development.motorlog.ui.components.MlCard
+import com.development.motorlog.ui.components.MlTextField
+import com.development.motorlog.ui.components.RodapeDeForm
+import com.development.motorlog.ui.components.SectionLabel
+import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.util.formatarData
@@ -93,11 +92,12 @@ fun FormServicoScreen(
 
     // O formulário INTEIRO é uma lista rolável e só o Salvar fica fixo. Com campos fixos no topo, o
     // teclado espremia a lista de peças a zero e cobria o campo de preço que estava sendo digitado.
-    Column(modifier.fillMaxSize().padding(16.dp).imePadding()) {
+    Column(modifier.fillMaxSize().imePadding()) {
         LazyColumn(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item { SectionLabel("O que foi feito?") }
             item {
                 // sugestões: 1 toque em vez de digitar no trânsito, e o histórico agrupa ("Revisão" ≠ "revisao")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy((-6).dp)) {
@@ -110,114 +110,71 @@ fun FormServicoScreen(
                     }
                 }
             }
+            item { MlTextField(tipoServico, { tipoServico = it; erro = null }, "Tipo do serviço", icone = R.drawable.ic_ml_wrench) }
+            item { SectionLabel("Quanto e onde") }
             item {
-                OutlinedTextField(
-                    value = tipoServico,
-                    onValueChange = { tipoServico = it },
-                    label = { Text("O que foi feito?") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MlTextField(custo, { custo = it; erro = null }, "Valor pago (R$)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, numerico = true)
+                    MlTextField(km, { km = it; erro = null }, "Km", Modifier.weight(0.8f), icone = R.drawable.ic_ml_gauge, numerico = true)
+                }
             }
+            item { MlTextField(local, { local = it; erro = null }, "Nome da oficina", icone = R.drawable.ic_ml_pin) }
             item {
-                OutlinedTextField(
-                    value = custo,
-                    onValueChange = { custo = it },
-                    label = { Text("Quanto pagou? (R$)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = local,
-                    onValueChange = { local = it },
-                    label = { Text("Nome da oficina") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = km,
-                    onValueChange = { km = it },
-                    label = { Text("Quilometragem") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            item {
-                // campo de DATA: um botão que mostra a data atual e abre o calendário
-                OutlinedButton(
-                    onClick = { mostrarPicker = true },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                ) {
-                    Text("Data: $dataFormatada")
+                // campo de DATA: um card que mostra a data e abre o calendário
+                MlCard(onClick = { mostrarPicker = true }, pad = 12.dp) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconBox(R.drawable.ic_ml_calendar, cor = MaterialTheme.colorScheme.primary)
+                        Column(Modifier.weight(1f)) {
+                            Text("Data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(dataFormatada, style = MaterialTheme.typography.titleSmall)
+                        }
+                        Text("alterar", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
             item {
                 // ── Peças trocadas neste serviço (opcional) ──
-                Text(
-                    "Peças trocadas lá (opcional) · ${selecionadas.size} marcada(s)",
-                    fontWeight = FontWeight.Medium,
-                )
+                SectionLabel("Peças trocadas lá (opcional) · ${selecionadas.size} marcada(s)", Modifier.padding(top = 6.dp))
             }
-            item {
-                OutlinedTextField(
-                    value = busca,
-                    onValueChange = { busca = it },
-                    label = { Text("Buscar peça") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            item { MlTextField(busca, { busca = it }, "Buscar peça", icone = R.drawable.ic_ml_wrench) }
             items(pecasFiltradas, key = { it.id }) { peca ->
                 val marcada = selecionadas.containsKey(peca.id)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            selecionadas = if (marcada) selecionadas - peca.id else selecionadas + (peca.id to "")
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
+                MlCard(
+                    onClick = { selecionadas = if (marcada) selecionadas - peca.id else selecionadas + (peca.id to "") },
+                    pad = 8.dp,
+                    borda = if (marcada) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                 ) {
-                    Checkbox(
-                        checked = marcada,
-                        onCheckedChange = { marcar ->
-                            selecionadas = if (marcar) selecionadas + (peca.id to "") else selecionadas - peca.id
-                        },
-                    )
-                    Text(peca.nome, modifier = Modifier.weight(1f))
-                    if (marcada) {
-                        OutlinedTextField(
-                            value = selecionadas[peca.id] ?: "",
-                            onValueChange = { selecionadas = selecionadas + (peca.id to it) },
-                            label = { Text("R$") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.width(120.dp),
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Checkbox(
+                            checked = marcada,
+                            onCheckedChange = { marcar ->
+                                selecionadas = if (marcar) selecionadas + (peca.id to "") else selecionadas - peca.id
+                            },
                         )
+                        IconBox(iconeDaPeca(peca.nome), cor = if (marcada) MaterialTheme.colorScheme.primary else null, tamanho = 34.dp)
+                        Text(peca.nome, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        if (marcada) {
+                            MlTextField(
+                                selecionadas[peca.id] ?: "", { selecionadas = selecionadas + (peca.id to it) }, "R$",
+                                Modifier.width(112.dp), numerico = true,
+                            )
+                        }
                     }
                 }
             }
             item { Spacer(Modifier.height(4.dp)) }
         }
 
-        val erroAtual = erro
-        if (erroAtual != null) {
-            Text(erroAtual, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 6.dp))
-        }
-
-        Button(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 52.dp),
+        RodapeDeForm(
+            textoBotao = if (servico != null) "Salvar alterações" else "Salvar visita",
+            erro = erro,
+            icone = R.drawable.ic_ml_check,
             onClick = {
                 val custoInt = custo.toIntOrNull()
                 val kmInt = km.toIntOrNull()
                 if (custoInt == null || kmInt == null || tipoServico.isBlank() || local.isBlank()) {
                     erro = "Preencha todos os campos corretamente!"
-                    return@Button
+                    return@RodapeDeForm
                 }
                 erro = null
                 val novo = Servico(
@@ -234,10 +191,8 @@ fun FormServicoScreen(
                 if (servico != null) viewModel.atualizarServicoComPecas(moto, novo, pecasComPreco)
                 else viewModel.inserirServicoComPecas(moto, novo, pecasComPreco)
                 onSalvar()
-            }
-        ) {
-            Text(if (servico != null) "Salvar alterações" else "Salvar serviço")
-        }
+            },
+        )
     }
 
     // O DIÁLOGO DO CALENDÁRIO — só existe na tela quando o booleano manda

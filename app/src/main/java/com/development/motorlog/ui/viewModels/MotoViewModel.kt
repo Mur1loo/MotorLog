@@ -31,6 +31,10 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     var motos by mutableStateOf<List<Moto>>(emptyList())
         private set
 
+    // false até a 1ª leitura do banco terminar: a Garagem não mostra "cadastre sua moto" antes disso
+    var carregou by mutableStateOf(false)
+        private set
+
     // motoId -> quantas trocas vencidas/perto (alertas da Garagem). Recalculado junto com a lista.
     var alertas by mutableStateOf<Map<Long, ResumoAlertas>>(emptyMap())
         private set
@@ -60,6 +64,7 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             val hoje = hojeUtcMillis()
             ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicoDao.listarPorMoto(moto.id), hoje) }
             motos = lista
+            carregou = true
         }
     }
 

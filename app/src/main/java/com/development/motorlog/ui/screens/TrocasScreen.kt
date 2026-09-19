@@ -1,6 +1,5 @@
 package com.development.motorlog.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,8 +23,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,16 +34,21 @@ import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.estimarDiasAteTroca
+import com.development.motorlog.ui.components.IconBox
+import com.development.motorlog.ui.components.LinhaDeTiles
+import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.RegistrarTrocaDialog
 import com.development.motorlog.ui.components.StatusDot
+import com.development.motorlog.ui.theme.MlTextFaint
+import com.development.motorlog.ui.theme.chakra
 import com.development.motorlog.ui.theme.cor
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarNumero
+import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
-// "Trocas por km" — variante 'grupos' do protótipo (RecsGrupos): 3 grupos por urgência que mapeiam
-// 1:1 no StatusTroca, + um 4º grupo "Sem registro" (NUNCA_TROCADA) recolhido por padrão (DECISOES D6).
-// Só apresentação: o domínio não muda, é um groupBy(statusTroca) na UI.
+// "Quando troca cada peça" — variante 'grupos' do protótipo (RecsGrupos): resumo em 3 cards,
+// depois grupos por urgência que mapeiam 1:1 no StatusTroca, + "Nunca registrei" recolhido (D6).
 private data class Grupo(val status: StatusTroca, val titulo: String, val subtitulo: String)
 
 private val GRUPOS = listOf(
@@ -78,6 +81,13 @@ fun TrocasScreen(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        item {
+            LinhaDeTiles(Modifier.padding(bottom = 6.dp)) {
+                ResumoStatus(StatusTroca.VENCIDA, porStatus[StatusTroca.VENCIDA].orEmpty().size, "vencidas", Modifier.weight(1f))
+                ResumoStatus(StatusTroca.PERTO, porStatus[StatusTroca.PERTO].orEmpty().size, "em breve", Modifier.weight(1f))
+                ResumoStatus(StatusTroca.OK, porStatus[StatusTroca.OK].orEmpty().size, "em dia", Modifier.weight(1f))
+            }
+        }
         GRUPOS.forEach { grupo ->
             val itens = porStatus[grupo.status].orEmpty()
             if (itens.isEmpty()) return@forEach
@@ -123,19 +133,32 @@ fun TrocasScreen(
 }
 
 @Composable
+private fun ResumoStatus(status: StatusTroca, quantidade: Int, rotulo: String, modifier: Modifier) {
+    MlCard(modifier = modifier, pad = 12.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StatusDot(status.cor(), tamanho = 10.dp)
+            Column {
+                Text(quantidade.toString(), style = chakra(20.sp), color = status.cor())
+                Text(rotulo, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
 private fun CabecalhoGrupo(grupo: Grupo, quantidade: Int, acao: (() -> Unit)?, recolhido: Boolean) {
     val cor = grupo.status.cor()
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 14.dp, start = 2.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, start = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StatusDot(cor, tamanho = 9.dp)
         Spacer(Modifier.width(9.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(grupo.titulo, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(grupo.subtitulo, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(grupo.titulo, style = MaterialTheme.typography.titleMedium)
+            Text(grupo.subtitulo, style = MaterialTheme.typography.bodySmall, color = MlTextFaint)
         }
-        Text("$quantidade", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = cor)
+        Text("$quantidade", style = chakra(15.sp), color = cor)
         if (acao != null) {
             TextButton(onClick = acao) { Text(if (recolhido) "mostrar" else "ocultar") }
         }
@@ -149,59 +172,46 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick
     val proxima = rec.kmProximaTroca
     val restante = rec.kmRestante
 
-    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
-        Column(modifier = Modifier.fillMaxWidth().padding(13.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(rec.pecaNome, fontWeight = FontWeight.Bold, fontSize = 14.5.sp)
-                    if (ultima != null && proxima != null) {
-                        Text(
-                            "troca a cada ${formatarKm(proxima - ultima)}",
-                            fontSize = 11.5.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                if (restante != null) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            formatarNumero(if (restante < 0) -restante else restante),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.5.sp,
-                            color = cor,
-                            textAlign = TextAlign.End,
-                        )
-                        val dias = estimarDiasAteTroca(restante, ritmoKmMes)
-                        Text(
-                            when {
-                                restante == 0 -> "vence agora"
-                                restante < 0 -> "km em atraso"
-                                dias != null -> "km · ${descreverDias(dias)}"
-                                else -> "km restantes"
-                            },
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+    MlCard(onClick = onClick, pad = 13.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconBox(iconeDaPeca(rec.pecaNome), cor = if (rec.statusTroca == StatusTroca.NUNCA_TROCADA) null else cor)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(rec.pecaNome, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (ultima != null && proxima != null) {
+                    Text("troca a cada ${formatarKm(proxima - ultima)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            if (ultima != null && proxima != null && proxima > ultima) {
-                Spacer(Modifier.height(10.dp))
-                val pctUsado = ((kmAtual - ultima).toFloat() / (proxima - ultima)).coerceIn(0f, 1f)
-                LinearProgressIndicator(
-                    progress = { pctUsado },
-                    modifier = Modifier.fillMaxWidth().height(7.dp),
-                    color = cor,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    gapSize = 0.dp,
-                    drawStopIndicator = {},
-                )
-                Spacer(Modifier.height(5.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("trocou aos ${formatarNumero(ultima)}", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("vence aos ${formatarNumero(proxima)}", fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
+            if (restante != null) {
+                val dias = estimarDiasAteTroca(restante, ritmoKmMes)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(formatarNumero(if (restante < 0) -restante else restante), style = chakra(15.sp), color = cor, textAlign = TextAlign.End)
+                    Text(
+                        when {
+                            restante == 0 -> "vence agora"
+                            restante < 0 -> "km em atraso"
+                            dias != null -> "km · ${descreverDias(dias)}"
+                            else -> "km restantes"
+                        },
+                        style = MaterialTheme.typography.labelSmall, color = MlTextFaint,
+                    )
                 }
+            }
+        }
+        if (ultima != null && proxima != null && proxima > ultima) {
+            Spacer(Modifier.height(10.dp))
+            val pctUsado = ((kmAtual - ultima).toFloat() / (proxima - ultima)).coerceIn(0f, 1f)
+            LinearProgressIndicator(
+                progress = { pctUsado },
+                modifier = Modifier.fillMaxWidth().height(7.dp),
+                color = cor,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                gapSize = 0.dp,
+                drawStopIndicator = {},
+            )
+            Spacer(Modifier.height(5.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("trocou aos ${formatarNumero(ultima)}", style = MaterialTheme.typography.labelSmall, color = MlTextFaint)
+                Text("vence aos ${formatarNumero(proxima)}", style = MaterialTheme.typography.labelSmall)
             }
         }
     }
