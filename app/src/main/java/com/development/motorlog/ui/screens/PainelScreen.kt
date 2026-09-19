@@ -60,6 +60,7 @@ fun PainelScreen(
     onRegistrarServico: () -> Unit,
     onVerHistorico: () -> Unit,
     onVerTrocas: () -> Unit,
+    onEditarMoto: () -> Unit,
     onExcluirMoto: () -> Unit,
     onEditarPeca: (Peca) -> Unit,
     onAbrirServico: (Servico) -> Unit
@@ -239,11 +240,11 @@ fun PainelScreen(
             }
         }
 
-        TextButton(
-            onClick = { confirmarExclusao = true },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Excluir moto", color = MaterialTheme.colorScheme.error)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onEditarMoto, modifier = Modifier.weight(1f)) { Text("Editar dados") }
+            TextButton(onClick = { confirmarExclusao = true }, modifier = Modifier.weight(1f)) {
+                Text("Excluir moto", color = MaterialTheme.colorScheme.error)
+            }
         }
     }
 

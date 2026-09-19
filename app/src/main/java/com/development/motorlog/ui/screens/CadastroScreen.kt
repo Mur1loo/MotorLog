@@ -28,15 +28,17 @@ import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.viewModels.MotoViewModel
 
 @Composable
+// moto == null → cadastro; moto != null → edição de identificação (o km se edita em "Atualizar km")
 fun CadastroScreen(
     modifier: Modifier = Modifier,
+    moto: Moto? = null,
     viewModel: MotoViewModel = viewModel(),
     onSalvar: () -> Unit
 ) {
-    var modelo by rememberSaveable { mutableStateOf("") }
-    var placa by rememberSaveable { mutableStateOf("") }
-    var ano by rememberSaveable { mutableStateOf("") }
-    var km by rememberSaveable { mutableStateOf("") }
+    var modelo by rememberSaveable { mutableStateOf(moto?.modelo ?: "") }
+    var placa by rememberSaveable { mutableStateOf(moto?.placa ?: "") }
+    var ano by rememberSaveable { mutableStateOf(moto?.anoFabricacao?.toString() ?: "") }
+    var km by rememberSaveable { mutableStateOf(moto?.kilometragem?.toString() ?: "") }
     var erro by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -68,14 +70,16 @@ fun CadastroScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        SectionLabel("Quilometragem")
-        OutlinedTextField(
-            value = km,
-            onValueChange = { km = it },
-            label = { Text("Km atual") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-        )
+        if (moto == null) {
+            SectionLabel("Quilometragem")
+            OutlinedTextField(
+                value = km,
+                onValueChange = { km = it },
+                label = { Text("Km atual") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
         val erroAtual = erro
         if (erroAtual != null) {
@@ -95,14 +99,18 @@ fun CadastroScreen(
                     return@Button
                 }
                 erro = null
-                viewModel.inserirMoto(
-                    Moto(modelo = modelo, anoFabricacao = newAno, placa = placa, kilometragem = newKm)
-                )
+                if (moto != null) {
+                    viewModel.atualizarMoto(moto.copy(modelo = modelo, placa = placa, anoFabricacao = newAno))
+                } else {
+                    viewModel.inserirMoto(
+                        Moto(modelo = modelo, anoFabricacao = newAno, placa = placa, kilometragem = newKm)
+                    )
+                }
                 onSalvar()
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Salvar moto")
+            Text(if (moto != null) "Salvar alterações" else "Salvar moto")
         }
     }
 }

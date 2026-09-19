@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,19 +46,21 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// servico == null → novo; servico != null → edição (peças marcadas nascem das trocas ligadas a ele)
 fun FormServicoScreen(
     moto: Moto,
     modifier: Modifier = Modifier,
+    servico: Servico? = null,
     viewModel: RegistroViewModel = viewModel(),
     onSalvar: () -> Unit,
 ) {
-    var tipoServico by rememberSaveable { mutableStateOf("") }
-    var custo by rememberSaveable { mutableStateOf("") }
-    var local by rememberSaveable { mutableStateOf("") }
+    var tipoServico by rememberSaveable { mutableStateOf(servico?.tipoServico ?: "") }
+    var custo by rememberSaveable { mutableStateOf(servico?.custo?.toString() ?: "") }
+    var local by rememberSaveable { mutableStateOf(servico?.local ?: "") }
     // km nasce do km atual da moto (o serviço normalmente é feito agora)
-    var km by rememberSaveable { mutableStateOf(moto.kilometragem.toString()) }
+    var km by rememberSaveable { mutableStateOf((servico?.kilometragem ?: moto.kilometragem).toString()) }
     // data: o VALOR (Long em millis) — nasce "hoje". mostrarPicker: o calendário está ABERTO?
-    var data by rememberSaveable { mutableLongStateOf(hojeUtcMillis()) }
+    var data by rememberSaveable { mutableLongStateOf(servico?.data ?: hojeUtcMillis()) }
     var mostrarPicker by remember { mutableStateOf(false) }
     var busca by rememberSaveable { mutableStateOf("") }
     var erro by remember { mutableStateOf<String?>(null) }
@@ -66,6 +69,16 @@ fun FormServicoScreen(
     // peça marcada -> texto do preço digitado (presença na chave = selecionada).
     // Map imutável em rememberSaveable (HashMap é Serializable → sobrevive ao giro).
     var selecionadas by rememberSaveable { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    // edição: carrega as trocas do serviço uma vez e pré-marca (preço como texto)
+    var carregouSelecao by rememberSaveable { mutableStateOf(servico == null) }
+    if (servico != null) {
+        LaunchedEffect(servico) { viewModel.carregarRegistrosDoServico(servico.id) }
+        val registros = viewModel.registrosDoServico
+        if (!carregouSelecao && registros.isNotEmpty() && registros.all { it.servicoId == servico.id }) {
+            selecionadas = registros.associate { it.pecaId to it.preco.toString() }
+            carregouSelecao = true
+        }
+    }
 
     val dataFormatada = remember(data) { formatarData(data) }
     val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
@@ -169,7 +182,8 @@ fun FormServicoScreen(
                     return@Button
                 }
                 erro = null
-                val servico = Servico(
+                val novo = Servico(
+                    id = servico?.id ?: 0,
                     motoId = moto.id,
                     custo = custoInt,
                     kilometragem = kmInt,
@@ -179,11 +193,12 @@ fun FormServicoScreen(
                 )
                 // texto do preço -> Int (vazio/invalid vira 0)
                 val pecasComPreco = selecionadas.mapValues { it.value.toIntOrNull() ?: 0 }
-                viewModel.inserirServicoComPecas(servico, pecasComPreco)
+                if (servico != null) viewModel.atualizarServicoComPecas(novo, pecasComPreco)
+                else viewModel.inserirServicoComPecas(novo, pecasComPreco)
                 onSalvar()
             }
         ) {
-            Text("Salvar serviço")
+            Text(if (servico != null) "Salvar alterações" else "Salvar serviço")
         }
     }
 

@@ -181,6 +181,28 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
+    // Edição do serviço: atualiza a visita e sincroniza as trocas ligadas a ela
+    // (remove as desmarcadas, atualiza preço/km das que ficaram, cria as novas).
+    fun atualizarServicoComPecas(servico: Servico, pecasComPreco: Map<Long, Int>) {
+        viewModelScope.launch {
+            servicoDao.atualizar(servico)
+            val atuais = registroDao.listarPorServico(servico.id)
+            atuais.filter { it.pecaId !in pecasComPreco }.forEach { registroDao.deletar(it) }
+            pecasComPreco.forEach { (pecaId, preco) ->
+                val existente = atuais.find { it.pecaId == pecaId }
+                if (existente != null) {
+                    registroDao.atualizar(existente.copy(preco = preco, kmTroca = servico.kilometragem))
+                } else {
+                    registroDao.inserirRegistro(
+                        Registro(motoId = servico.motoId, pecaId = pecaId, kmTroca = servico.kilometragem, servicoId = servico.id, preco = preco)
+                    )
+                }
+            }
+            servicos = servicoDao.query(servico.motoId)
+            registrosDoServico = registroDao.listarPorServico(servico.id)
+        }
+    }
+
     fun inserirPeca(peca: Peca){
         viewModelScope.launch {
             pecaDao.inserir(peca = peca)

@@ -85,6 +85,8 @@ class MainActivity : ComponentActivity() {
                         "RegistrarServico" -> "Painel"
                         "Historico" -> "Painel"
                         "Trocas" -> "Painel"
+                        "EditarMoto" -> "Painel"
+                        "EditarServico" -> "RevisaoDetail"
                         "RevisaoDetail" -> origemDetalhe
                         else -> "Garagem"
                     }
@@ -92,6 +94,8 @@ class MainActivity : ComponentActivity() {
 
                 val titulo = when (telaAtual) {
                     "Cadastro" -> "Nova moto"
+                    "EditarMoto" -> "Editar moto"
+                    "EditarServico" -> "Editar serviço"
                     "Painel" -> motoSelecionada?.modelo ?: "Painel"
                     "AtualizarKm" -> "Atualizar km"
                     "Registro" -> "Registrar troca"
@@ -150,6 +154,27 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 onSalvar = { telaAtual = "Garagem" })
                         }
+                        "EditarMoto" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null) {
+                                CadastroScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    moto = motoSel,
+                                    onSalvar = { telaAtual = "Painel" })
+                            }
+                        }
+                        "EditarServico" -> {
+                            val motoSel = motoSelecionada
+                            val servicoSel = servicoSelecionado
+                            if (motoSel != null && servicoSel != null) {
+                                FormServicoScreen(
+                                    moto = motoSel,
+                                    servico = servicoSel,
+                                    modifier = Modifier.padding(innerPadding),
+                                    onSalvar = { telaAtual = "RevisaoDetail" }
+                                )
+                            }
+                        }
                         "Painel" -> {
                             val motoSel = motoSelecionada
                             if (motoSel != null){
@@ -162,6 +187,7 @@ class MainActivity : ComponentActivity() {
                                     onRegistrarServico = { telaAtual = "RegistrarServico" },
                                     onVerHistorico = { telaAtual = "Historico" },
                                     onVerTrocas = { telaAtual = "Trocas" },
+                                    onEditarMoto = { telaAtual = "EditarMoto" },
                                     onExcluirMoto = {
                                         motoViewModel.deletarMoto(motoSel)
                                         motoId = null
@@ -247,6 +273,7 @@ class MainActivity : ComponentActivity() {
                                 RevisaoDetailScreen(
                                     servico = servicoSel,
                                     modifier = Modifier.padding(innerPadding),
+                                    onEditar = { telaAtual = "EditarServico" },
                                     onExcluido = {
                                         servicoId = null
                                         telaAtual = origemDetalhe
