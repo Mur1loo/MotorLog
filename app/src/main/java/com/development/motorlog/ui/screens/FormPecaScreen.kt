@@ -64,8 +64,9 @@ fun FormPecaScreen(
             onClick = {
                 val newIntervalo = intervalo.toIntOrNull()
 
-                if (newIntervalo == null || nome.isBlank()) {
-                    erro = "Campos não podem ficar vazios!"
+                // intervalo 0 marcaria VENCIDA no instante da troca; negativo inverte a conta
+                if (newIntervalo == null || newIntervalo <= 0 || nome.isBlank()) {
+                    erro = "Informe o nome e um intervalo em km maior que zero."
                     return@Button
                 }
                 erro = null

@@ -90,6 +90,11 @@ fun CadastroScreen(
                     erro = "Campos não podem ser vazios!"
                     return@Button
                 }
+                if (newKm < 0 || newAno !in 1900..2100) {
+                    erro = "Ano ou quilometragem inválidos."
+                    return@Button
+                }
+                erro = null
                 viewModel.inserirMoto(
                     Moto(modelo = modelo, anoFabricacao = newAno, placa = placa, kilometragem = newKm)
                 )
