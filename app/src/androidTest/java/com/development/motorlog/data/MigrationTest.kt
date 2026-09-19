@@ -112,15 +112,29 @@ class MigrationTest {
     }
 
     @Test
-    fun migra5para9_caminhoCompletoDoCelular() {
+    fun migra9para10_motoGanhaIntervaloRevisaoZero() {
+        helper.createDatabase(nomeBanco, 9).apply {
+            execSQL("INSERT INTO Moto (id, modelo, placa, anoFabricacao, kilometragem, kmAtualizadoEm) VALUES (1, 'Crosser', 'ABC1D23', 2020, 16000, 0)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(nomeBanco, 10, true, MIGRATION_9_10)
+        db.query("SELECT kilometragem, intervaloRevisaoKm FROM Moto WHERE id = 1").use { c ->
+            c.moveToFirst(); assertEquals(16000, c.getInt(0)); assertEquals(0, c.getInt(1))
+        }
+    }
+
+    @Test
+    fun migra5para10_caminhoCompletoDoCelular() {
         helper.createDatabase(nomeBanco, 5).apply { semearV5(this); close() }
         val db = helper.runMigrationsAndValidate(
-            nomeBanco, 9, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
+            nomeBanco, 10, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
         )
         db.query("SELECT kmTroca, preco FROM Registro WHERE id = 7").use { c ->
             c.moveToFirst(); assertEquals(15000, c.getInt(0)); assertEquals(0, c.getInt(1))
         }
-        db.query("SELECT kmAtualizadoEm FROM Moto WHERE id = 1").use { c -> c.moveToFirst(); assertEquals(0L, c.getLong(0)) }
+        db.query("SELECT kmAtualizadoEm, intervaloRevisaoKm FROM Moto WHERE id = 1").use { c ->
+            c.moveToFirst(); assertEquals(0L, c.getLong(0)); assertEquals(0, c.getInt(1))
+        }
     }
 
     @Test

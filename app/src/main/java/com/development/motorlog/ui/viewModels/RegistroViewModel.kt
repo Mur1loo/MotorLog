@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.calcularRecomendacoes
+import com.development.motorlog.domain.comRevisao
+import com.development.motorlog.domain.recomendacaoDeRevisao
 
 class RegistroViewModel(application: Application): AndroidViewModel(application) {
     private val registroDao = AppDatabase.getDatabase(application).registroDao()
@@ -47,11 +49,12 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     // Toda escrita que muda recomendação chama isto na MESMA coroutine, depois do commit:
     // a tela seguinte pode ler o banco antes do insert terminar, mas este recálculo vem depois.
     private suspend fun recalcular(moto: Moto) {
-        recomendacoes = calcularRecomendacoes(
+        val pecas = calcularRecomendacoes(
             kmAtual = moto.kilometragem,
             pecas = pecaDao.listarPecas(),
             registros = registroDao.listarRegistros(moto.id),
         )
+        recomendacoes = comRevisao(pecas, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, servicoDao.query(moto.id)))
     }
 
 

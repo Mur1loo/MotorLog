@@ -18,6 +18,8 @@ import com.development.motorlog.ui.util.lerData
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.calcularRitmoKmMes
+import com.development.motorlog.domain.comRevisao
+import com.development.motorlog.domain.recomendacaoDeRevisao
 import com.development.motorlog.domain.kmRodadosNoApp
 import com.development.motorlog.domain.montarExportacao
 import com.development.motorlog.ui.util.formatarData
@@ -69,8 +71,9 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             val lista = dao.listarTodas()
             val pecas = pecaDao.listarPecas()
             alertas = lista.associate { moto ->
+                val recs = calcularRecomendacoes(moto.kilometragem, pecas, registroDao.listarRegistros(moto.id))
                 moto.id to resumirAlertas(
-                    calcularRecomendacoes(moto.kilometragem, pecas, registroDao.listarRegistros(moto.id))
+                    comRevisao(recs, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, servicoDao.query(moto.id)))
                 )
             }
             val hoje = hojeUtcMillis()

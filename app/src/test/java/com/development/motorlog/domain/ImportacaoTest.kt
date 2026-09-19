@@ -17,7 +17,7 @@ class ImportacaoTest {
     @Test
     fun `ida e volta - o que exporta, importa igual`() {
         val csv = montarExportacao(
-            motos = listOf(Moto(id = 1, modelo = "Crosser", placa = "ABC1D23", anoFabricacao = 2020, kilometragem = 16000, kmAtualizadoEm = 5 * dia)),
+            motos = listOf(Moto(id = 1, modelo = "Crosser", placa = "ABC1D23", anoFabricacao = 2020, kilometragem = 16000, kmAtualizadoEm = 5 * dia, intervaloRevisaoKm = 5000)),
             pecas = listOf(Peca(id = 7, nome = "Óleo do motor", intervaloKm = 3000), Peca(id = 8, nome = "Vela", intervaloKm = 10000)),
             registros = listOf(
                 Registro(motoId = 1, pecaId = 7, kmTroca = 12000, servicoId = null, preco = 0),
@@ -28,7 +28,7 @@ class ImportacaoTest {
         )
         val d = lerExportacao(csv, ::parse)
 
-        assertEquals(listOf(MotoImportada("Crosser", "ABC1D23", 2020, 16000, 5 * dia)), d.motos)
+        assertEquals(listOf(MotoImportada("Crosser", "ABC1D23", 2020, 16000, 5 * dia, 5000)), d.motos)
         assertEquals(2, d.trocas.size)
         assertEquals(TrocaImportada("Crosser ABC1D23", "Óleo do motor", 12000, 0, emServico = false), d.trocas[0])
         assertEquals(TrocaImportada("Crosser ABC1D23", "Óleo do motor", 16000, 60, emServico = true), d.trocas[1])

@@ -24,6 +24,8 @@ import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.calcularRitmoKmMes
+import com.development.motorlog.domain.comRevisao
+import com.development.motorlog.domain.recomendacaoDeRevisao
 import com.development.motorlog.domain.montarLembrete
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.hojeUtcMillis
@@ -46,7 +48,8 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         criarCanal(ctx)
 
         db.motoDao().listarTodas().forEach { moto ->
-            val recs = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
+            val recsPecas = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
+            val recs = comRevisao(recsPecas, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, db.servicoDao().query(moto.id)))
             val ritmo = calcularRitmoKmMes(db.historicoKmDao().listarPorMoto(moto.id), hoje)
             val texto = montarLembrete(moto.modelo, moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData) ?: return@forEach
             // o título da notificação já é o modelo; o corpo não precisa repetir

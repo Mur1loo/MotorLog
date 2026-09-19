@@ -45,6 +45,7 @@ fun CadastroScreen(
     var placa by rememberSaveable { mutableStateOf(moto?.placa ?: "") }
     var ano by rememberSaveable { mutableStateOf(moto?.anoFabricacao?.toString() ?: "") }
     var km by rememberSaveable { mutableStateOf(moto?.kilometragem?.toString() ?: "") }
+    var revisao by rememberSaveable { mutableStateOf(moto?.intervaloRevisaoKm?.takeIf { it > 0 }?.toString() ?: "") }
     var erro by rememberSaveable { mutableStateOf<String?>(null) }
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
@@ -70,6 +71,15 @@ fun CadastroScreen(
                 MlTextField(placa, { placa = it.uppercase(); erro = null }, "Placa", Modifier.weight(1.3f), icone = R.drawable.ic_ml_tag)
                 MlTextField(ano, { ano = it; erro = null }, "Ano", Modifier.weight(1f), numerico = true)
             }
+            Spacer(Modifier.height(16.dp))
+            SectionLabel("Revisão na oficina")
+            MlTextField(revisao, { revisao = it; erro = null }, "Revisão a cada quantos km? (opcional)", icone = R.drawable.ic_ml_wrench, numerico = true)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Ex.: 5.000. Eu aviso quando a próxima revisão estiver chegando, contando da última visita registrada como \"Revisão\". Vazio = não avisar.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 2.dp),
+            )
             if (moto == null) {
                 Spacer(Modifier.height(16.dp))
                 SectionLabel("Quilometragem")
@@ -99,11 +109,16 @@ fun CadastroScreen(
                     erro = "Ano ou quilometragem inválidos."
                     return@RodapeDeForm
                 }
+                val newRevisao = if (revisao.isBlank()) 0 else revisao.toIntOrNull()
+                if (newRevisao == null || newRevisao < 0) {
+                    erro = "Intervalo de revisão inválido (deixe vazio pra não avisar)."
+                    return@RodapeDeForm
+                }
                 erro = null
                 if (moto != null) {
-                    viewModel.atualizarMoto(moto.copy(modelo = modelo, placa = placa, anoFabricacao = newAno))
+                    viewModel.atualizarMoto(moto.copy(modelo = modelo, placa = placa, anoFabricacao = newAno, intervaloRevisaoKm = newRevisao))
                 } else {
-                    viewModel.inserirMoto(Moto(modelo = modelo, anoFabricacao = newAno, placa = placa, kilometragem = newKm!!))
+                    viewModel.inserirMoto(Moto(modelo = modelo, anoFabricacao = newAno, placa = placa, kilometragem = newKm!!, intervaloRevisaoKm = newRevisao))
                 }
                 onSalvar()
             },

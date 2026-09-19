@@ -316,7 +316,8 @@ class MainActivity : ComponentActivity() {
                                         pecaId = peca.id
                                         origemDetalhe = "Trocas"
                                         telaAtual = "EditarPeca"
-                                    }
+                                    },
+                                    onRegistrarServico = { telaAtual = "RegistrarServico" },
                                 )
                             }
                         }

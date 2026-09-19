@@ -33,6 +33,7 @@ import com.development.motorlog.data.Peca
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.descreverDias
+import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
@@ -63,6 +64,7 @@ fun TrocasScreen(
     moto: Moto,
     ritmoKmMes: Int?,
     onEditarPeca: (Peca) -> Unit,
+    onRegistrarServico: () -> Unit,
     modifier: Modifier = Modifier,
     registroViewModel: RegistroViewModel = viewModel(),
 ) {
@@ -105,7 +107,7 @@ fun TrocasScreen(
             }
             if (!recolhido) {
                 items(itens, key = { it.pecaId }) { rec ->
-                    TrocaCard(rec, kmAtual = moto.kilometragem, ritmoKmMes = ritmoKmMes) { trocandoPecaId = rec.pecaId }
+                    TrocaCard(rec, kmAtual = moto.kilometragem, ritmoKmMes = ritmoKmMes) { if (rec.ehRevisao) onRegistrarServico() else trocandoPecaId = rec.pecaId }
                 }
             }
         }
@@ -178,7 +180,9 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick
             Column(modifier = Modifier.weight(1f)) {
                 Text(rec.pecaNome, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (ultima != null && proxima != null) {
-                    Text("troca a cada ${formatarKm(proxima - ultima)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${if (rec.ehRevisao) "revisão" else "troca"} a cada ${formatarKm(proxima - ultima)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else if (rec.ehRevisao) {
+                    Text("registre a última revisão em \"Fui à oficina\"", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             if (restante != null) {

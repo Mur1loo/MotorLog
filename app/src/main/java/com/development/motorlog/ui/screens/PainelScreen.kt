@@ -47,6 +47,7 @@ import com.development.motorlog.domain.gastoNoMes
 import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.diasEntre
+import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.ui.components.AcaoDeSecao
 import com.development.motorlog.ui.components.BotaoPrimario
@@ -227,7 +228,7 @@ fun PainelScreen(
             } else {
                 proximasTrocas.take(4).forEachIndexed { i, rec ->
                     if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    LinhaDeAlerta(rec, ritmoKmMes) { trocandoPecaId = rec.pecaId }
+                    LinhaDeAlerta(rec, ritmoKmMes) { if (rec.ehRevisao) onRegistrarServico() else trocandoPecaId = rec.pecaId }
                 }
             }
         }
@@ -313,7 +314,7 @@ fun LinhaDeAlerta(rec: Recomendacao, ritmoKmMes: Int?, onClick: () -> Unit) {
             Text(rec.pecaNome, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 when {
-                    rec.statusTroca == StatusTroca.NUNCA_TROCADA -> "sem registro"
+                    rec.statusTroca == StatusTroca.NUNCA_TROCADA -> if (rec.ehRevisao) "registre a última revisão em \"Fui à oficina\"" else "sem registro"
                     restante == 0 -> "vence agora"
                     restante < 0 -> "${formatarKm(-restante)} em atraso"
                     else -> "Faltam ${formatarKm(restante)}" + if (dias != null) " · ${descreverDias(dias)}" else ""
@@ -323,7 +324,7 @@ fun LinhaDeAlerta(rec: Recomendacao, ritmoKmMes: Int?, onClick: () -> Unit) {
         }
         Pill(
             when (rec.statusTroca) {
-                StatusTroca.VENCIDA -> "Trocar"
+                StatusTroca.VENCIDA -> if (rec.ehRevisao) "Revisar" else "Trocar"
                 StatusTroca.PERTO -> "Em breve"
                 StatusTroca.OK -> "Em dia"
                 StatusTroca.NUNCA_TROCADA -> "Registrar"
