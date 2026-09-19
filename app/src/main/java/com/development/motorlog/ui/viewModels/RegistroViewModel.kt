@@ -137,6 +137,14 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
+    // "Troquei agora": troca avulsa de uma peça + recomendações recalculadas na sequência
+    fun registrarTroca(moto: Moto, peca: Peca, km: Int) {
+        viewModelScope.launch {
+            registroDao.inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = km, servicoId = null))
+            carregarRecomendacoes(moto)
+        }
+    }
+
     fun inserirServico(servico: Servico){
         viewModelScope.launch {
             servicoDao.inserir(servico = servico)

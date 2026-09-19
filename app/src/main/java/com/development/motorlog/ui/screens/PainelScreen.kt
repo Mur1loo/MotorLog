@@ -23,8 +23,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
+import com.development.motorlog.ui.components.RegistrarTrocaDialog
 import com.development.motorlog.ui.components.StatusDot
 import com.development.motorlog.ui.theme.cor
 import androidx.compose.ui.Alignment
@@ -65,6 +67,8 @@ fun PainelScreen(
     // no painel só interessam as peças JÁ com registro (sem as "nunca trocadas")
     val proximasTrocas = recomendacoes.filter { it.statusTroca != StatusTroca.NUNCA_TROCADA }
     var confirmarExclusao by remember { mutableStateOf(false) }
+    var trocandoPecaId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val trocandoPeca = trocandoPecaId?.let { id -> pecas.find { it.id == id } }
 
     LaunchedEffect(moto) {
         registroViewModel.carregarRecomendacoes(moto)
@@ -170,9 +174,7 @@ fun PainelScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    pecas.find { it.id == rec.pecaId }?.let { onEditarPeca(it) }
-                                },
+                                .clickable { trocandoPecaId = rec.pecaId },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             StatusDot(cor)
@@ -238,6 +240,22 @@ fun PainelScreen(
         ) {
             Text("Excluir moto", color = MaterialTheme.colorScheme.error)
         }
+    }
+
+    if (trocandoPeca != null) {
+        RegistrarTrocaDialog(
+            peca = trocandoPeca,
+            kmAtual = moto.kilometragem,
+            onConfirmar = { km ->
+                registroViewModel.registrarTroca(moto, trocandoPeca, km)
+                trocandoPecaId = null
+            },
+            onEditarPeca = {
+                trocandoPecaId = null
+                onEditarPeca(trocandoPeca)
+            },
+            onCancelar = { trocandoPecaId = null },
+        )
     }
 
     if (confirmarExclusao) {

@@ -34,6 +34,7 @@ import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.ui.components.RegistrarTrocaDialog
 import com.development.motorlog.ui.components.StatusDot
 import com.development.motorlog.ui.theme.cor
 import com.development.motorlog.ui.viewModels.RegistroViewModel
@@ -47,7 +48,7 @@ private val GRUPOS = listOf(
     Grupo(StatusTroca.VENCIDA, "Vencidas", "troque assim que possível"),
     Grupo(StatusTroca.PERTO, "Perto de vencer", "planeje a troca"),
     Grupo(StatusTroca.OK, "Mais adiante", "tudo sob controle"),
-    Grupo(StatusTroca.NUNCA_TROCADA, "Sem registro", "toque pra registrar a primeira troca"),
+    Grupo(StatusTroca.NUNCA_TROCADA, "Sem registro", "toque numa peça pra registrar a primeira troca"),
 )
 
 @Composable
@@ -60,6 +61,9 @@ fun TrocasScreen(
     val recomendacoes = registroViewModel.recomendacoes
     val pecas = registroViewModel.pecas
     var mostrarSemRegistro by rememberSaveable { mutableStateOf(false) }
+    // peça do diálogo "Troquei agora" (id → sobrevive ao giro)
+    var trocandoPecaId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val trocandoPeca = trocandoPecaId?.let { id -> pecas.find { it.id == id } }
 
     LaunchedEffect(moto) { registroViewModel.carregarRecomendacoes(moto) }
 
@@ -86,9 +90,7 @@ fun TrocasScreen(
             }
             if (!recolhido) {
                 items(itens, key = { it.pecaId }) { rec ->
-                    TrocaCard(rec, kmAtual = moto.kilometragem) {
-                        pecas.find { it.id == rec.pecaId }?.let(onEditarPeca)
-                    }
+                    TrocaCard(rec, kmAtual = moto.kilometragem) { trocandoPecaId = rec.pecaId }
                 }
             }
         }
@@ -96,6 +98,22 @@ fun TrocasScreen(
             item { Text("Carregando…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         item { Spacer(Modifier.height(8.dp)) }
+    }
+
+    if (trocandoPeca != null) {
+        RegistrarTrocaDialog(
+            peca = trocandoPeca,
+            kmAtual = moto.kilometragem,
+            onConfirmar = { km ->
+                registroViewModel.registrarTroca(moto, trocandoPeca, km)
+                trocandoPecaId = null
+            },
+            onEditarPeca = {
+                trocandoPecaId = null
+                onEditarPeca(trocandoPeca)
+            },
+            onCancelar = { trocandoPecaId = null },
+        )
     }
 }
 
@@ -165,6 +183,8 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, onClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().height(7.dp),
                     color = cor,
                     trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    gapSize = 0.dp,
+                    drawStopIndicator = {},
                 )
                 Spacer(Modifier.height(5.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

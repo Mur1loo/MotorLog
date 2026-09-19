@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +29,8 @@ import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
+// Troca avulsa. Busca + lista rolável no meio; km e Salvar sempre visíveis embaixo
+// (antes ficavam depois dos ~50 botões — era preciso rolar tudo pra salvar).
 @Composable
 fun RegistroScreen(
     moto: Moto,
@@ -42,13 +44,13 @@ fun RegistroScreen(
     // a troca normalmente é registrada agora → nasce com o km atual da moto
     var km by rememberSaveable { mutableStateOf(moto.kilometragem.toString()) }
     var busca by rememberSaveable { mutableStateOf("") }
+    val pecaSelecionada = pecas.find { it.id == pecaSelecionadaId }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
-            .imePadding()
-            .verticalScroll(rememberScrollState()),
+            .imePadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         SectionLabel("Peça")
@@ -56,6 +58,7 @@ fun RegistroScreen(
             value = busca,
             onValueChange = { busca = it },
             label = { Text("Buscar peça") },
+            singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -65,19 +68,16 @@ fun RegistroScreen(
             Text("Carregando peças...", color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else if (pecasFiltradas.isEmpty()) {
             Text("Nenhuma peça encontrada", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        } else {
-            pecasFiltradas.forEach { peca ->
-                val selecionada = peca.id == pecaSelecionadaId
-                if (selecionada) {
-                    Button(
-                        onClick = { pecaSelecionadaId = peca.id },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(peca.nome) }
+        }
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(pecasFiltradas, key = { it.id }) { peca ->
+                if (peca.id == pecaSelecionadaId) {
+                    Button(onClick = { pecaSelecionadaId = peca.id }, modifier = Modifier.fillMaxWidth()) { Text(peca.nome) }
                 } else {
-                    OutlinedButton(
-                        onClick = { pecaSelecionadaId = peca.id },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(peca.nome) }
+                    OutlinedButton(onClick = { pecaSelecionadaId = peca.id }, modifier = Modifier.fillMaxWidth()) { Text(peca.nome) }
                 }
             }
         }
@@ -87,6 +87,7 @@ fun RegistroScreen(
             value = km,
             onValueChange = { km = it },
             label = { Text("Km da troca") },
+            singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
         )
@@ -94,15 +95,16 @@ fun RegistroScreen(
         Button(
             onClick = {
                 val novoKm = km.toIntOrNull() ?: return@Button
-                val peca = pecas.find { it.id == pecaSelecionadaId } ?: return@Button
+                val peca = pecaSelecionada ?: return@Button
                 viewModel.inserirRegistro(
                     Registro(motoId = moto.id, pecaId = peca.id, kmTroca = novoKm, servicoId = null)
                 )
                 onSalvar()
             },
+            enabled = pecaSelecionada != null && km.toIntOrNull() != null,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Salvar troca")
+            Text(if (pecaSelecionada == null) "Escolha a peça" else "Salvar troca: ${pecaSelecionada.nome}")
         }
     }
 }
