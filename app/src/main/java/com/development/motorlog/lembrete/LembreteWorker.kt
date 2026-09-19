@@ -13,6 +13,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -86,6 +87,13 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
             val canal = NotificationChannel(CANAL, "Lembretes de manutenção", NotificationManager.IMPORTANCE_DEFAULT)
                 .apply { description = "Km sem atualizar e trocas vencidas" }
             ctx.getSystemService(NotificationManager::class.java).createNotificationChannel(canal)
+        }
+
+        // Pra testar sem esperar as 19h:
+        //   adb shell am start -n com.development.motorlog/.MainActivity --ez lembreteAgora true
+        const val EXTRA_RODAR_AGORA = "lembreteAgora"
+        fun rodarAgora(ctx: Context) {
+            WorkManager.getInstance(ctx).enqueue(OneTimeWorkRequestBuilder<LembreteWorker>().build())
         }
 
         // Idempotente (KEEP): chamar a cada abertura do app não duplica o trabalho.
