@@ -15,6 +15,12 @@ fun formatarData(millis: Long): String =
         .toLocalDate()
         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
+// "28/06/2026" -> Long (meia-noite UTC), ou null se não for uma data. Inverso de formatarData.
+fun lerData(texto: String): Long? = try {
+    java.time.LocalDate.parse(texto.trim(), DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+} catch (_: java.time.format.DateTimeParseException) { null }
+
 // hoje à meia-noite UTC — a MESMA base que o DatePicker usa. Convenção pra todo Long de data do projeto.
 fun hojeUtcMillis(): Long =
     LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()

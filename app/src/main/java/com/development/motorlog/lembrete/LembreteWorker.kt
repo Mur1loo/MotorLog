@@ -49,7 +49,8 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
             val recs = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
             val ritmo = calcularRitmoKmMes(db.historicoKmDao().listarPorMoto(moto.id), hoje)
             val texto = montarLembrete(moto.modelo, moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData) ?: return@forEach
-            notificar(ctx, moto, texto, comResposta = true)
+            // o título da notificação já é o modelo; o corpo não precisa repetir
+            notificar(ctx, moto, texto.removePrefix("${moto.modelo}: "), comResposta = true)
         }
         return Result.success()
     }

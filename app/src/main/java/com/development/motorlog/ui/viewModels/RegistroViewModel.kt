@@ -55,6 +55,11 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     }
 
 
+    // depois de restaurar um backup o catálogo pode ter peças novas
+    fun recarregarCatalogo() {
+        viewModelScope.launch { pecas = pecaDao.listarPecas() }
+    }
+
     private fun carregarPecas() {
         viewModelScope.launch {
             if (pecaDao.listarPecas().isEmpty()){

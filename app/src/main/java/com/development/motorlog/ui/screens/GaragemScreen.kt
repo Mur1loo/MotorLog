@@ -1,6 +1,8 @@
 package com.development.motorlog.ui.screens
 
 import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,9 +15,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -51,14 +55,16 @@ import com.development.motorlog.ui.theme.cor
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.MotoViewModel
+import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 @Composable
 fun GaragemScreen(
     modifier: Modifier = Modifier,
     viewModel: MotoViewModel = viewModel(),
+    registroViewModel: RegistroViewModel = viewModel(),
     onAdicionar: () -> Unit,
     onEditarMoto: (Moto) -> Unit,
-    onEditarPeca: () -> Unit,
+    onMensagem: (String) -> Unit,
 ) {
     val motos = viewModel.motos
     val alertas = viewModel.alertas
@@ -69,6 +75,42 @@ fun GaragemScreen(
 
     // trocas/serviços registrados em outras telas mudam os alertas → recarrega ao entrar
     LaunchedEffect(Unit) { viewModel.carregarMotos() }
+
+    // Restaurar backup: escolhe o arquivo (CSV exportado pelo próprio app), lê e pede confirmação
+    val escolherArquivo = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        val texto = runCatching {
+            contexto.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+        }.getOrNull()
+        if (texto == null) onMensagem("Não consegui ler esse arquivo.") else viewModel.prepararImportacao(texto)
+    }
+    val pendente = viewModel.importacaoPendente
+    if (pendente != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelarImportacao() },
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            title = { Text(if (pendente.vazio) "Arquivo sem dados do MotorLog" else "Restaurar backup?", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Text(
+                    if (pendente.vazio) "Escolha o arquivo gerado em \"Exportar\" (texto com as seções MOTOS, TROCAS, SERVIÇOS)."
+                    else "Encontrei ${pendente.motos.size} moto(s), ${pendente.trocas.size} troca(s), ${pendente.servicos.size} visita(s) à oficina " +
+                        "e ${pendente.pecas.size} peça(s). O que já existir no app não será duplicado." +
+                        if (pendente.avisos.isNotEmpty()) "\n\n${pendente.avisos.size} linha(s) não entendida(s) serão ignoradas." else "",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                if (!pendente.vazio) TextButton(onClick = {
+                    viewModel.confirmarImportacao { r ->
+                        registroViewModel.recarregarCatalogo()
+                        onMensagem("Restaurado: ${r.motos} moto(s), ${r.trocas} troca(s), ${r.servicos} visita(s), ${r.pecas} peça(s)" +
+                            if (r.ignorados > 0) " · ${r.ignorados} já existiam" else "")
+                    }
+                }) { Text("Restaurar") }
+            },
+            dismissButton = { TextButton(onClick = { viewModel.cancelarImportacao() }) { Text(if (pendente.vazio) "Fechar" else "Cancelar") } },
+        )
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -108,13 +150,13 @@ fun GaragemScreen(
             item { Spacer(Modifier.height(4.dp)) }
         }
 
+        // rodapé: backup pra fora (Exportar) e de volta (Restaurar). "Peças e intervalos" foi pro cabeçalho (engrenagem)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            BotaoSecundario("Peças e intervalos", onEditarPeca, Modifier.weight(1f), icone = R.drawable.ic_ml_cog)
             BotaoSecundario(
-                "Exportar", onClick = {
+                "Exportar backup", onClick = {
                     viewModel.exportar { csv ->
                         val enviar = Intent(Intent.ACTION_SEND)
                             .setType("text/plain")
@@ -123,7 +165,12 @@ fun GaragemScreen(
                         contexto.startActivity(Intent.createChooser(enviar, "Exportar dados"))
                     }
                 },
-                modifier = Modifier.weight(0.8f), icone = R.drawable.ic_ml_share, enabled = motos.isNotEmpty(),
+                modifier = Modifier.weight(1f), icone = R.drawable.ic_ml_share, enabled = motos.isNotEmpty(),
+            )
+            BotaoSecundario(
+                "Restaurar backup",
+                onClick = { escolherArquivo.launch(arrayOf("text/*", "application/octet-stream")) },
+                modifier = Modifier.weight(1f), icone = R.drawable.ic_ml_doc,
             )
         }
     }

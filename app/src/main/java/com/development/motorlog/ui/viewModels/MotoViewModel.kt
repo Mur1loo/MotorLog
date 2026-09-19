@@ -9,7 +9,12 @@ import androidx.compose.runtime.getValue
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
+import com.development.motorlog.data.ResumoImportacao
 import com.development.motorlog.data.atualizarKm
+import com.development.motorlog.data.importar
+import com.development.motorlog.domain.DadosImportados
+import com.development.motorlog.domain.lerExportacao
+import com.development.motorlog.ui.util.lerData
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.calcularRitmoKmMes
@@ -67,6 +72,26 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicoDao.listarPorMoto(moto.id), hoje) }
             motos = lista
             carregou = true
+        }
+    }
+
+    // Restaurar backup: 1) lê o CSV e guarda pra confirmação; 2) aplica sem duplicar
+    var importacaoPendente by mutableStateOf<DadosImportados?>(null)
+        private set
+
+    fun prepararImportacao(texto: String) {
+        importacaoPendente = lerExportacao(texto, ::lerData)
+    }
+
+    fun cancelarImportacao() { importacaoPendente = null }
+
+    fun confirmarImportacao(aoTerminar: (ResumoImportacao) -> Unit) {
+        val dados = importacaoPendente ?: return
+        viewModelScope.launch {
+            val resumo = db.importar(dados)
+            importacaoPendente = null
+            carregarMotos()
+            aoTerminar(resumo)
         }
     }
 

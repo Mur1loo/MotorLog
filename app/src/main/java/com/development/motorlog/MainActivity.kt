@@ -13,6 +13,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -23,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.lembrete.LembreteWorker
@@ -167,6 +171,14 @@ class MainActivity : ComponentActivity() {
                             subtitulo = subtitulo,
                             grande = telaAtual == "Garagem",
                             onVoltar = if (telaAtual != "Garagem") irParaTras else null,
+                            acoes = if (telaAtual == "Garagem") {
+                                {
+                                    // engrenagem do protótipo: catálogo de peças e intervalos
+                                    IconButton(onClick = { telaAtual = "GerenciarPecas" }) {
+                                        Icon(painterResource(R.drawable.ic_ml_cog), contentDescription = "Peças e intervalos", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            } else null,
                         )
                     },
                     bottomBar = {
@@ -199,9 +211,7 @@ class MainActivity : ComponentActivity() {
                                     motoId = moto.id
                                     telaAtual = "Painel"
                                 },
-                                onEditarPeca = {
-                                    telaAtual = "GerenciarPecas"
-                                })
+                                onMensagem = { mensagem = it })
                         }
                         "Cadastro" -> {
                             CadastroScreen(
