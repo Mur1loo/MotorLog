@@ -42,9 +42,17 @@ android {
     buildFeatures {
         compose = true
     }
+    // o MigrationTestHelper lê os schemas exportados (schemas/<db>/<versão>.json) como assets do androidTest
+    sourceSets.getByName("androidTest").assets.directories.add("schemas")
 }
 
 dependencies {
+    constraints {
+        // room-testing 2.8 (MigrationTestHelper) lê os schemas com kotlinx-serialization 1.8;
+        // o lifecycle 2.9 traz a 1.7.3 e a resolução consistente do AGP puxava o androidTest pra ela.
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    }
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -58,6 +66,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.room.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
