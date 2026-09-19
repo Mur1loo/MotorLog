@@ -9,6 +9,9 @@ import androidx.compose.runtime.getValue
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.ResumoAlertas
+import com.development.motorlog.domain.calcularRecomendacoes
+import com.development.motorlog.domain.resumirAlertas
 import com.development.motorlog.ui.util.hojeUtcMillis
 
 import kotlinx.coroutines.launch
@@ -17,8 +20,14 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
 
     private val dao = AppDatabase.getDatabase(application).motoDao()
     private val historicoDao = AppDatabase.getDatabase(application).historicoKmDao()
+    private val pecaDao = AppDatabase.getDatabase(application).pecaDao()
+    private val registroDao = AppDatabase.getDatabase(application).registroDao()
 
     var motos by mutableStateOf<List<Moto>>(emptyList())
+        private set
+
+    // motoId -> quantas trocas vencidas/perto (alertas da Garagem). Recalculado junto com a lista.
+    var alertas by mutableStateOf<Map<Long, ResumoAlertas>>(emptyMap())
         private set
 
     init {
@@ -27,7 +36,14 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
 
     fun carregarMotos() {
         viewModelScope.launch {
-            motos = dao.listarTodas()
+            val lista = dao.listarTodas()
+            val pecas = pecaDao.listarPecas()
+            alertas = lista.associate { moto ->
+                moto.id to resumirAlertas(
+                    calcularRecomendacoes(moto.kilometragem, pecas, registroDao.listarRegistros(moto.id))
+                )
+            }
+            motos = lista
         }
     }
 

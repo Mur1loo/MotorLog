@@ -24,14 +24,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
+import com.development.motorlog.domain.ResumoAlertas
+import com.development.motorlog.domain.diasEntre
+import com.development.motorlog.ui.components.Pill
+import com.development.motorlog.ui.theme.MlOk
+import com.development.motorlog.ui.theme.MlOver
+import com.development.motorlog.ui.theme.MlSoon
+import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.MotoViewModel
 
 @Composable
@@ -43,7 +53,12 @@ fun GaragemScreen(
     onEditarPeca: () -> Unit,
 ) {
     val motos = viewModel.motos
+    val alertas = viewModel.alertas
     val totalKm = motos.sumOf { it.kilometragem }
+    val totalVencidas = alertas.values.sumOf { it.vencidas }
+
+    // trocas/serviços registrados em outras telas mudam os alertas → recarrega ao entrar
+    LaunchedEffect(Unit) { viewModel.carregarMotos() }
 
     Column(
         modifier = modifier
@@ -54,7 +69,11 @@ fun GaragemScreen(
         // ── stats da frota ──
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             StatCard("MOTOS", motos.size.toString(), Modifier.weight(1f))
-            StatCard("KM NA FROTA", "$totalKm", Modifier.weight(2f))
+            StatCard("KM NA FROTA", "$totalKm", Modifier.weight(1.6f))
+            StatCard(
+                "VENCIDAS", "$totalVencidas", Modifier.weight(1.1f),
+                corValor = if (totalVencidas > 0) MlOver else MlOk,
+            )
         }
 
         LazyColumn(
@@ -62,7 +81,7 @@ fun GaragemScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             items(motos) { moto ->
-                MotoCard(moto) { onEditarMoto(moto) }
+                MotoCard(moto, alertas[moto.id]) { onEditarMoto(moto) }
             }
             item {
                 AdicionarMotoCard(onAdicionar)
@@ -77,7 +96,12 @@ fun GaragemScreen(
 }
 
 @Composable
-private fun StatCard(rotulo: String, valor: String, modifier: Modifier = Modifier) {
+private fun StatCard(
+    rotulo: String,
+    valor: String,
+    modifier: Modifier = Modifier,
+    corValor: Color = MaterialTheme.colorScheme.onSurface,
+) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(13.dp)) {
             Text(
@@ -87,7 +111,7 @@ private fun StatCard(rotulo: String, valor: String, modifier: Modifier = Modifie
                 letterSpacing = 0.8.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(valor, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(valor, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = corValor)
         }
     }
 }
@@ -111,7 +135,8 @@ private fun BikeBadge(moto: Moto) {
 }
 
 @Composable
-fun MotoCard(moto: Moto, onClick: () -> Unit) {
+fun MotoCard(moto: Moto, alertas: ResumoAlertas?, onClick: () -> Unit) {
+    val diasSemKm = if (moto.kmAtualizadoEm > 0) diasEntre(moto.kmAtualizadoEm, hojeUtcMillis()) else null
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -131,12 +156,30 @@ fun MotoCard(moto: Moto, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    "${moto.kilometragem} km",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        "${moto.kilometragem} km",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) {
+                        Text(
+                            "há $diasSemKm dias",
+                            fontSize = 12.sp,
+                            color = MlSoon,
+                            modifier = Modifier.padding(bottom = 1.dp),
+                        )
+                    }
+                }
+                if (alertas != null) {
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (alertas.vencidas > 0) Pill("${alertas.vencidas} vencida${if (alertas.vencidas > 1) "s" else ""}", MlOver)
+                        if (alertas.perto > 0) Pill("${alertas.perto} perto de vencer", MlSoon)
+                        if (!alertas.temAlerta) Pill("Em dia", MlOk)
+                    }
+                }
             }
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
