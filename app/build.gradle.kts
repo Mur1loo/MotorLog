@@ -50,8 +50,8 @@ dependencies {
     constraints {
         // room-testing 2.8 (MigrationTestHelper) lê os schemas com kotlinx-serialization 1.8;
         // o lifecycle 2.9 traz a 1.7.3 e a resolução consistente do AGP puxava o androidTest pra ela.
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+        implementation(libs.kotlinx.serialization.core)
+        implementation(libs.kotlinx.serialization.json)
     }
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
