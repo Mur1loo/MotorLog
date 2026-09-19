@@ -32,6 +32,10 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     var registrosDoServico by mutableStateOf<List<Registro>>(emptyList())
         private set
 
+    // trocas registradas fora de um serviço (as do serviço aparecem no detalhe dele)
+    var trocasAvulsas by mutableStateOf<List<Registro>>(emptyList())
+        private set
+
     init {
         carregarPecas()
     }
@@ -154,6 +158,20 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     fun carregarServicos(moto: Moto){
         viewModelScope.launch {
             servicos = servicoDao.query(moto.id)
+        }
+    }
+
+    fun carregarTrocasAvulsas(moto: Moto) {
+        viewModelScope.launch {
+            trocasAvulsas = registroDao.listarRegistros(moto.id).filter { it.servicoId == null }
+        }
+    }
+
+    fun deletarTrocaAvulsa(registro: Registro, moto: Moto) {
+        viewModelScope.launch {
+            registroDao.deletar(registro)
+            carregarTrocasAvulsas(moto)
+            carregarRecomendacoes(moto)
         }
     }
 
