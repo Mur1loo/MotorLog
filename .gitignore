@@ -20,3 +20,5 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+# APKs gerados (pesados; gere com ./gradlew assembleRelease)
+loja/*.apk
