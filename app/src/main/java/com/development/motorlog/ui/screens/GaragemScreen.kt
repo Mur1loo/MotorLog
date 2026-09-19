@@ -22,6 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -46,6 +50,7 @@ import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.Odometer
 import com.development.motorlog.ui.components.Pill
 import com.development.motorlog.ui.components.PillNeutra
+import com.development.motorlog.ui.components.SobreDialog
 import com.development.motorlog.ui.components.StatTile
 import com.development.motorlog.ui.components.TamanhoOdometro
 import com.development.motorlog.ui.theme.MlBorderHi
@@ -84,6 +89,8 @@ fun GaragemScreen(
         }.getOrNull()
         if (texto == null) onMensagem("Não consegui ler esse arquivo.") else viewModel.prepararImportacao(texto)
     }
+    var mostrarSobre by rememberSaveable { mutableStateOf(false) }
+    if (mostrarSobre) SobreDialog(onFechar = { mostrarSobre = false }, onMensagem = onMensagem)
     val pendente = viewModel.importacaoPendente
     if (pendente != null) {
         AlertDialog(
@@ -172,6 +179,10 @@ fun GaragemScreen(
                 onClick = { escolherArquivo.launch(arrayOf("text/*", "application/octet-stream")) },
                 modifier = Modifier.weight(1f), icone = R.drawable.ic_ml_doc,
             )
+        }
+        // discreto, no fim da tela: quem é o app e como apoiar (opcional)
+        TextButton(onClick = { mostrarSobre = true }, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
+            Text("Sobre o MotorLog · apoiar o projeto", style = MaterialTheme.typography.labelMedium, color = MlTextFaint)
         }
     }
 }
