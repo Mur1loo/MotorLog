@@ -167,7 +167,7 @@ class MainActivity : ComponentActivity() {
                                 RegistroScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
-                                    onSalvar = { telaAtual = "Garagem" }
+                                    onSalvar = { telaAtual = "Painel" }
                                 )
                             }
                         }

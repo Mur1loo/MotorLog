@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Servico
+import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import java.time.LocalDate
@@ -64,7 +65,7 @@ fun FormServicoScreen(
     val selecionadas = remember { mutableStateMapOf<Long, String>() }
 
     val dataFormatada = remember(data) { formatarData(data) }
-    val pecasFiltradas = pecas.filter { it.nome.contains(busca, ignoreCase = true) }
+    val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
 
     Column(
         modifier.fillMaxSize().padding(16.dp),
