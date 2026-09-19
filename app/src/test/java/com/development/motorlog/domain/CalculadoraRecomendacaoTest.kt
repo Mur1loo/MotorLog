@@ -21,6 +21,7 @@ class CalculadoraRecomendacaoTest {
     fun `peca nunca trocada vira NUNCA_TROCADA com km nulos`() {
         val rec = unica(kmAtual = 16000)
         assertEquals(StatusTroca.NUNCA_TROCADA, rec.statusTroca)
+        assertNull(rec.kmUltimaTroca)
         assertNull(rec.kmProximaTroca)
         assertNull(rec.kmRestante)
         assertEquals(oleo.id, rec.pecaId)
@@ -30,6 +31,7 @@ class CalculadoraRecomendacaoTest {
     @Test
     fun `varias trocas da mesma peca - vale a de maior km, nao a ultima inserida`() {
         val rec = unica(16000, troca(oleo, 15000), troca(oleo, 9000), troca(oleo, 12000))
+        assertEquals(15000, rec.kmUltimaTroca)
         assertEquals(18000, rec.kmProximaTroca)
         assertEquals(2000, rec.kmRestante)
         assertEquals(StatusTroca.OK, rec.statusTroca)

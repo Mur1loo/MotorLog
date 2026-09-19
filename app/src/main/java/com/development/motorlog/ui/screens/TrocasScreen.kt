@@ -1,0 +1,177 @@
+package com.development.motorlog.ui.screens
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Card
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.data.Moto
+import com.development.motorlog.data.Peca
+import com.development.motorlog.domain.Recomendacao
+import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.ui.components.StatusDot
+import com.development.motorlog.ui.theme.cor
+import com.development.motorlog.ui.viewModels.RegistroViewModel
+
+// "Trocas por km" — variante 'grupos' do protótipo (RecsGrupos): 3 grupos por urgência que mapeiam
+// 1:1 no StatusTroca, + um 4º grupo "Sem registro" (NUNCA_TROCADA) recolhido por padrão (DECISOES D6).
+// Só apresentação: o domínio não muda, é um groupBy(statusTroca) na UI.
+private data class Grupo(val status: StatusTroca, val titulo: String, val subtitulo: String)
+
+private val GRUPOS = listOf(
+    Grupo(StatusTroca.VENCIDA, "Vencidas", "troque assim que possível"),
+    Grupo(StatusTroca.PERTO, "Perto de vencer", "planeje a troca"),
+    Grupo(StatusTroca.OK, "Mais adiante", "tudo sob controle"),
+    Grupo(StatusTroca.NUNCA_TROCADA, "Sem registro", "toque pra registrar a primeira troca"),
+)
+
+@Composable
+fun TrocasScreen(
+    moto: Moto,
+    onEditarPeca: (Peca) -> Unit,
+    modifier: Modifier = Modifier,
+    registroViewModel: RegistroViewModel = viewModel(),
+) {
+    val recomendacoes = registroViewModel.recomendacoes
+    val pecas = registroViewModel.pecas
+    var mostrarSemRegistro by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(moto) { registroViewModel.carregarRecomendacoes(moto) }
+
+    val porStatus = recomendacoes.groupBy { it.statusTroca }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        GRUPOS.forEach { grupo ->
+            val itens = porStatus[grupo.status].orEmpty()
+            if (itens.isEmpty()) return@forEach
+            val recolhido = grupo.status == StatusTroca.NUNCA_TROCADA && !mostrarSemRegistro
+
+            item(key = "cab-${grupo.status}") {
+                CabecalhoGrupo(
+                    grupo = grupo,
+                    quantidade = itens.size,
+                    acao = if (grupo.status == StatusTroca.NUNCA_TROCADA) {
+                        { mostrarSemRegistro = !mostrarSemRegistro }
+                    } else null,
+                    recolhido = recolhido,
+                )
+            }
+            if (!recolhido) {
+                items(itens, key = { it.pecaId }) { rec ->
+                    TrocaCard(rec, kmAtual = moto.kilometragem) {
+                        pecas.find { it.id == rec.pecaId }?.let(onEditarPeca)
+                    }
+                }
+            }
+        }
+        if (recomendacoes.isEmpty()) {
+            item { Text("Carregando…", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+        item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+@Composable
+private fun CabecalhoGrupo(grupo: Grupo, quantidade: Int, acao: (() -> Unit)?, recolhido: Boolean) {
+    val cor = grupo.status.cor()
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 14.dp, start = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StatusDot(cor, tamanho = 9.dp)
+        Spacer(Modifier.width(9.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(grupo.titulo, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(grupo.subtitulo, fontSize = 11.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Text("$quantidade", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = cor)
+        if (acao != null) {
+            TextButton(onClick = acao) { Text(if (recolhido) "mostrar" else "ocultar") }
+        }
+    }
+}
+
+@Composable
+private fun TrocaCard(rec: Recomendacao, kmAtual: Int, onClick: () -> Unit) {
+    val cor = rec.statusTroca.cor()
+    val ultima = rec.kmUltimaTroca
+    val proxima = rec.kmProximaTroca
+    val restante = rec.kmRestante
+
+    Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
+        Column(modifier = Modifier.fillMaxWidth().padding(13.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(rec.pecaNome, fontWeight = FontWeight.Bold, fontSize = 14.5.sp)
+                    if (ultima != null && proxima != null) {
+                        Text(
+                            "a cada ${proxima - ultima} km",
+                            fontSize = 11.5.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                if (restante != null) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            "${if (restante < 0) -restante else restante}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.5.sp,
+                            color = cor,
+                            textAlign = TextAlign.End,
+                        )
+                        Text(
+                            if (restante < 0) "km em atraso" else "km restantes",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            if (ultima != null && proxima != null && proxima > ultima) {
+                Spacer(Modifier.height(10.dp))
+                val pctUsado = ((kmAtual - ultima).toFloat() / (proxima - ultima)).coerceIn(0f, 1f)
+                LinearProgressIndicator(
+                    progress = { pctUsado },
+                    modifier = Modifier.fillMaxWidth().height(7.dp),
+                    color = cor,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                )
+                Spacer(Modifier.height(5.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("$ultima", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("troca aos $proxima", fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}

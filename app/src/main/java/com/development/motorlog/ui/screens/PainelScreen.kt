@@ -50,6 +50,7 @@ fun PainelScreen(
     onRegistrarTroca: () -> Unit,
     onRegistrarServico: () -> Unit,
     onVerHistorico: () -> Unit,
+    onVerTrocas: () -> Unit,
     onExcluirMoto: () -> Unit,
     onEditarPeca: (Peca) -> Unit,
     onAbrirServico: (Servico) -> Unit
@@ -121,18 +122,29 @@ fun PainelScreen(
                 modifier = Modifier.fillMaxWidth().padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Text(
-                    "PRÓXIMAS TROCAS",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.5.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "PRÓXIMAS TROCAS",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        "Ver todas",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { onVerTrocas() },
+                    )
+                }
 
                 if (proximasTrocas.isEmpty()) {
                     Text("Nenhuma troca registrada ainda.")
                 } else {
-                    proximasTrocas.forEach { rec ->
+                    // no painel só as mais urgentes; a lista completa fica em "Ver todas"
+                    proximasTrocas.take(5).forEach { rec ->
                         val cor = rec.statusTroca.cor()
                         val texto = when (rec.statusTroca) {
                             StatusTroca.NUNCA_TROCADA -> "sem histórico"

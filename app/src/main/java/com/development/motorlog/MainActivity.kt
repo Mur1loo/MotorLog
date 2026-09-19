@@ -36,6 +36,7 @@ import com.development.motorlog.ui.screens.HistoricoScreen
 import com.development.motorlog.ui.screens.PainelScreen
 import com.development.motorlog.ui.screens.RegistroScreen
 import com.development.motorlog.ui.screens.RevisaoDetailScreen
+import com.development.motorlog.ui.screens.TrocasScreen
 import com.development.motorlog.ui.theme.MotorLogTheme
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
@@ -74,6 +75,7 @@ class MainActivity : ComponentActivity() {
                         "EditarPeca" -> origemDetalhe
                         "RegistrarServico" -> "Painel"
                         "Historico" -> "Painel"
+                        "Trocas" -> "Painel"
                         "RevisaoDetail" -> origemDetalhe
                         else -> "Garagem"
                     }
@@ -86,6 +88,7 @@ class MainActivity : ComponentActivity() {
                     "Registro" -> "Registrar troca"
                     "RegistrarServico" -> "Registrar serviço"
                     "Historico" -> "Histórico"
+                    "Trocas" -> "Trocas por km"
                     "RevisaoDetail" -> servicoSelecionado?.tipoServico ?: "Serviço"
                     "GerenciarPecas" -> "Peças"
                     "EditarPeca" -> if (pecaId != null) "Editar peça" else "Nova peça"
@@ -140,6 +143,7 @@ class MainActivity : ComponentActivity() {
                                     onRegistrarTroca = { telaAtual = "Registro" },
                                     onRegistrarServico = { telaAtual = "RegistrarServico" },
                                     onVerHistorico = { telaAtual = "Historico" },
+                                    onVerTrocas = { telaAtual = "Trocas" },
                                     onExcluirMoto = {
                                         motoViewModel.deletarMoto(motoSel)
                                         motoId = null
@@ -199,6 +203,20 @@ class MainActivity : ComponentActivity() {
                                         servicoId = servico.id
                                         origemDetalhe = "Historico"
                                         telaAtual = "RevisaoDetail"
+                                    }
+                                )
+                            }
+                        }
+                        "Trocas" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null){
+                                TrocasScreen(
+                                    moto = motoSel,
+                                    modifier = Modifier.padding(innerPadding),
+                                    onEditarPeca = { peca ->
+                                        pecaId = peca.id
+                                        origemDetalhe = "Trocas"
+                                        telaAtual = "EditarPeca"
                                     }
                                 )
                             }
