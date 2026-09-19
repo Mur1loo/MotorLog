@@ -1,0 +1,43 @@
+MOTORLOG — MATERIAL E ROTEIRO PARA A GOOGLE PLAY
+=================================================
+
+1) CONTA E CHAVE
+- Play Console: https://play.google.com/console (taxa única de US$ 25).
+- Chave de assinatura: Android Studio → Build → Generate Signed Bundle/APK → Android App Bundle →
+  Create new… Salve o .jks FORA do projeto (ou na raiz; está no .gitignore) e copie
+  keystore.properties.exemplo → keystore.properties preenchendo as senhas.
+  ATENÇÃO: perder o .jks = impossível atualizar o app depois. Faça backup em 2 lugares.
+- Gerar o pacote: ./gradlew bundleRelease  → app/build/outputs/bundle/release/app-release.aab
+  (o mapping.txt do R8 fica em app/build/outputs/mapping/release/ — envie junto no Console).
+
+2) FICHA DA LOJA
+Nome: MotorLog
+Descrição curta (≤ 80): O caderninho de manutenção da moto que faz a conta sozinho.
+Descrição completa:
+  Você atualiza a quilometragem; o MotorLog avisa quando cada peça vence.
+  • Registre trocas de óleo, pneu, pastilha, relação e mais de 50 peças com intervalos ajustáveis.
+  • Registre visitas à oficina com custo, peças trocadas e data.
+  • Veja o que está vencido, o que vence em breve e quantos dias faltam no seu ritmo.
+  • Lembrete diário quando o km está parado ou há troca vencida — atualize direto da notificação.
+  • Custo por km e gasto do mês. Backup em texto, restaurável em outro celular.
+  Feito por um motoboy, de graça, sem anúncios. Seus dados ficam só no seu celular.
+Categoria: Automóveis e veículos. Classificação: para todos.
+Ícone 512×512: loja/icone_512.png
+Capturas: use o emulador/celular com o app aberto em Garagem, Painel, Atualizar km, Trocas, Histórico.
+  (Play exige mín. 2, formato 16:9 ou 9:16, 320–3840 px.)
+Imagem de destaque 1024×500: montar com o ícone sobre fundo #0E1014 e o texto da descrição curta.
+
+3) FORMULÁRIOS
+- Política de privacidade: hospedar loja/politica-de-privacidade.html (GitHub Pages do repositório
+  serve) e colar a URL.
+- Segurança dos dados: "Não coleta nem compartilha dados". Sem criptografia em trânsito (não há trânsito).
+- Permissões: POST_NOTIFICATIONS (lembrete). Nada sensível.
+- Público-alvo: 18+ (uso de veículo). Sem anúncios. Sem compras no app (a chave Pix é doação fora do app —
+  permitido, pois não desbloqueia nada).
+
+4) TESTE FECHADO
+Conta pessoal nova precisa de ≥ 12 testadores por 14 dias no teste fechado antes da produção.
+Crie a lista, mande o link opt-in pros colegas motoboys, depois "Promover para produção".
+
+5) A CADA ATUALIZAÇÃO
+app/build.gradle.kts → versionCode += 1 e versionName (ex.: 1.1.1) → bundleRelease → enviar .aab + mapping.

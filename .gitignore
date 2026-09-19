@@ -15,3 +15,8 @@
 local.properties
 *.md
 !README.md
+
+# assinatura de release (nunca no git)
+keystore.properties
+*.jks
+*.keystore

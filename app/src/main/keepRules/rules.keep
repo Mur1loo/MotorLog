@@ -1,12 +1,13 @@
-# Add project specific R8 rules here.
-# AGP will combine all keep rule files in src/main/keepRules to pass to R8
-#
-# For more details, see
-#   https://d.android.com/r/tools/r8/keep-rules
+# Regras de keep do MotorLog (o AGP combina todos os arquivos desta pasta e passa ao R8).
+# Room, WorkManager e Compose já trazem as próprias regras nas bibliotecas.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Entidades do Room são data classes lidas pelo código gerado — sem reflexão, mas manter os nomes
+# das colunas evita surpresa se algum dia entrar TypeConverter/consulta por nome.
+-keep class com.development.motorlog.data.** { *; }
+
+# Receiver/Worker são instanciados pelo sistema pelo nome
+-keep class com.development.motorlog.lembrete.** { *; }
+
+# rastro legível em crash (o mapping.txt vai pro Play Console)
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

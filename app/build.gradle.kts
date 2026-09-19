@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
 }
+
+// Assinatura de release: lê keystore.properties (fora do git). Sem o arquivo, o release continua
+// assinando com a chave de debug — dá pra testar no celular, mas NÃO serve pra Play Store.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val temKeystore = keystoreProps.getProperty("storeFile") != null
 
 ksp {
     arg("room.schemaLocation","$projectDir/schemas")
@@ -21,18 +31,31 @@ android {
         applicationId = "com.development.motorlog"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        // Play Store: versionCode sempre cresce a cada envio; versionName é o que o usuário vê
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (temKeystore) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
-            optimization {
-                enable = false
-            }
+            signingConfig = signingConfigs.getByName(if (temKeystore) "release" else "debug")
+            // R8: encolhe código e recursos (Room, WorkManager e Compose trazem as próprias regras;
+            // as do projeto ficam em src/main/keepRules/)
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
     compileOptions {
