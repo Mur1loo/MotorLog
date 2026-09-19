@@ -66,14 +66,29 @@ fun GaragemScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // ── stats da frota ──
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatCard("MOTOS", motos.size.toString(), Modifier.weight(1f))
-            StatCard("KM NA FROTA", "$totalKm", Modifier.weight(1.6f))
-            StatCard(
-                "VENCIDAS", "$totalVencidas", Modifier.weight(1.1f),
-                corValor = if (totalVencidas > 0) MlOver else MlOk,
-            )
+        // ── primeira abertura: explica a tese em 2 linhas em vez de mostrar zeros ──
+        if (motos.isEmpty()) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Seu caderninho de manutenção", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        "Cadastre a moto com o km do painel. A cada troca de peça você registra o km, e o " +
+                            "MotorLog calcula sozinho quando a próxima vence — basta manter o km atualizado.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
+        } else {
+            // ── stats da frota ──
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatCard("MOTOS", motos.size.toString(), Modifier.weight(1f))
+                StatCard("KM NA FROTA", "$totalKm", Modifier.weight(1.6f))
+                StatCard(
+                    "VENCIDAS", "$totalVencidas", Modifier.weight(1.1f),
+                    corValor = if (totalVencidas > 0) MlOver else MlOk,
+                )
+            }
         }
 
         LazyColumn(
