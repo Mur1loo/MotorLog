@@ -1,11 +1,15 @@
 package com.development.motorlog
 
+import android.Manifest
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.lembrete.LembreteWorker
 import com.development.motorlog.ui.screens.AtualizarKmScreen
 import com.development.motorlog.ui.screens.CadastroScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
@@ -50,13 +55,16 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
+        LembreteWorker.agendar(this)
+        // vindo da notificação: abre direto o Painel daquela moto
+        val motoDaNotificacao = intent.getLongExtra(LembreteWorker.EXTRA_MOTO_ID, -1L).takeIf { it > 0 }
         setContent {
             MotorLogTheme {
                 // Navegação por estado. Tudo aqui é rememberSaveable (sobrevive ao giro e à morte
                 // do processo): os "passageiros" são só ids (Long, Bundle-friendly); o objeto é
                 // resolvido nas listas dos ViewModels, que já sobrevivem ao config change.
-                var telaAtual by rememberSaveable { mutableStateOf("Garagem") }
-                var motoId by rememberSaveable { mutableStateOf<Long?>(null) }
+                var telaAtual by rememberSaveable { mutableStateOf(if (motoDaNotificacao != null) "Painel" else "Garagem") }
+                var motoId by rememberSaveable { mutableStateOf(motoDaNotificacao) }
                 var pecaId by rememberSaveable { mutableStateOf<Long?>(null) }   // null = peça nova
                 var servicoId by rememberSaveable { mutableStateOf<Long?>(null) }
                 // de qual tela o usuário abriu o detalhe/edição (pra voltar pro lugar certo)
@@ -96,6 +104,14 @@ class MainActivity : ComponentActivity() {
                 }
 
                 BackHandler(enabled = telaAtual != "Garagem") { irParaTras() }
+
+                // Android 13+: notificação exige permissão em runtime. Pede uma vez, ao abrir.
+                val pedirPermissao = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+                LaunchedEffect(Unit) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !LembreteWorker.podeNotificar(this@MainActivity)) {
+                        pedirPermissao.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),

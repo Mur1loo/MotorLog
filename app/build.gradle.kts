@@ -78,4 +78,7 @@ dependencies {
 
     // ViewModel Dependecies
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // lembrete diário (notificação) — ver DECISOES D11
+    implementation(libs.androidx.work.runtime.ktx)
 }

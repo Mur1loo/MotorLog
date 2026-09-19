@@ -92,12 +92,33 @@ class MigrationTest {
     }
 
     @Test
-    fun migra5para8_caminhoCompletoDoCelular() {
+    fun migra8para9_motoGanhaKmAtualizadoEmZero_eTabelaHistoricoKm() {
+        helper.createDatabase(nomeBanco, 8).apply {
+            execSQL("INSERT INTO Moto (id, modelo, placa, anoFabricacao, kilometragem) VALUES (1, 'Crosser', 'ABC1D23', 2020, 16000)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(nomeBanco, 9, true, MIGRATION_8_9)
+        db.query("SELECT kilometragem, kmAtualizadoEm FROM Moto WHERE id = 1").use { c ->
+            c.moveToFirst(); assertEquals(16000, c.getInt(0)); assertEquals(0L, c.getLong(1))
+        }
+        db.query("SELECT COUNT(*) FROM HistoricoKm").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
+        // FK CASCADE: apagar a moto leva o histórico junto
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO HistoricoKm (motoId, km, data) VALUES (1, 16000, 0)")
+        db.execSQL("DELETE FROM Moto WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM HistoricoKm").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
+    }
+
+    @Test
+    fun migra5para9_caminhoCompletoDoCelular() {
         helper.createDatabase(nomeBanco, 5).apply { semearV5(this); close() }
-        val db = helper.runMigrationsAndValidate(nomeBanco, 8, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+        val db = helper.runMigrationsAndValidate(
+            nomeBanco, 9, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
+        )
         db.query("SELECT kmTroca, preco FROM Registro WHERE id = 7").use { c ->
             c.moveToFirst(); assertEquals(15000, c.getInt(0)); assertEquals(0, c.getInt(1))
         }
+        db.query("SELECT kmAtualizadoEm FROM Moto WHERE id = 1").use { c -> c.moveToFirst(); assertEquals(0L, c.getLong(0)) }
     }
 
     @Test

@@ -45,12 +45,23 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
     }
 }
 
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // SQL copiado do 9.json exportado pelo Room.
+        // coluna simples → ADD COLUMN; DEFAULT 0 = "nunca registrado" pras motos que já existem
+        db.execSQL("ALTER TABLE `Moto` ADD COLUMN `kmAtualizadoEm` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `HistoricoKm` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `motoId` INTEGER NOT NULL, `km` INTEGER NOT NULL, `data` INTEGER NOT NULL, FOREIGN KEY(`motoId`) REFERENCES `Moto`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_HistoricoKm_motoId` ON `HistoricoKm` (`motoId`)")
+    }
+}
+
 @Database(
     entities = [Moto::class,
         Registro::class,
         Peca::class,
-        Servico::class],
-    version = 8,
+        Servico::class,
+        HistoricoKm::class],
+    version = 9,
     exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun motoDao(): MotoDao
@@ -58,6 +69,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pecaDao(): PecaDao
 
     abstract fun servicoDao(): ServicoDao
+    abstract fun historicoKmDao(): HistoricoKmDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -70,7 +82,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 context = context.applicationContext,
                                 klass = AppDatabase::class.java,
                                 name = "motorlog.db"
-                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9).build()
 
                 INSTANCE = instance
                 instance

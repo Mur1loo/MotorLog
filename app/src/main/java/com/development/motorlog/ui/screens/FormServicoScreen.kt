@@ -40,9 +40,8 @@ import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.util.formatarData
+import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -208,7 +207,3 @@ fun FormServicoScreen(
         }
     }
 }
-
-// hoje à meia-noite UTC — MESMA base que o DatePicker usa (evita data "um dia errado")
-private fun hojeUtcMillis(): Long =
-    LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()

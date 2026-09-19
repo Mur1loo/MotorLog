@@ -12,4 +12,6 @@ data class Moto(
     val placa: String,
     val anoFabricacao: Int,
     var kilometragem: Int,
+    // meia-noite UTC do dia da última atualização de km; 0 = nunca registrado (motos anteriores à v9)
+    val kmAtualizadoEm: Long = 0,
 )

@@ -36,7 +36,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Servico
+import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.diasEntre
+import com.development.motorlog.ui.theme.MlSoon
+import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import com.development.motorlog.ui.util.formatarData
 
@@ -97,6 +101,18 @@ fun PainelScreen(
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
             }
+            val diasSemKm = if (moto.kmAtualizadoEm > 0) diasEntre(moto.kmAtualizadoEm, hojeUtcMillis()) else null
+            Text(
+                when (diasSemKm) {
+                    null -> "Sem registro de quando o km foi atualizado"
+                    0 -> "Atualizado hoje"
+                    1 -> "Atualizado ontem"
+                    else -> "Atualizado há $diasSemKm dias"
+                },
+                fontSize = 13.sp,
+                color = if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) MlSoon
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Button(
                 onClick = { onAtualizarKm() },
                 modifier = Modifier.fillMaxWidth().height(54.dp),

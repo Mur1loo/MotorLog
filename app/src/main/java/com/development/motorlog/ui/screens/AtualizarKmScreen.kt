@@ -69,7 +69,7 @@ fun AtualizarKmScreen(
             confirmarMenor = true
             return
         }
-        viewModel.atualizarMoto(moto.copy(kilometragem = km))
+        viewModel.atualizarKm(moto, km)
         onSalvar()
     }
 
