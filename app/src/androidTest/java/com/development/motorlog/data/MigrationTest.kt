@@ -72,6 +72,35 @@ class MigrationTest {
     }
 
     @Test
+    fun migra7para8_criaIndices_semTocarDados() {
+        helper.createDatabase(nomeBanco, 7).apply {
+            // na v7 o CREATE do Room não tem DEFAULT (o DEFAULT 0 vive só na MIGRATION_6_7) → preco explícito
+            execSQL("INSERT INTO Moto (id, modelo, placa, anoFabricacao, kilometragem) VALUES (1, 'Crosser', 'ABC1D23', 2020, 16000)")
+            execSQL("INSERT INTO Peca (id, nome, intervaloKm) VALUES (1, 'Óleo do motor', 3000)")
+            execSQL("INSERT INTO Registro (id, motoId, pecaId, kmTroca, servicoId, preco) VALUES (7, 1, 1, 15000, NULL, 0)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(nomeBanco, 8, true, MIGRATION_7_8)
+        db.query("SELECT COUNT(*) FROM Registro").use { c -> c.moveToFirst(); assertEquals(1, c.getInt(0)) }
+        db.query("SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'index_%' ORDER BY name").use { c ->
+            val nomes = generateSequence { if (c.moveToNext()) c.getString(0) else null }.toList()
+            assertEquals(
+                listOf("index_Registro_motoId", "index_Registro_pecaId", "index_Registro_servicoId", "index_Servico_motoId"),
+                nomes,
+            )
+        }
+    }
+
+    @Test
+    fun migra5para8_caminhoCompletoDoCelular() {
+        helper.createDatabase(nomeBanco, 5).apply { semearV5(this); close() }
+        val db = helper.runMigrationsAndValidate(nomeBanco, 8, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+        db.query("SELECT kmTroca, preco FROM Registro WHERE id = 7").use { c ->
+            c.moveToFirst(); assertEquals(15000, c.getInt(0)); assertEquals(0, c.getInt(1))
+        }
+    }
+
+    @Test
     fun migra6para7_precoNasceZero() {
         helper.createDatabase(nomeBanco, 6).apply {
             semearV5(this)

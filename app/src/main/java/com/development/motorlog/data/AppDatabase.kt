@@ -35,12 +35,22 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("ALTER TABLE `Registro` ADD COLUMN `preco` INTEGER NOT NULL DEFAULT 0")
     }
 }
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // só índices (não tocam dados). SQL copiado do 8.json exportado pelo Room.
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Registro_motoId` ON `Registro` (`motoId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Registro_pecaId` ON `Registro` (`pecaId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Registro_servicoId` ON `Registro` (`servicoId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Servico_motoId` ON `Servico` (`motoId`)")
+    }
+}
+
 @Database(
     entities = [Moto::class,
         Registro::class,
         Peca::class,
         Servico::class],
-    version = 7,
+    version = 8,
     exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun motoDao(): MotoDao
@@ -60,7 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 context = context.applicationContext,
                                 klass = AppDatabase::class.java,
                                 name = "motorlog.db"
-                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7).build()
+                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
 
                 INSTANCE = instance
                 instance
