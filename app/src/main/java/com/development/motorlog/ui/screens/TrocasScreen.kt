@@ -34,6 +34,8 @@ import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.descreverDias
+import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.ui.components.RegistrarTrocaDialog
 import com.development.motorlog.ui.components.StatusDot
 import com.development.motorlog.ui.theme.cor
@@ -54,6 +56,7 @@ private val GRUPOS = listOf(
 @Composable
 fun TrocasScreen(
     moto: Moto,
+    ritmoKmMes: Int?,
     onEditarPeca: (Peca) -> Unit,
     modifier: Modifier = Modifier,
     registroViewModel: RegistroViewModel = viewModel(),
@@ -90,7 +93,7 @@ fun TrocasScreen(
             }
             if (!recolhido) {
                 items(itens, key = { it.pecaId }) { rec ->
-                    TrocaCard(rec, kmAtual = moto.kilometragem) { trocandoPecaId = rec.pecaId }
+                    TrocaCard(rec, kmAtual = moto.kilometragem, ritmoKmMes = ritmoKmMes) { trocandoPecaId = rec.pecaId }
                 }
             }
         }
@@ -138,7 +141,7 @@ private fun CabecalhoGrupo(grupo: Grupo, quantidade: Int, acao: (() -> Unit)?, r
 }
 
 @Composable
-private fun TrocaCard(rec: Recomendacao, kmAtual: Int, onClick: () -> Unit) {
+private fun TrocaCard(rec: Recomendacao, kmAtual: Int, ritmoKmMes: Int?, onClick: () -> Unit) {
     val cor = rec.statusTroca.cor()
     val ultima = rec.kmUltimaTroca
     val proxima = rec.kmProximaTroca
@@ -166,8 +169,13 @@ private fun TrocaCard(rec: Recomendacao, kmAtual: Int, onClick: () -> Unit) {
                             color = cor,
                             textAlign = TextAlign.End,
                         )
+                        val dias = estimarDiasAteTroca(restante, ritmoKmMes)
                         Text(
-                            if (restante < 0) "km em atraso" else "km restantes",
+                            when {
+                                restante < 0 -> "km em atraso"
+                                dias != null -> "km · ${descreverDias(dias)}"
+                                else -> "km restantes"
+                            },
                             fontSize = 10.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,

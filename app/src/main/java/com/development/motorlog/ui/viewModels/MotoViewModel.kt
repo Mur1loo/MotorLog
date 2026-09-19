@@ -11,6 +11,7 @@ import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.calcularRecomendacoes
+import com.development.motorlog.domain.calcularRitmoKmMes
 import com.development.motorlog.domain.resumirAlertas
 import com.development.motorlog.ui.util.hojeUtcMillis
 
@@ -30,6 +31,10 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     var alertas by mutableStateOf<Map<Long, ResumoAlertas>>(emptyMap())
         private set
 
+    // motoId -> km/mês estimado pelo HistoricoKm (null = ainda sem dados suficientes)
+    var ritmos by mutableStateOf<Map<Long, Int?>>(emptyMap())
+        private set
+
     init {
         carregarMotos()
     }
@@ -43,6 +48,8 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
                     calcularRecomendacoes(moto.kilometragem, pecas, registroDao.listarRegistros(moto.id))
                 )
             }
+            val hoje = hojeUtcMillis()
+            ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicoDao.listarPorMoto(moto.id), hoje) }
             motos = lista
         }
     }

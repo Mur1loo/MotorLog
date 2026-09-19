@@ -156,6 +156,7 @@ class MainActivity : ComponentActivity() {
                                 PainelScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
+                                    ritmoKmMes = motoViewModel.ritmos[motoSel.id],
                                     onAtualizarKm = { telaAtual = "AtualizarKm" },
                                     onRegistrarTroca = { telaAtual = "Registro" },
                                     onRegistrarServico = { telaAtual = "RegistrarServico" },
@@ -229,6 +230,7 @@ class MainActivity : ComponentActivity() {
                             if (motoSel != null){
                                 TrocasScreen(
                                     moto = motoSel,
+                                    ritmoKmMes = motoViewModel.ritmos[motoSel.id],
                                     modifier = Modifier.padding(innerPadding),
                                     onEditarPeca = { peca ->
                                         pecaId = peca.id

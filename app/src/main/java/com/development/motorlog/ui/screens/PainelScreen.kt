@@ -40,7 +40,9 @@ import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Servico
 import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.diasEntre
+import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.ui.theme.MlSoon
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
@@ -51,6 +53,7 @@ import com.development.motorlog.ui.util.formatarData
 fun PainelScreen(
     modifier: Modifier = Modifier,
     moto: Moto,
+    ritmoKmMes: Int?,
     registroViewModel: RegistroViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
     onRegistrarTroca: () -> Unit,
@@ -123,10 +126,11 @@ fun PainelScreen(
             ) { Text("Atualizar agora", fontSize = 16.sp, fontWeight = FontWeight.Bold) }
         }
 
-        // ── tiles: gasto + nº de serviços ──
+        // ── tiles: ritmo + gasto + nº de serviços ──
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            PainelStat("GASTO TOTAL", "R$ ${servicos.sumOf { it.custo }}", Modifier.weight(1f))
-            PainelStat("SERVIÇOS", "${servicos.size}", Modifier.weight(1f))
+            PainelStat("RITMO", if (ritmoKmMes != null) "$ritmoKmMes" else "—", Modifier.weight(1.1f), unidade = "km/mês")
+            PainelStat("GASTO TOTAL", "R$ ${servicos.sumOf { it.custo }}", Modifier.weight(1.1f))
+            PainelStat("SERVIÇOS", "${servicos.size}", Modifier.weight(0.8f))
         }
 
         // ── ações secundárias ──
@@ -166,10 +170,11 @@ fun PainelScreen(
                     // no painel só as mais urgentes; a lista completa fica em "Ver todas"
                     proximasTrocas.take(5).forEach { rec ->
                         val cor = rec.statusTroca.cor()
+                        val dias = estimarDiasAteTroca(rec.kmRestante, ritmoKmMes)
                         val texto = when (rec.statusTroca) {
                             StatusTroca.NUNCA_TROCADA -> "sem histórico"
                             StatusTroca.VENCIDA -> "vencido há ${-(rec.kmRestante ?: 0)} km"
-                            else -> "faltam ${rec.kmRestante ?: 0} km"
+                            else -> "faltam ${rec.kmRestante ?: 0} km" + if (dias != null) " · ${descreverDias(dias)}" else ""
                         }
                         Row(
                             modifier = Modifier
@@ -271,7 +276,7 @@ fun PainelScreen(
 }
 
 @Composable
-private fun PainelStat(rotulo: String, valor: String, modifier: Modifier = Modifier) {
+private fun PainelStat(rotulo: String, valor: String, modifier: Modifier = Modifier, unidade: String? = null) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
@@ -281,7 +286,13 @@ private fun PainelStat(rotulo: String, valor: String, modifier: Modifier = Modif
                 letterSpacing = 0.8.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Text(valor, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(valor, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                if (unidade != null) {
+                    Spacer(Modifier.width(4.dp))
+                    Text(unidade, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 4.dp))
+                }
+            }
         }
     }
 }
