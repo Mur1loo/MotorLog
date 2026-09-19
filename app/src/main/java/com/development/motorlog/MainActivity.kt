@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.lembrete.LembreteWorker
 import com.development.motorlog.ui.components.AbaMoto
@@ -46,6 +47,9 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 // telas que vivem "dentro de uma moto" e mostram a barra inferior com o FAB +KM
 private val TELAS_DA_MOTO = setOf("Painel", "Historico", "Trocas")
+// extra do atalho da tela inicial (res/xml/shortcuts.xml) e chave da última moto aberta
+const val EXTRA_ABRIR_KM = "abrirKm"
+private const val PREF_ULTIMA_MOTO = "ultima_moto"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,19 +65,24 @@ class MainActivity : ComponentActivity() {
         if (primeiraCriacao && intent.getBooleanExtra(LembreteWorker.EXTRA_RODAR_AGORA, false)) LembreteWorker.rodarAgora(this)
         // vindo da notificação: abre direto o Painel daquela moto
         val motoDaNotificacao = intent.getLongExtra(LembreteWorker.EXTRA_MOTO_ID, -1L).takeIf { it > 0 }
+        // vindo do atalho "+KM" da tela inicial: abre a folha de km da última moto usada
+        val prefs = getSharedPreferences("motorlog", MODE_PRIVATE)
+        val abrirKm = primeiraCriacao && intent.getBooleanExtra(EXTRA_ABRIR_KM, false)
+        val ultimaMoto = prefs.getLong(PREF_ULTIMA_MOTO, -1L).takeIf { it > 0 }
+        val motoInicial = motoDaNotificacao ?: if (abrirKm) ultimaMoto else null
         setContent {
             MotorLogTheme {
                 // Navegação por estado. Tudo aqui é rememberSaveable (sobrevive ao giro e à morte
                 // do processo): os "passageiros" são só ids (Long, Bundle-friendly); o objeto é
                 // resolvido nas listas dos ViewModels, que já sobrevivem ao config change.
-                var telaAtual by rememberSaveable { mutableStateOf(if (motoDaNotificacao != null) "Painel" else "Garagem") }
-                var motoId by rememberSaveable { mutableStateOf(motoDaNotificacao) }
+                var telaAtual by rememberSaveable { mutableStateOf(if (motoInicial != null) "Painel" else "Garagem") }
+                var motoId by rememberSaveable { mutableStateOf(motoInicial) }
                 var pecaId by rememberSaveable { mutableStateOf<Long?>(null) }   // null = peça nova
                 var servicoId by rememberSaveable { mutableStateOf<Long?>(null) }
                 // de qual tela o usuário abriu o detalhe/edição (pra voltar pro lugar certo)
                 var origemDetalhe by rememberSaveable { mutableStateOf("Garagem") }
                 // a ação nº 1 é uma folha inferior sobre a tela atual, não uma tela
-                var mostrarKm by rememberSaveable { mutableStateOf(false) }
+                var mostrarKm by rememberSaveable { mutableStateOf(abrirKm) }
 
                 val motoViewModel: MotoViewModel = viewModel()
                 val registroViewModel: RegistroViewModel = viewModel()
@@ -133,12 +142,20 @@ class MainActivity : ComponentActivity() {
                         pedirPermissao.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 }
-                // moto que não existe mais (ex.: notificação antiga de moto excluída): volta pra Garagem
+                // moto que não existe mais (ex.: notificação antiga de moto excluída): volta pra Garagem.
+                // Atalho sem moto conhecida: usa a única/primeira moto. Lembra a última moto aberta.
                 LaunchedEffect(motoId, motoViewModel.motos) {
-                    if (motoId != null && motoViewModel.motos.isNotEmpty() && motoSelecionada == null) {
+                    val motos = motoViewModel.motos
+                    if (motoId != null && motos.isNotEmpty() && motoSelecionada == null) {
                         motoId = null
                         telaAtual = "Garagem"
                     }
+                    if (motoId == null && mostrarKm && motos.isNotEmpty()) {
+                        motoId = motos.first().id
+                        telaAtual = "Painel"
+                    }
+                    if (motoId == null && mostrarKm && motoViewModel.carregou && motos.isEmpty()) mostrarKm = false
+                    motoId?.let { id -> prefs.edit { putLong(PREF_ULTIMA_MOTO, id) } }
                 }
 
                 Scaffold(

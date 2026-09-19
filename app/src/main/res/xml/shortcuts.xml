@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- atalho estático da tela inicial (segurar o ícone do app): abre direto a folha "Atualizar km" -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="atualizar_km"
+        android:enabled="true"
+        android:icon="@drawable/ic_atalho_km"
+        android:shortcutShortLabel="@string/atalho_km_curto"
+        android:shortcutLongLabel="@string/atalho_km_longo">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.development.motorlog"
+            android:targetClass="com.development.motorlog.MainActivity">
+            <extra android:name="abrirKm" android:value="true" />
+        </intent>
+    </shortcut>
+</shortcuts>

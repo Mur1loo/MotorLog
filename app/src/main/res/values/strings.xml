@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MotorLog</string>
+    <string name="atalho_km_curto">Atualizar km</string>
+    <string name="atalho_km_longo">Atualizar km da moto</string>
 </resources>
