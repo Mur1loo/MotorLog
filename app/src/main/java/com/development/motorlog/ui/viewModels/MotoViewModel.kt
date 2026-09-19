@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
+import com.development.motorlog.data.atualizarKm
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.calcularRitmoKmMes
@@ -22,7 +23,8 @@ import kotlinx.coroutines.launch
 
 class MotoViewModel(application : Application) : AndroidViewModel(application = application) {
 
-    private val dao = AppDatabase.getDatabase(application).motoDao()
+    private val db = AppDatabase.getDatabase(application)
+    private val dao = db.motoDao()
     private val historicoDao = AppDatabase.getDatabase(application).historicoKmDao()
     private val pecaDao = AppDatabase.getDatabase(application).pecaDao()
     private val registroDao = AppDatabase.getDatabase(application).registroDao()
@@ -95,11 +97,7 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     // A ação nº 1: salva o km, marca o dia e guarda 1 ponto/dia no histórico (ritmo e lembrete).
     fun atualizarKm(moto: Moto, novoKm: Int) {
         viewModelScope.launch {
-            val hoje = hojeUtcMillis()
-            dao.atualizar(moto.copy(kilometragem = novoKm, kmAtualizadoEm = hoje))
-            if (historicoDao.atualizarDia(moto.id, hoje, novoKm) == 0) {
-                historicoDao.inserir(HistoricoKm(motoId = moto.id, km = novoKm, data = hoje))
-            }
+            db.atualizarKm(moto, novoKm, hojeUtcMillis())
             carregarMotos()
         }
     }

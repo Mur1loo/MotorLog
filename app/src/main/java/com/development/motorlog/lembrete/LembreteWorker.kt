@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -20,8 +21,11 @@ import androidx.work.WorkerParameters
 import com.development.motorlog.MainActivity
 import com.development.motorlog.R
 import com.development.motorlog.data.AppDatabase
+import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.calcularRecomendacoes
+import com.development.motorlog.domain.calcularRitmoKmMes
 import com.development.motorlog.domain.montarLembrete
+import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.hojeUtcMillis
 import java.time.Duration
 import java.time.LocalDateTime
@@ -43,34 +47,11 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
 
         db.motoDao().listarTodas().forEach { moto ->
             val recs = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
-            val texto = montarLembrete(moto.modelo, moto.kmAtualizadoEm, hoje, recs) ?: return@forEach
-            notificar(ctx, moto.id, texto)
+            val ritmo = calcularRitmoKmMes(db.historicoKmDao().listarPorMoto(moto.id), hoje)
+            val texto = montarLembrete(moto.modelo, moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData) ?: return@forEach
+            notificar(ctx, moto, texto, comResposta = true)
         }
         return Result.success()
-    }
-
-    private fun notificar(ctx: Context, motoId: Long, texto: String) {
-        val abrirPainel = Intent(ctx, MainActivity::class.java)
-            .putExtra(EXTRA_MOTO_ID, motoId)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pendente = PendingIntent.getActivity(
-            ctx, motoId.toInt(), abrirPainel,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        val notificacao = NotificationCompat.Builder(ctx, CANAL)
-            .setSmallIcon(R.drawable.ic_notificacao)
-            .setContentTitle("MotorLog")
-            .setContentText(texto)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
-            .setContentIntent(pendente)
-            .setAutoCancel(true)
-            .build()
-        // id por moto: a notificação do dia seguinte substitui a de hoje em vez de empilhar.
-        // A permissão pode ser revogada entre a checagem e o notify → SecurityException = ficar em silêncio.
-        try {
-            NotificationManagerCompat.from(ctx).notify(motoId.toInt(), notificacao)
-        } catch (_: SecurityException) {
-        }
     }
 
     companion object {
@@ -82,6 +63,48 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         fun podeNotificar(ctx: Context): Boolean =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                 ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+
+        // Notificação da moto. comResposta = ação "Atualizar km" com campo de resposta rápida
+        // (o motoboy digita o km do painel sem abrir o app — AtualizarKmReceiver salva).
+        fun notificar(ctx: Context, moto: Moto, texto: String, comResposta: Boolean) {
+            if (!podeNotificar(ctx)) return
+            criarCanal(ctx)
+            val abrirPainel = Intent(ctx, MainActivity::class.java)
+                .putExtra(EXTRA_MOTO_ID, moto.id)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            val pendente = PendingIntent.getActivity(
+                ctx, moto.id.toInt(), abrirPainel,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            val builder = NotificationCompat.Builder(ctx, CANAL)
+                .setSmallIcon(R.drawable.ic_notificacao)
+                .setContentTitle(moto.modelo)
+                .setContentText(texto)
+                .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
+                .setContentIntent(pendente)
+                .setAutoCancel(true)
+            if (comResposta) {
+                val responder = Intent(ctx, AtualizarKmReceiver::class.java).putExtra(EXTRA_MOTO_ID, moto.id)
+                // RemoteInput exige PendingIntent MUTÁVEL (o sistema escreve a resposta nele)
+                val pendenteResposta = PendingIntent.getBroadcast(
+                    ctx, moto.id.toInt(), responder,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                )
+                val campo = RemoteInput.Builder(AtualizarKmReceiver.KEY_KM).setLabel("Km do painel (só números)").build()
+                builder.addAction(
+                    NotificationCompat.Action.Builder(R.drawable.ic_ml_gauge, "Atualizar km", pendenteResposta)
+                        .addRemoteInput(campo)
+                        .setAllowGeneratedReplies(false)
+                        .build(),
+                )
+            }
+            // id por moto: a notificação do dia seguinte substitui a de hoje em vez de empilhar.
+            // A permissão pode ser revogada entre a checagem e o notify → SecurityException = ficar em silêncio.
+            try {
+                NotificationManagerCompat.from(ctx).notify(moto.id.toInt(), builder.build())
+            } catch (_: SecurityException) {
+            }
+        }
 
         fun criarCanal(ctx: Context) {
             val canal = NotificationChannel(CANAL, "Lembretes de manutenção", NotificationManager.IMPORTANCE_DEFAULT)

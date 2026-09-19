@@ -20,11 +20,15 @@ const val DIAS_PARA_LEMBRAR_KM = 3
 
 // Texto da notificação diária, ou null se não há motivo pra incomodar.
 // kmAtualizadoEm = 0 significa "nunca registrado" (moto anterior à v9): não cobra atualização.
+// Com ritmo (km/mês) conhecido, a troca mais próxima é dita em DIAS e com a data prevista —
+// é assim que o motoboy planeja a semana. formatarData vem de fora (a UI formata em UTC).
 fun montarLembrete(
     modelo: String,
     kmAtualizadoEm: Long,
     hoje: Long,
     recomendacoes: List<Recomendacao>,
+    ritmoKmMes: Int? = null,
+    formatarData: ((Long) -> String)? = null,
 ): String? {
     val alertas = resumirAlertas(recomendacoes)
     val diasSemKm = if (kmAtualizadoEm > 0) diasEntre(kmAtualizadoEm, hoje) else null
@@ -34,7 +38,17 @@ fun montarLembrete(
             val sufixo = if (nomes.size > 2) "…" else ""
             add(if (nomes.size == 1) "${nomes[0]} vencido" else "${nomes.size} trocas vencidas (${nomes.take(2).joinToString()}$sufixo)")
         }
-        if (alertas.perto > 0) add(if (alertas.perto == 1) "1 troca perto de vencer" else "${alertas.perto} trocas perto de vencer")
+        if (alertas.perto > 0) {
+            val proxima = recomendacoes.filter { it.statusTroca == StatusTroca.PERTO }.minByOrNull { it.kmRestante ?: Int.MAX_VALUE }
+            val dias = estimarDiasAteTroca(proxima?.kmRestante, ritmoKmMes)
+            if (proxima != null && dias != null) {
+                val data = formatarData?.let { " (${it(hoje + dias * MILLIS_POR_DIA)})" } ?: ""
+                val outras = if (alertas.perto > 1) " e mais ${alertas.perto - 1}" else ""
+                add("${proxima.pecaNome} vence em ${descreverDias(dias)}$data$outras")
+            } else {
+                add(if (alertas.perto == 1) "1 troca perto de vencer" else "${alertas.perto} trocas perto de vencer")
+            }
+        }
         if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) add("faz $diasSemKm dias que o km não é atualizado")
     }
     if (partes.isEmpty()) return null

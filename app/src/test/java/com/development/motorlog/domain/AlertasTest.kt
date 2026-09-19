@@ -58,4 +58,18 @@ class AlertasTest {
         val texto = montarLembrete("Crosser", 10 * dia, 10 * dia, listOf(rec("Óleo", StatusTroca.VENCIDA), rec("Vela", StatusTroca.VENCIDA), rec("Pneu", StatusTroca.VENCIDA)))
         assertEquals("Crosser: 3 trocas vencidas (Óleo, Vela…)", texto)
     }
+
+    @Test
+    fun `com ritmo, a troca perto e dita em dias e com data`() {
+        val perto = Recomendacao(pecaId = 1, pecaNome = "Óleo", kmUltimaTroca = 12000, kmProximaTroca = 15000, kmRestante = 400, statusTroca = StatusTroca.PERTO)
+        val texto = montarLembrete("Crosser", 10 * dia, 10 * dia, listOf(perto), ritmoKmMes = 1800, formatarData = { "D${it / dia}" })
+        // 400 km a 1800 km/mês ≈ 6 dias → hoje (dia 10) + 6 = dia 16
+        assertEquals("Crosser: Óleo vence em ~6 dias (D16)", texto)
+    }
+
+    @Test
+    fun `sem ritmo, continua contando as trocas perto`() {
+        val perto = Recomendacao(pecaId = 1, pecaNome = "Óleo", kmUltimaTroca = 12000, kmProximaTroca = 15000, kmRestante = 400, statusTroca = StatusTroca.PERTO)
+        assertEquals("Crosser: 1 troca perto de vencer", montarLembrete("Crosser", 10 * dia, 10 * dia, listOf(perto)))
+    }
 }
