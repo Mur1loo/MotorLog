@@ -32,8 +32,8 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 @Composable
 fun RegistroScreen(
     moto: Moto,
-    viewModel: RegistroViewModel = viewModel(),
     modifier: Modifier = Modifier,
+    viewModel: RegistroViewModel = viewModel(),
     onSalvar: () -> Unit,
 ) {
     val pecas = viewModel.pecas

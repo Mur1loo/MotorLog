@@ -13,6 +13,6 @@ import androidx.compose.ui.unit.dp
 
 // Bolinha de status (como o StatusDot do protótipo). A cor vem de StatusTroca.cor().
 @Composable
-fun StatusDot(cor: Color, tamanho: Dp = 10.dp, modifier: Modifier = Modifier) {
+fun StatusDot(cor: Color, modifier: Modifier = Modifier, tamanho: Dp = 10.dp) {
     Box(modifier = modifier.size(tamanho).clip(CircleShape).background(cor))
 }

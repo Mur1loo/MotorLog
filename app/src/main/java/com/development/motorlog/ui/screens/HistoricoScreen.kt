@@ -28,8 +28,8 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 fun HistoricoScreen(
     moto: Moto,
     onAbrirServico: (Servico) -> Unit,
-    registroViewModel: RegistroViewModel = viewModel(),
     modifier: Modifier = Modifier,
+    registroViewModel: RegistroViewModel = viewModel(),
 ) {
     val servicos = registroViewModel.servicos
 

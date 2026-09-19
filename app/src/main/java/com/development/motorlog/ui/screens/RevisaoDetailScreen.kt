@@ -31,8 +31,8 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 @Composable
 fun RevisaoDetailScreen(
     servico: Servico,
-    registroViewModel: RegistroViewModel = viewModel(),
     modifier: Modifier = Modifier,
+    registroViewModel: RegistroViewModel = viewModel(),
     onExcluido: () -> Unit,
 ) {
     val registros = registroViewModel.registrosDoServico

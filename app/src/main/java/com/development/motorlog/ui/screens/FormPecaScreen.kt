@@ -29,8 +29,8 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 @Composable
 fun FormPecaScreen(
     peca : Peca?,
+    modifier: Modifier = Modifier,
     viewModel: RegistroViewModel = viewModel(),
-    modifier : Modifier = Modifier,
     onSalvar: () -> Unit,
     ){
     var nome by rememberSaveable { mutableStateOf(peca?.nome ?: "") }

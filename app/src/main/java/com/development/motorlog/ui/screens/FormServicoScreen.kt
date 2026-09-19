@@ -25,6 +25,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,8 +48,8 @@ import java.time.ZoneOffset
 @Composable
 fun FormServicoScreen(
     moto: Moto,
-    viewModel: RegistroViewModel = viewModel(),
     modifier: Modifier = Modifier,
+    viewModel: RegistroViewModel = viewModel(),
     onSalvar: () -> Unit,
 ) {
     var tipoServico by rememberSaveable { mutableStateOf("") }
@@ -57,7 +58,7 @@ fun FormServicoScreen(
     // km nasce do km atual da moto (o serviço normalmente é feito agora)
     var km by rememberSaveable { mutableStateOf(moto.kilometragem.toString()) }
     // data: o VALOR (Long em millis) — nasce "hoje". mostrarPicker: o calendário está ABERTO?
-    var data by rememberSaveable { mutableStateOf(hojeUtcMillis()) }
+    var data by rememberSaveable { mutableLongStateOf(hojeUtcMillis()) }
     var mostrarPicker by remember { mutableStateOf(false) }
     var busca by rememberSaveable { mutableStateOf("") }
     var erro by remember { mutableStateOf<String?>(null) }
