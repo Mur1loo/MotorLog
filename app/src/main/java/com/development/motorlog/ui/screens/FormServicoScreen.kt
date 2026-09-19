@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
@@ -23,7 +25,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.Moto
@@ -61,14 +63,15 @@ fun FormServicoScreen(
     var erro by remember { mutableStateOf<String?>(null) }
 
     val pecas = viewModel.pecas
-    // peça marcada -> texto do preço digitado (presença na chave = selecionada)
-    val selecionadas = remember { mutableStateMapOf<Long, String>() }
+    // peça marcada -> texto do preço digitado (presença na chave = selecionada).
+    // Map imutável em rememberSaveable (HashMap é Serializable → sobrevive ao giro).
+    var selecionadas by rememberSaveable { mutableStateOf<Map<Long, String>>(emptyMap()) }
 
     val dataFormatada = remember(data) { formatarData(data) }
     val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
 
     Column(
-        modifier.fillMaxSize().padding(16.dp),
+        modifier.fillMaxSize().padding(16.dp).imePadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         OutlinedTextField(
@@ -81,6 +84,7 @@ fun FormServicoScreen(
             value = custo,
             onValueChange = { custo = it },
             label = { Text("Custo (R$)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
@@ -93,6 +97,7 @@ fun FormServicoScreen(
             value = km,
             onValueChange = { km = it },
             label = { Text("Quilometragem") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -124,22 +129,23 @@ fun FormServicoScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            if (marcada) selecionadas.remove(peca.id) else selecionadas[peca.id] = ""
+                            selecionadas = if (marcada) selecionadas - peca.id else selecionadas + (peca.id to "")
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(
                         checked = marcada,
                         onCheckedChange = { marcar ->
-                            if (marcar) selecionadas[peca.id] = "" else selecionadas.remove(peca.id)
+                            selecionadas = if (marcar) selecionadas + (peca.id to "") else selecionadas - peca.id
                         },
                     )
                     Text(peca.nome, modifier = Modifier.weight(1f))
                     if (marcada) {
                         OutlinedTextField(
                             value = selecionadas[peca.id] ?: "",
-                            onValueChange = { selecionadas[peca.id] = it },
+                            onValueChange = { selecionadas = selecionadas + (peca.id to it) },
                             label = { Text("R$") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.width(110.dp),
                         )
