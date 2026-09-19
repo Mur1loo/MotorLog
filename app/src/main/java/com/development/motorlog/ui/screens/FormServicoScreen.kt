@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -89,71 +91,89 @@ fun FormServicoScreen(
     val dataFormatada = remember(data) { formatarData(data) }
     val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
 
-    Column(
-        modifier.fillMaxSize().padding(16.dp).imePadding(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        // sugestões: 1 toque em vez de digitar no trânsito, e o histórico agrupa ("Revisão" ≠ "revisao")
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy((-6).dp)) {
-            TIPOS_SUGERIDOS.forEach { tipo ->
-                FilterChip(
-                    selected = tipoServico == tipo,
-                    onClick = { tipoServico = tipo },
-                    label = { Text(tipo) },
-                )
-            }
-        }
-        OutlinedTextField(
-            value = tipoServico,
-            onValueChange = { tipoServico = it },
-            label = { Text("O que foi feito?") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = custo,
-            onValueChange = { custo = it },
-            label = { Text("Quanto pagou? (R$)") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = local,
-            onValueChange = { local = it },
-            label = { Text("Nome da oficina") },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = km,
-            onValueChange = { km = it },
-            label = { Text("Quilometragem") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        // campo de DATA: um botão que mostra a data atual e abre o calendário
-        OutlinedButton(
-            onClick = { mostrarPicker = true },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Data: $dataFormatada")
-        }
-
-        // ── Peças trocadas neste serviço (opcional) ──
-        Text(
-            "Peças trocadas lá (opcional) · ${selecionadas.size} marcada(s)",
-            fontWeight = FontWeight.Medium,
-        )
-        OutlinedTextField(
-            value = busca,
-            onValueChange = { busca = it },
-            label = { Text("Buscar peça") },
-            modifier = Modifier.fillMaxWidth(),
-        )
+    // O formulário INTEIRO é uma lista rolável e só o Salvar fica fixo. Com campos fixos no topo, o
+    // teclado espremia a lista de peças a zero e cobria o campo de preço que estava sendo digitado.
+    Column(modifier.fillMaxSize().padding(16.dp).imePadding()) {
         LazyColumn(
             modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            items(pecasFiltradas) { peca ->
+            item {
+                // sugestões: 1 toque em vez de digitar no trânsito, e o histórico agrupa ("Revisão" ≠ "revisao")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy((-6).dp)) {
+                    TIPOS_SUGERIDOS.forEach { tipo ->
+                        FilterChip(
+                            selected = tipoServico == tipo,
+                            onClick = { tipoServico = tipo },
+                            label = { Text(tipo) },
+                        )
+                    }
+                }
+            }
+            item {
+                OutlinedTextField(
+                    value = tipoServico,
+                    onValueChange = { tipoServico = it },
+                    label = { Text("O que foi feito?") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                OutlinedTextField(
+                    value = custo,
+                    onValueChange = { custo = it },
+                    label = { Text("Quanto pagou? (R$)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                OutlinedTextField(
+                    value = local,
+                    onValueChange = { local = it },
+                    label = { Text("Nome da oficina") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                OutlinedTextField(
+                    value = km,
+                    onValueChange = { km = it },
+                    label = { Text("Quilometragem") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                // campo de DATA: um botão que mostra a data atual e abre o calendário
+                OutlinedButton(
+                    onClick = { mostrarPicker = true },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                ) {
+                    Text("Data: $dataFormatada")
+                }
+            }
+            item {
+                // ── Peças trocadas neste serviço (opcional) ──
+                Text(
+                    "Peças trocadas lá (opcional) · ${selecionadas.size} marcada(s)",
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            item {
+                OutlinedTextField(
+                    value = busca,
+                    onValueChange = { busca = it },
+                    label = { Text("Buscar peça") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            items(pecasFiltradas, key = { it.id }) { peca ->
                 val marcada = selecionadas.containsKey(peca.id)
                 Row(
                     modifier = Modifier
@@ -177,20 +197,21 @@ fun FormServicoScreen(
                             label = { Text("R$") },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            modifier = Modifier.width(110.dp),
+                            modifier = Modifier.width(120.dp),
                         )
                     }
                 }
             }
+            item { Spacer(Modifier.height(4.dp)) }
         }
 
         val erroAtual = erro
         if (erroAtual != null) {
-            Text(erroAtual, color = MaterialTheme.colorScheme.error)
+            Text(erroAtual, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 6.dp))
         }
 
         Button(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 52.dp),
             onClick = {
                 val custoInt = custo.toIntOrNull()
                 val kmInt = km.toIntOrNull()
