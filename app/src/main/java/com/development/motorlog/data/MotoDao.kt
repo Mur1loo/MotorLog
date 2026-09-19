@@ -9,7 +9,7 @@ import androidx.room.Update
 @Dao
 interface MotoDao {
     @Insert
-    suspend fun inserir(moto: Moto)
+    suspend fun inserir(moto: Moto): Long
 
     @Update
     suspend fun atualizar(moto: Moto)

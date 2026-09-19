@@ -15,3 +15,10 @@
 local.properties
 *.md
 !README.md
+
+# assinatura de release (nunca no git)
+keystore.properties
+*.jks
+*.keystore
+# APKs gerados (pesados; gere com ./gradlew assembleRelease)
+loja/*.apk

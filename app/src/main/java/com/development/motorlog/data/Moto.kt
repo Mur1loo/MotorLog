@@ -12,4 +12,9 @@ data class Moto(
     val placa: String,
     val anoFabricacao: Int,
     var kilometragem: Int,
+    // meia-noite UTC do dia da última atualização de km; 0 = nunca registrado (motos anteriores à v9)
+    val kmAtualizadoEm: Long = 0,
+    // revisão na oficina a cada N km (0 = não avisar). A última revisão é o Servico mais recente
+    // cujo tipo contém "revis"; a próxima = km dele + este intervalo.
+    val intervaloRevisaoKm: Int = 0,
 )

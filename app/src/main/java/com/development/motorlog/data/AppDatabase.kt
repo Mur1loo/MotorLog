@@ -35,12 +35,40 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("ALTER TABLE `Registro` ADD COLUMN `preco` INTEGER NOT NULL DEFAULT 0")
     }
 }
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // só índices (não tocam dados). SQL copiado do 8.json exportado pelo Room.
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Registro_motoId` ON `Registro` (`motoId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Registro_pecaId` ON `Registro` (`pecaId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Registro_servicoId` ON `Registro` (`servicoId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Servico_motoId` ON `Servico` (`motoId`)")
+    }
+}
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // SQL copiado do 9.json exportado pelo Room.
+        // coluna simples → ADD COLUMN; DEFAULT 0 = "nunca registrado" pras motos que já existem
+        db.execSQL("ALTER TABLE `Moto` ADD COLUMN `kmAtualizadoEm` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `HistoricoKm` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `motoId` INTEGER NOT NULL, `km` INTEGER NOT NULL, `data` INTEGER NOT NULL, FOREIGN KEY(`motoId`) REFERENCES `Moto`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_HistoricoKm_motoId` ON `HistoricoKm` (`motoId`)")
+    }
+}
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // coluna simples → ADD COLUMN; DEFAULT 0 = "não avisar" pras motos que já existem
+        db.execSQL("ALTER TABLE `Moto` ADD COLUMN `intervaloRevisaoKm` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Database(
     entities = [Moto::class,
         Registro::class,
         Peca::class,
-        Servico::class],
-    version = 7,
+        Servico::class,
+        HistoricoKm::class],
+    version = 10,
     exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun motoDao(): MotoDao
@@ -48,6 +76,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pecaDao(): PecaDao
 
     abstract fun servicoDao(): ServicoDao
+    abstract fun historicoKmDao(): HistoricoKmDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -60,7 +89,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 context = context.applicationContext,
                                 klass = AppDatabase::class.java,
                                 name = "motorlog.db"
-                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7).build()
+                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10).build()
 
                 INSTANCE = instance
                 instance

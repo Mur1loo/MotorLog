@@ -18,6 +18,7 @@ fun calcularRecomendacoes(
             Recomendacao(
                 pecaId = peca.id,
                 pecaNome = peca.nome,
+                kmUltimaTroca = null,
                 kmProximaTroca = null,
                 kmRestante = null,
                 statusTroca = StatusTroca.NUNCA_TROCADA,
@@ -32,6 +33,7 @@ fun calcularRecomendacoes(
             Recomendacao(
                 pecaId = peca.id,
                 pecaNome = peca.nome,
+                kmUltimaTroca = ultimaTroca.kmTroca,
                 kmProximaTroca = proxima,
                 kmRestante = proxima - kmAtual,
                 statusTroca = status

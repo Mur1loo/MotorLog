@@ -2,6 +2,7 @@ package com.development.motorlog.data
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -20,7 +21,9 @@ import androidx.room.PrimaryKey
         parentColumns = ["id"],
         childColumns = ["servicoId"],
         onDelete = ForeignKey.SET_NULL
-    )]
+    )],
+    // índices nas FKs (o Room avisa a cada build sem eles; entram na v8)
+    indices = [Index("motoId"), Index("pecaId"), Index("servicoId")],
 )
 data class Registro(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
