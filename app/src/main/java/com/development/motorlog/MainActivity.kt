@@ -37,6 +37,12 @@ import com.development.motorlog.ui.components.BarraInferior
 import com.development.motorlog.ui.components.BotaoDeCabecalho
 import com.development.motorlog.ui.components.MlTopBar
 import com.development.motorlog.ui.components.SobreDialog
+import com.development.motorlog.ui.navegacao.TELA_INICIAL
+import com.development.motorlog.ui.navegacao.abrir
+import com.development.motorlog.ui.navegacao.pilhaDaAba
+import com.development.motorlog.ui.navegacao.pilhaInicial
+import com.development.motorlog.ui.navegacao.podeVoltar
+import com.development.motorlog.ui.navegacao.voltar
 import com.development.motorlog.ui.screens.AtualizarKmSheet
 import com.development.motorlog.ui.screens.CadastroScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
@@ -88,15 +94,15 @@ class MainActivity : ComponentActivity() {
         val podePedirApoio = primeiraCriacao && motoInicial == null && !abrirKm
         setContent {
             MotorLogTheme {
-                // Navegação por estado. Tudo aqui é rememberSaveable (sobrevive ao giro e à morte
-                // do processo): os "passageiros" são só ids (Long, Bundle-friendly); o objeto é
-                // resolvido nas listas dos ViewModels, que já sobrevivem ao config change.
-                var telaAtual by rememberSaveable { mutableStateOf(if (motoInicial != null) "Painel" else "Garagem") }
+                // Navegação por estado, com pilha de telas (ui/navegacao/Pilha.kt): o voltar leva
+                // pra tela de onde o usuário veio. Tudo aqui é rememberSaveable (sobrevive ao giro e
+                // à morte do processo): os "passageiros" são só ids (Long, Bundle-friendly); o objeto
+                // é resolvido nas listas dos ViewModels, que já sobrevivem ao config change.
+                var pilha by rememberSaveable { mutableStateOf(pilhaInicial(abrirNoPainel = motoInicial != null)) }
+                val telaAtual = pilha.last()
                 var motoId by rememberSaveable { mutableStateOf(motoInicial) }
                 var pecaId by rememberSaveable { mutableStateOf<Long?>(null) }   // null = peça nova
                 var servicoId by rememberSaveable { mutableStateOf<Long?>(null) }
-                // de qual tela o usuário abriu o detalhe/edição (pra voltar pro lugar certo)
-                var origemDetalhe by rememberSaveable { mutableStateOf("Garagem") }
                 // a ação nº 1 é uma folha inferior sobre a tela atual, não uma tela
                 var mostrarKm by rememberSaveable { mutableStateOf(abrirKm) }
                 var mostrarApoio by rememberSaveable { mutableStateOf(false) }
@@ -107,20 +113,11 @@ class MainActivity : ComponentActivity() {
                 val pecaSelecionada = pecaId?.let { id -> registroViewModel.pecas.find { it.id == id } }
                 val servicoSelecionado = servicoId?.let { id -> registroViewModel.servicos.find { it.id == id } }
 
-                val irParaTras: () -> Unit = {
-                    telaAtual = when (telaAtual) {
-                        "Registro" -> "Painel"
-                        "EditarPeca" -> origemDetalhe
-                        "RegistrarServico" -> "Painel"
-                        "Historico" -> "Painel"
-                        "Trocas" -> "Painel"
-                        "EditarMoto" -> "Painel"
-                        "EditarServico" -> "RevisaoDetail"
-                        "RevisaoDetail" -> origemDetalhe
-                        "Fotos" -> "Painel"
-                        else -> "Garagem"
-                    }
-                }
+                val abrirTela: (String) -> Unit = { pilha = pilha.abrir(it) }
+                // voltar do celular, seta do topo e "salvou → volta pra onde estava"
+                val irParaTras: () -> Unit = { pilha = pilha.voltar() }
+                val trocarAba: (String) -> Unit = { pilha = pilhaDaAba(it) }
+                val irParaGaragem: () -> Unit = { pilha = listOf(TELA_INICIAL) }
 
                 val titulo = when (telaAtual) {
                     "Cadastro" -> "Nova moto"
@@ -145,7 +142,7 @@ class MainActivity : ComponentActivity() {
                     else -> null
                 }
 
-                BackHandler(enabled = telaAtual != "Garagem") { irParaTras() }
+                BackHandler(enabled = pilha.podeVoltar) { irParaTras() }
 
                 // feedback imediato depois de salvar (pilar de UX: nunca silêncio)
                 val snackbar = remember { SnackbarHostState() }
@@ -167,11 +164,11 @@ class MainActivity : ComponentActivity() {
                     val motos = motoViewModel.motos
                     if (motoId != null && motos.isNotEmpty() && motoSelecionada == null) {
                         motoId = null
-                        telaAtual = "Garagem"
+                        irParaGaragem()
                     }
                     if (motoId == null && mostrarKm && motos.isNotEmpty()) {
                         motoId = motos.first().id
-                        telaAtual = "Painel"
+                        trocarAba("Painel")
                     }
                     if (motoId == null && mostrarKm && motoViewModel.carregou && motos.isEmpty()) mostrarKm = false
                     motoId?.let { id -> prefs.edit { putLong(PREF_ULTIMA_MOTO, id) } }
@@ -198,17 +195,17 @@ class MainActivity : ComponentActivity() {
                             titulo = titulo,
                             subtitulo = subtitulo,
                             grande = telaAtual == "Garagem",
-                            onVoltar = if (telaAtual != "Garagem") irParaTras else null,
+                            onVoltar = if (pilha.podeVoltar) irParaTras else null,
                             acoes = when {
                                 // catálogo de peças e intervalos: chave + texto. A engrenagem antiga
                                 // (círculo com raios) era confundida com o botão de tema claro/escuro.
                                 telaAtual == "Garagem" -> {
-                                    { BotaoDeCabecalho("Peças", R.drawable.ic_ml_wrench, "Peças e intervalos") { telaAtual = "GerenciarPecas" } }
+                                    { BotaoDeCabecalho("Peças", R.drawable.ic_ml_wrench, "Peças e intervalos") { abrirTela("GerenciarPecas") } }
                                 }
                                 // a Garagem saiu da barra inferior (entrou Fotos): volta por aqui, 1 toque
                                 telaAtual in TELAS_DA_MOTO -> {
                                     {
-                                        IconButton(onClick = { telaAtual = "Garagem" }) {
+                                        IconButton(onClick = irParaGaragem) {
                                             Icon(painterResource(R.drawable.ic_ml_moto), contentDescription = "Garagem", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     }
@@ -227,12 +224,14 @@ class MainActivity : ComponentActivity() {
                                     else -> AbaMoto.PAINEL
                                 },
                                 aoNavegar = { aba ->
-                                    telaAtual = when (aba) {
-                                        AbaMoto.PAINEL -> "Painel"
-                                        AbaMoto.HISTORICO -> "Historico"
-                                        AbaMoto.TROCAS -> "Trocas"
-                                        AbaMoto.FOTOS -> "Fotos"
-                                    }
+                                    trocarAba(
+                                        when (aba) {
+                                            AbaMoto.PAINEL -> "Painel"
+                                            AbaMoto.HISTORICO -> "Historico"
+                                            AbaMoto.TROCAS -> "Trocas"
+                                            AbaMoto.FOTOS -> "Fotos"
+                                        },
+                                    )
                                 },
                                 aoAtualizarKm = { mostrarKm = true },
                             )
@@ -243,17 +242,17 @@ class MainActivity : ComponentActivity() {
                         "Garagem" -> {
                             GaragemScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onAdicionar = { telaAtual = "Cadastro" },
+                                onAdicionar = { abrirTela("Cadastro") },
                                 onEditarMoto = { moto ->
                                     motoId = moto.id
-                                    telaAtual = "Painel"
+                                    trocarAba("Painel")
                                 },
                                 onMensagem = { mensagem = it })
                         }
                         "Cadastro" -> {
                             CadastroScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onSalvar = { mensagem = "Moto cadastrada. Toque nela pra ver o painel."; telaAtual = "Garagem" })
+                                onSalvar = { mensagem = "Moto cadastrada. Toque nela pra ver o painel."; irParaTras() })
                         }
                         "EditarMoto" -> {
                             val motoSel = motoSelecionada
@@ -261,7 +260,7 @@ class MainActivity : ComponentActivity() {
                                 CadastroScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
-                                    onSalvar = { mensagem = "Dados da moto salvos."; telaAtual = "Painel" })
+                                    onSalvar = { mensagem = "Dados da moto salvos."; irParaTras() })
                             }
                         }
                         "EditarServico" -> {
@@ -272,7 +271,7 @@ class MainActivity : ComponentActivity() {
                                     moto = motoSel,
                                     servico = servicoSel,
                                     modifier = Modifier.padding(innerPadding),
-                                    onSalvar = { mensagem = "Serviço atualizado."; telaAtual = "RevisaoDetail" }
+                                    onSalvar = { mensagem = "Serviço atualizado."; irParaTras() }
                                 )
                             }
                         }
@@ -285,27 +284,25 @@ class MainActivity : ComponentActivity() {
                                     ritmoKmMes = motoViewModel.ritmos[motoSel.id],
                                     kmRodados = motoViewModel.kmRodados[motoSel.id] ?: 0,
                                     onAtualizarKm = { mostrarKm = true },
-                                    onRegistrarTroca = { telaAtual = "Registro" },
-                                    onRegistrarServico = { telaAtual = "RegistrarServico" },
-                                    onVerHistorico = { telaAtual = "Historico" },
-                                    onVerTrocas = { telaAtual = "Trocas" },
-                                    onEditarMoto = { telaAtual = "EditarMoto" },
+                                    onRegistrarTroca = { abrirTela("Registro") },
+                                    onRegistrarServico = { abrirTela("RegistrarServico") },
+                                    onVerHistorico = { trocarAba("Historico") },
+                                    onVerTrocas = { trocarAba("Trocas") },
+                                    onEditarMoto = { abrirTela("EditarMoto") },
                                     onExcluirMoto = {
                                         motoViewModel.deletarMoto(motoSel)
                                         motoId = null
-                                        telaAtual = "Garagem"
+                                        irParaGaragem()
                                     },
                                     onEditarPeca = { peca ->
                                         pecaId = peca.id
-                                        origemDetalhe = "Painel"
-                                        telaAtual = "EditarPeca"
+                                        abrirTela("EditarPeca")
                                     },
                                     onAbrirServico = { servico ->
                                         servicoId = servico.id
-                                        origemDetalhe = "Painel"
-                                        telaAtual = "RevisaoDetail"
+                                        abrirTela("RevisaoDetail")
                                     },
-                                    onAbrirFotos = { telaAtual = "Fotos" },
+                                    onAbrirFotos = { trocarAba("Fotos") },
                                     onMensagem = { mensagem = it },
                                 )
                             }
@@ -316,7 +313,7 @@ class MainActivity : ComponentActivity() {
                                 RegistroScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
-                                    onSalvar = { mensagem = "Troca registrada. Já recalculei a próxima."; telaAtual = "Painel" }
+                                    onSalvar = { mensagem = "Troca registrada. Já recalculei a próxima."; irParaTras() }
                                 )
                             }
                         }
@@ -326,7 +323,7 @@ class MainActivity : ComponentActivity() {
                                 FormServicoScreen(
                                     moto = motoSel,
                                     modifier = Modifier.padding(innerPadding),
-                                    onSalvar = { mensagem = "Serviço salvo no histórico."; telaAtual = "Painel" }
+                                    onSalvar = { mensagem = "Serviço salvo no histórico."; irParaTras() }
                                 )
                             }
                         }
@@ -338,8 +335,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(innerPadding),
                                     onAbrirServico = { servico ->
                                         servicoId = servico.id
-                                        origemDetalhe = "Historico"
-                                        telaAtual = "RevisaoDetail"
+                                        abrirTela("RevisaoDetail")
                                     },
                                     onMensagem = { mensagem = it },
                                 )
@@ -354,10 +350,9 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(innerPadding),
                                     onEditarPeca = { peca ->
                                         pecaId = peca.id
-                                        origemDetalhe = "Trocas"
-                                        telaAtual = "EditarPeca"
+                                        abrirTela("EditarPeca")
                                     },
-                                    onRegistrarServico = { telaAtual = "RegistrarServico" },
+                                    onRegistrarServico = { abrirTela("RegistrarServico") },
                                 )
                             }
                         }
@@ -369,10 +364,10 @@ class MainActivity : ComponentActivity() {
                                     servico = servicoSel,
                                     accent = motoSel?.let(::accentDaMoto) ?: MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.padding(innerPadding),
-                                    onEditar = { telaAtual = "EditarServico" },
+                                    onEditar = { abrirTela("EditarServico") },
                                     onExcluido = {
                                         servicoId = null
-                                        telaAtual = origemDetalhe
+                                        irParaTras()
                                     }
                                 )
                             } else if (motoSel != null) {
@@ -396,12 +391,10 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(innerPadding),
                                 onSalvarPeca = {
                                     pecaId = null
-                                    origemDetalhe = "GerenciarPecas"
-                                    telaAtual = "EditarPeca"},
+                                    abrirTela("EditarPeca")},
                                 onEditarPeca = { peca ->
                                     pecaId = peca.id
-                                    origemDetalhe = "GerenciarPecas"
-                                    telaAtual = "EditarPeca"}
+                                    abrirTela("EditarPeca")}
                             )
                         }
                         "EditarPeca" -> {
@@ -413,7 +406,7 @@ class MainActivity : ComponentActivity() {
                                     onSalvar = {
                                         mensagem = "Peça salva."
                                         pecaId = null
-                                        telaAtual = origemDetalhe
+                                        irParaTras()
                                     }
                                 )
                             }
@@ -430,7 +423,7 @@ class MainActivity : ComponentActivity() {
                         onSalvo = { km ->
                             mostrarKm = false
                             mensagem = "Km atualizado: ${formatarKm(km)}"
-                            if (telaAtual !in TELAS_DA_MOTO) telaAtual = "Painel"
+                            if (telaAtual !in TELAS_DA_MOTO) trocarAba("Painel")
                         },
                     )
                 }

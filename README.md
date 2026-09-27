@@ -55,7 +55,7 @@ Como todo o cálculo parte do km atual, "atualizar km" é a ação mais importan
 | Build | Gradle (Kotlin DSL) com version catalog, AGP 9.2.1 |
 | SDK | minSdk 28 · targetSdk 36 · compileSdk 36 |
 
-A navegação é feita por estado (`when(telaAtual)`), sem biblioteca externa — uma escolha deliberada para reaproveitar estado entre telas neste estágio do projeto.
+A navegação é feita por estado (`when(telaAtual)`), sem biblioteca externa — uma escolha deliberada para reaproveitar estado entre telas neste estágio do projeto. As telas ficam numa pilha (`ui/navegacao/Pilha.kt`, Kotlin puro e testado): o voltar leva para a tela de onde o usuário veio, e trocar de aba da moto não empilha.
 
 ## Arquitetura
 
@@ -110,7 +110,6 @@ O público-alvo é quem usa a moto para trabalhar, não quem gosta de tecnologia
 - Widget na tela inicial para atualizar o km sem abrir o app.
 - Backup completo em arquivo único (dados + fotos do álbum).
 - Marcos da moto ("passou dos 50.000 km!") e foto do painel junto da atualização de km.
-- Navegação com back stack real.
 - Leitura reativa com `Flow`; índice de cuidado.
 
 ## Contribuindo
