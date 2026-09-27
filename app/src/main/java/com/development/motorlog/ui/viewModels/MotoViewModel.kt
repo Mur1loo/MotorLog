@@ -24,6 +24,8 @@ import com.development.motorlog.domain.kmRodadosNoApp
 import com.development.motorlog.domain.montarExportacao
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.domain.resumirAlertas
+import com.development.motorlog.domain.escolherCapa
+import com.development.motorlog.fotos.ArmazemDeFotos
 import com.development.motorlog.ui.util.hojeUtcMillis
 
 import kotlinx.coroutines.Job
@@ -37,6 +39,7 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     private val pecaDao = AppDatabase.getDatabase(application).pecaDao()
     private val registroDao = AppDatabase.getDatabase(application).registroDao()
     private val servicoDao = AppDatabase.getDatabase(application).servicoDao()
+    private val fotoDao = db.fotoMotoDao()
 
     var motos by mutableStateOf<List<Moto>>(emptyList())
         private set
@@ -55,6 +58,10 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
 
     // motoId -> km rodados desde o 1º registro no app (base do custo por km)
     var kmRodados by mutableStateOf<Map<Long, Int>>(emptyMap())
+        private set
+
+    // motoId -> arquivo da foto de capa (só motos com foto). Garagem mostra a foto no lugar do badge.
+    var capas by mutableStateOf<Map<Long, String>>(emptyMap())
         private set
 
     init {
@@ -80,6 +87,7 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             val historicos = lista.associate { moto -> moto.id to historicoDao.listarPorMoto(moto.id) }
             ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicos.getValue(moto.id), hoje) }
             kmRodados = lista.associate { moto -> moto.id to kmRodadosNoApp(historicos.getValue(moto.id), moto.kilometragem) }
+            capas = lista.mapNotNull { moto -> escolherCapa(fotoDao.listarPorMoto(moto.id), moto.fotoCapaId)?.let { moto.id to it.arquivo } }.toMap()
             motos = lista
             carregou = true
         }
@@ -146,7 +154,10 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
 
     fun deletarMoto(moto: Moto) {
         viewModelScope.launch {
+            // o CASCADE apaga as linhas do álbum; os arquivos das fotos o app apaga aqui
+            val fotos = fotoDao.listarPorMoto(moto.id)
             dao.deletar(moto)
+            fotos.forEach { ArmazemDeFotos.apagar(getApplication<Application>(), it.arquivo) }
             carregarMotos()
         }
     }

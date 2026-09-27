@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -29,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
+import com.development.motorlog.ui.components.CampoData
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.MlTextField
@@ -36,11 +38,13 @@ import com.development.motorlog.ui.components.RodapeDeForm
 import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
-// "Troquei uma peça": busca + lista de peças em cards (ícone, nome, intervalo), km fixo embaixo
-// e o Salvar no rodapé — sempre visíveis, mesmo com a lista longa.
+// "Troquei uma peça" (por conta própria: em casa, com um amigo): busca + lista de peças em cards
+// (ícone, nome, intervalo); km, valor da peça e dia fixos embaixo e o Salvar no rodapé — sempre
+// visíveis, mesmo com a lista longa. Visita à oficina (com mão de obra) é "Fui à oficina".
 @Composable
 fun RegistroScreen(
     moto: Moto,
@@ -53,9 +57,13 @@ fun RegistroScreen(
     var pecaSelecionadaId by rememberSaveable { mutableStateOf<Long?>(null) }
     // a troca normalmente é registrada agora → nasce com o km atual da moto
     var km by rememberSaveable { mutableStateOf(moto.kilometragem.toString()) }
+    // quanto pagou na peça: opcional (vazio = não informado) — é o que entra no gasto da moto
+    var preco by rememberSaveable { mutableStateOf("") }
+    var data by rememberSaveable { mutableLongStateOf(hojeUtcMillis()) }
     var busca by rememberSaveable { mutableStateOf("") }
     val pecaSelecionada = pecas.find { it.id == pecaSelecionadaId }
     val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
+    val precoInt = if (preco.isBlank()) 0 else preco.toIntOrNull()
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
@@ -74,8 +82,13 @@ fun RegistroScreen(
                 item { Spacer(Modifier.height(4.dp)) }
             }
             Spacer(Modifier.height(8.dp))
-            SectionLabel("Quilometragem")
-            MlTextField(km, { km = it }, "Km na hora da troca", icone = R.drawable.ic_ml_gauge, numerico = true, erro = km.toIntOrNull() == null)
+            SectionLabel("Km, valor e dia")
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MlTextField(km, { km = it }, "Km da troca", Modifier.weight(1f), icone = R.drawable.ic_ml_gauge, numerico = true, erro = km.toIntOrNull() == null)
+                MlTextField(preco, { preco = it }, "Peça R$ (opcional)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, numerico = true, erro = precoInt == null)
+            }
+            Spacer(Modifier.height(8.dp))
+            CampoData(data, { data = it }, rotulo = "Quando trocou")
             Spacer(Modifier.height(10.dp))
         }
         RodapeDeForm(
@@ -83,10 +96,11 @@ fun RegistroScreen(
             onClick = {
                 val novoKm = km.toIntOrNull() ?: return@RodapeDeForm
                 val peca = pecaSelecionada ?: return@RodapeDeForm
-                viewModel.registrarTroca(moto, peca, novoKm)
+                val novoPreco = precoInt ?: return@RodapeDeForm
+                viewModel.registrarTroca(moto, peca, novoKm, novoPreco, data)
                 onSalvar()
             },
-            enabled = pecaSelecionada != null && km.toIntOrNull() != null,
+            enabled = pecaSelecionada != null && km.toIntOrNull() != null && precoInt != null,
             icone = R.drawable.ic_ml_check,
         )
     }

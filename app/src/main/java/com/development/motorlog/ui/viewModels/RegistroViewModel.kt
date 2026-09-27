@@ -11,6 +11,8 @@ import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
 import com.development.motorlog.data.Servico
 import kotlinx.coroutines.launch
+import java.io.File
+import com.development.motorlog.relatorio.gerarHistoricoPdf
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.calcularRecomendacoes
@@ -18,6 +20,7 @@ import com.development.motorlog.domain.comRevisao
 import com.development.motorlog.domain.recomendacaoDeRevisao
 
 class RegistroViewModel(application: Application): AndroidViewModel(application) {
+    private val db = AppDatabase.getDatabase(application)
     private val registroDao = AppDatabase.getDatabase(application).registroDao()
     private val pecaDao = AppDatabase.getDatabase(application).pecaDao()
     private val servicoDao = AppDatabase.getDatabase(application).servicoDao()
@@ -38,8 +41,22 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     var trocasAvulsas by mutableStateOf<List<Registro>>(emptyList())
         private set
 
+    // PDF do histórico sendo montado (o botão mostra "Gerando…" e não aceita 2º toque)
+    var gerandoPdf by mutableStateOf(false)
+        private set
+
     init {
         carregarPecas()
+    }
+
+    fun gerarHistoricoPdf(moto: Moto, aoPronto: (File) -> Unit, aoFalhar: () -> Unit) {
+        if (gerandoPdf) return
+        viewModelScope.launch {
+            gerandoPdf = true
+            val arquivo = runCatching { db.gerarHistoricoPdf(getApplication<Application>(), moto) }.getOrNull()
+            gerandoPdf = false
+            if (arquivo != null) aoPronto(arquivo) else aoFalhar()
+        }
     }
 
     fun carregarRecomendacoes(moto: Moto) {
@@ -154,10 +171,21 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
-    // Troca avulsa de uma peça ("Troquei agora" e a tela Troquei uma peça) + recálculo na sequência
-    fun registrarTroca(moto: Moto, peca: Peca, km: Int) {
+    // Troca por conta própria de uma peça ("Troquei agora" e a tela Troquei uma peça), com o preço
+    // da peça (0 = não informado) e o dia + recálculo na sequência
+    fun registrarTroca(moto: Moto, peca: Peca, km: Int, preco: Int, data: Long) {
         viewModelScope.launch {
-            registroDao.inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = km, servicoId = null))
+            registroDao.inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = km, servicoId = null, preco = preco, data = data))
+            trocasAvulsas = listarAvulsas(moto)
+            recalcular(moto)
+        }
+    }
+
+    // Corrigir km/preço/dia de uma troca por conta própria (Histórico)
+    fun atualizarTrocaAvulsa(registro: Registro, moto: Moto) {
+        viewModelScope.launch {
+            registroDao.atualizar(registro)
+            trocasAvulsas = listarAvulsas(moto)
             recalcular(moto)
         }
     }

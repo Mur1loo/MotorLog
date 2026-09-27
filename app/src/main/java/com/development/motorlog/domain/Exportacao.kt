@@ -22,15 +22,15 @@ fun montarExportacao(
         appendLine("MotorLog")
         appendLine()
         appendLine("MOTOS")
-        appendLine("modelo;placa;ano;km_atual;km_atualizado_em;revisao_a_cada_km")
+        appendLine("modelo;placa;ano;km_atual;km_atualizado_em;revisao_a_cada_km;cor")
         motos.forEach { m ->
-            appendLine("${limpo(m.modelo)};${limpo(m.placa)};${m.anoFabricacao};${m.kilometragem};${if (m.kmAtualizadoEm > 0) formatarData(m.kmAtualizadoEm) else ""};${m.intervaloRevisaoKm}")
+            appendLine("${limpo(m.modelo)};${limpo(m.placa)};${m.anoFabricacao};${m.kilometragem};${if (m.kmAtualizadoEm > 0) formatarData(m.kmAtualizadoEm) else ""};${m.intervaloRevisaoKm};${m.cor}")
         }
         appendLine()
         appendLine("TROCAS")
-        appendLine("moto;peca;km_troca;preco;em_servico")
+        appendLine("moto;peca;km_troca;preco;em_servico;data")
         registros.sortedWith(compareBy({ it.motoId }, { it.kmTroca })).forEach { r ->
-            appendLine("${nomeMoto[r.motoId] ?: r.motoId};${limpo(nomePeca[r.pecaId] ?: "Peça #${r.pecaId}")};${r.kmTroca};${r.preco};${if (r.servicoId != null) "sim" else "não"}")
+            appendLine("${nomeMoto[r.motoId] ?: r.motoId};${limpo(nomePeca[r.pecaId] ?: "Peça #${r.pecaId}")};${r.kmTroca};${r.preco};${if (r.servicoId != null) "sim" else "não"};${if (r.data > 0) formatarData(r.data) else ""}")
         }
         appendLine()
         appendLine("SERVIÇOS")

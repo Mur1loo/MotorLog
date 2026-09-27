@@ -25,7 +25,7 @@ suspend fun AppDatabase.importar(dados: DadosImportados): ResumoImportacao {
     fun motoPorChave(chave: String) = motos.find { "${it.modelo} ${it.placa}".trim().equals(chave.trim(), ignoreCase = true) }
     dados.motos.forEach { m ->
         if (motoPorChave(m.chave) == null) {
-            val id = motoDao().inserir(Moto(modelo = m.modelo, placa = m.placa, anoFabricacao = m.ano, kilometragem = m.km, kmAtualizadoEm = m.kmAtualizadoEm ?: 0, intervaloRevisaoKm = m.intervaloRevisaoKm))
+            val id = motoDao().inserir(Moto(modelo = m.modelo, placa = m.placa, anoFabricacao = m.ano, kilometragem = m.km, kmAtualizadoEm = m.kmAtualizadoEm ?: 0, intervaloRevisaoKm = m.intervaloRevisaoKm, cor = m.cor))
             if (m.kmAtualizadoEm != null) historicoKmDao().inserir(HistoricoKm(motoId = id, km = m.km, data = m.kmAtualizadoEm))
             novasMotos++
         } else ignorados++
@@ -57,7 +57,7 @@ suspend fun AppDatabase.importar(dados: DadosImportados): ResumoImportacao {
         val existentes = registroDao().listarRegistros(moto.id)
         if (existentes.any { it.pecaId == peca.id && it.kmTroca == t.km }) { ignorados++; return@forEach }
         val servicoId = if (t.emServico) servicosPorMoto[moto.id]?.find { it.kilometragem == t.km }?.id else null
-        registroDao().inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = t.km, servicoId = servicoId, preco = t.preco))
+        registroDao().inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = t.km, servicoId = servicoId, preco = t.preco, data = t.data ?: 0))
         novasTrocas++
     }
     return ResumoImportacao(novasMotos, novasTrocas, novosServicos, novasPecas, ignorados)

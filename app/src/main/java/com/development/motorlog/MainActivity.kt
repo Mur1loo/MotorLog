@@ -37,6 +37,7 @@ import com.development.motorlog.ui.screens.AtualizarKmSheet
 import com.development.motorlog.ui.screens.CadastroScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
 import com.development.motorlog.ui.screens.FormServicoScreen
+import com.development.motorlog.ui.screens.FotosScreen
 import com.development.motorlog.ui.screens.GaragemScreen
 import com.development.motorlog.ui.screens.GerenciarPecasScreen
 import com.development.motorlog.ui.screens.HistoricoScreen
@@ -45,6 +46,7 @@ import com.development.motorlog.ui.screens.RegistroScreen
 import com.development.motorlog.ui.screens.RevisaoDetailScreen
 import com.development.motorlog.ui.screens.TrocasScreen
 import com.development.motorlog.ui.theme.MotorLogTheme
+import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
@@ -104,6 +106,7 @@ class MainActivity : ComponentActivity() {
                         "EditarMoto" -> "Painel"
                         "EditarServico" -> "RevisaoDetail"
                         "RevisaoDetail" -> origemDetalhe
+                        "Fotos" -> "Painel"
                         else -> "Garagem"
                     }
                 }
@@ -120,12 +123,13 @@ class MainActivity : ComponentActivity() {
                     "RevisaoDetail" -> servicoSelecionado?.tipoServico ?: "Serviço"
                     "GerenciarPecas" -> "Peças e intervalos"
                     "EditarPeca" -> if (pecaId != null) "Editar peça" else "Nova peça"
+                    "Fotos" -> "Álbum da moto"
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
                     "Painel" -> motoSelecionada?.let { "${it.anoFabricacao} · ${it.placa}" }
                     "Trocas" -> motoSelecionada?.let { "${it.modelo} · ${formatarKm(it.kilometragem)}" }
-                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico" -> motoSelecionada?.modelo
+                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos" -> motoSelecionada?.modelo
                     "Cadastro" -> "Cadastre sua motocicleta"
                     else -> null
                 }
@@ -267,7 +271,9 @@ class MainActivity : ComponentActivity() {
                                         servicoId = servico.id
                                         origemDetalhe = "Painel"
                                         telaAtual = "RevisaoDetail"
-                                    }
+                                    },
+                                    onAbrirFotos = { telaAtual = "Fotos" },
+                                    onMensagem = { mensagem = it },
                                 )
                             }
                         }
@@ -301,7 +307,8 @@ class MainActivity : ComponentActivity() {
                                         servicoId = servico.id
                                         origemDetalhe = "Historico"
                                         telaAtual = "RevisaoDetail"
-                                    }
+                                    },
+                                    onMensagem = { mensagem = it },
                                 )
                             }
                         }
@@ -327,6 +334,7 @@ class MainActivity : ComponentActivity() {
                             if (servicoSel != null){
                                 RevisaoDetailScreen(
                                     servico = servicoSel,
+                                    accent = motoSel?.let(::accentDaMoto) ?: MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.padding(innerPadding),
                                     onEditar = { telaAtual = "EditarServico" },
                                     onExcluido = {
@@ -337,6 +345,17 @@ class MainActivity : ComponentActivity() {
                             } else if (motoSel != null) {
                                 // voltou da morte do processo direto no detalhe: a lista ainda não carregou
                                 LaunchedEffect(motoSel) { registroViewModel.carregarServicos(motoSel) }
+                            }
+                        }
+                        "Fotos" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null) {
+                                FotosScreen(
+                                    moto = motoSel,
+                                    modifier = Modifier.padding(innerPadding),
+                                    onDefinirCapa = { foto -> motoViewModel.atualizarMoto(motoSel.copy(fotoCapaId = foto.id)) },
+                                    onMensagem = { mensagem = it },
+                                )
                             }
                         }
                         "GerenciarPecas" -> {

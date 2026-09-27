@@ -38,7 +38,6 @@ import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.SectionLabel
-import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.theme.chakra
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.formatarNumero
@@ -51,6 +50,7 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 @Composable
 fun RevisaoDetailScreen(
     servico: Servico,
+    accent: Color,
     modifier: Modifier = Modifier,
     registroViewModel: RegistroViewModel = viewModel(),
     onEditar: () -> Unit,
@@ -58,7 +58,6 @@ fun RevisaoDetailScreen(
 ) {
     val registros = registroViewModel.registrosDoServico
     val pecas = registroViewModel.pecas
-    val accent = accentDaMoto(servico.motoId)
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(servico) { registroViewModel.carregarRegistrosDoServico(servico.id) }

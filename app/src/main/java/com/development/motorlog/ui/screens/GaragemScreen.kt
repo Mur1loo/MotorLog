@@ -42,7 +42,7 @@ import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.diasEntre
-import com.development.motorlog.ui.components.BikeBadge
+import com.development.motorlog.ui.components.AvatarDaMoto
 import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
@@ -151,7 +151,7 @@ fun GaragemScreen(
                 }
             }
             items(motos, key = { it.id }) { moto ->
-                MotoCard(moto, alertas[moto.id], ritmos[moto.id]) { onEditarMoto(moto) }
+                MotoCard(moto, alertas[moto.id], ritmos[moto.id], viewModel.capas[moto.id]) { onEditarMoto(moto) }
             }
             if (viewModel.carregou) item { AdicionarMotoCard(onAdicionar) }
             item { Spacer(Modifier.height(4.dp)) }
@@ -187,15 +187,15 @@ fun GaragemScreen(
     }
 }
 
-// Card de moto do protótipo (BikeCard): badge, nome em Chakra, ano · placa, odômetro pequeno,
-// pills de alerta e ritmo.
+// Card de moto do protótipo (BikeCard): foto de capa (ou o badge), nome em Chakra, ano · placa,
+// odômetro pequeno, pills de alerta e ritmo.
 @Composable
-fun MotoCard(moto: Moto, alertas: ResumoAlertas?, ritmoKmMes: Int?, onClick: () -> Unit) {
-    val accent = accentDaMoto(moto.id)
+fun MotoCard(moto: Moto, alertas: ResumoAlertas?, ritmoKmMes: Int?, capa: String?, onClick: () -> Unit) {
+    val accent = accentDaMoto(moto)
     val diasSemKm = if (moto.kmAtualizadoEm > 0) diasEntre(moto.kmAtualizadoEm, hojeUtcMillis()) else null
     MlCard(onClick = onClick, pad = 14.dp) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            BikeBadge(accent, tamanho = 68.dp)
+            AvatarDaMoto(capa, accent, tamanho = 68.dp)
             Column(Modifier.weight(1f)) {
                 Text(moto.modelo, style = MaterialTheme.typography.titleLarge)
                 Text("${moto.anoFabricacao} · ${moto.placa}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

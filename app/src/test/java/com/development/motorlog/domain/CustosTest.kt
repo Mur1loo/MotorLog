@@ -41,7 +41,27 @@ class CustosTest {
         val hoje = java.time.LocalDate.of(2026, 9, 19).toEpochDay() * dia
         val inicioSet = java.time.LocalDate.of(2026, 9, 1).toEpochDay() * dia
         assertEquals(inicioSet, inicioDoMes(hoje))
-        val total = gastoNoMes(listOf(servico(250, hoje), servico(100, inicioSet), servico(999, inicioSet - dia)), hoje)
+        val total = gastoNoMes(listOf(servico(250, hoje), servico(100, inicioSet), servico(999, inicioSet - dia)), emptyList(), hoje)
         assertEquals(350, total)
+    }
+
+    @Test
+    fun `gasto no mes soma trocas por conta propria com dia conhecido`() {
+        val hoje = java.time.LocalDate.of(2026, 9, 19).toEpochDay() * dia
+        val inicioSet = java.time.LocalDate.of(2026, 9, 1).toEpochDay() * dia
+        fun troca(preco: Int, data: Long, servicoId: Long? = null) =
+            Registro(motoId = 1, pecaId = 1, kmTroca = 1, servicoId = servicoId, preco = preco, data = data)
+        val total = gastoNoMes(
+            listOf(servico(250, hoje)),
+            listOf(
+                troca(40, hoje),                    // entra
+                troca(30, inicioSet),               // entra (1º dia do mês)
+                troca(999, inicioSet - dia),        // mês passado
+                troca(777, 0),                      // dia desconhecido
+                troca(555, hoje, servicoId = 9),    // já está no custo do serviço
+            ),
+            hoje,
+        )
+        assertEquals(320, total)
     }
 }

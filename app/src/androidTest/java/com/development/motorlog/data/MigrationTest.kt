@@ -124,16 +124,38 @@ class MigrationTest {
     }
 
     @Test
-    fun migra5para10_caminhoCompletoDoCelular() {
+    fun migra10para11_trocaGanhaDataZero_motoGanhaCorAutomatica_eTabelaFotoMoto() {
+        helper.createDatabase(nomeBanco, 10).apply {
+            execSQL("INSERT INTO Moto (id, modelo, placa, anoFabricacao, kilometragem, kmAtualizadoEm, intervaloRevisaoKm) VALUES (1, 'Crosser', 'ABC1D23', 2020, 16000, 0, 0)")
+            execSQL("INSERT INTO Peca (id, nome, intervaloKm) VALUES (1, 'Óleo do motor', 3000)")
+            execSQL("INSERT INTO Registro (id, motoId, pecaId, kmTroca, servicoId, preco) VALUES (7, 1, 1, 15000, NULL, 60)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(nomeBanco, 11, true, MIGRATION_10_11)
+        db.query("SELECT preco, data FROM Registro WHERE id = 7").use { c ->
+            c.moveToFirst(); assertEquals(60, c.getInt(0)); assertEquals(0L, c.getLong(1))
+        }
+        db.query("SELECT cor, fotoCapaId FROM Moto WHERE id = 1").use { c ->
+            c.moveToFirst(); assertEquals(-1, c.getInt(0)); assertEquals(0L, c.getLong(1))
+        }
+        // FK CASCADE: apagar a moto leva as fotos (as linhas; os arquivos o app apaga antes)
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO FotoMoto (motoId, arquivo, data, km, legenda) VALUES (1, 'a.jpg', 0, 16000, '')")
+        db.execSQL("DELETE FROM Moto WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM FotoMoto").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
+    }
+
+    @Test
+    fun migra5para11_caminhoCompletoDoCelular() {
         helper.createDatabase(nomeBanco, 5).apply { semearV5(this); close() }
         val db = helper.runMigrationsAndValidate(
-            nomeBanco, 10, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+            nomeBanco, 11, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11,
         )
-        db.query("SELECT kmTroca, preco FROM Registro WHERE id = 7").use { c ->
-            c.moveToFirst(); assertEquals(15000, c.getInt(0)); assertEquals(0, c.getInt(1))
+        db.query("SELECT kmTroca, preco, data FROM Registro WHERE id = 7").use { c ->
+            c.moveToFirst(); assertEquals(15000, c.getInt(0)); assertEquals(0, c.getInt(1)); assertEquals(0L, c.getLong(2))
         }
-        db.query("SELECT kmAtualizadoEm, intervaloRevisaoKm FROM Moto WHERE id = 1").use { c ->
-            c.moveToFirst(); assertEquals(0L, c.getLong(0)); assertEquals(0, c.getInt(1))
+        db.query("SELECT kmAtualizadoEm, intervaloRevisaoKm, cor FROM Moto WHERE id = 1").use { c ->
+            c.moveToFirst(); assertEquals(0L, c.getLong(0)); assertEquals(0, c.getInt(1)); assertEquals(-1, c.getInt(2))
         }
     }
 
