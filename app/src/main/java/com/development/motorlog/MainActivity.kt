@@ -34,6 +34,7 @@ import com.development.motorlog.ui.components.AbaMoto
 import com.development.motorlog.ui.components.BarraInferior
 import com.development.motorlog.ui.components.BotaoDeCabecalho
 import com.development.motorlog.ui.components.MlTopBar
+import com.development.motorlog.ui.components.SobreDialog
 import com.development.motorlog.ui.screens.AtualizarKmSheet
 import com.development.motorlog.ui.screens.CadastroScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
@@ -49,6 +50,7 @@ import com.development.motorlog.ui.screens.TrocasScreen
 import com.development.motorlog.ui.theme.MotorLogTheme
 import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
@@ -57,6 +59,8 @@ private val TELAS_DA_MOTO = setOf("Painel", "Historico", "Trocas", "Fotos")
 // extra do atalho da tela inicial (res/xml/shortcuts.xml) e chave da última moto aberta
 const val EXTRA_ABRIR_KM = "abrirKm"
 private const val PREF_ULTIMA_MOTO = "ultima_moto"
+// dia (meia-noite UTC) em que o pedido de apoio apareceu pela última vez: no máximo 1x por dia
+private const val PREF_APOIO_MOSTRADO = "apoio_mostrado_em"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -77,6 +81,10 @@ class MainActivity : ComponentActivity() {
         val abrirKm = primeiraCriacao && intent.getBooleanExtra(EXTRA_ABRIR_KM, false)
         val ultimaMoto = prefs.getLong(PREF_ULTIMA_MOTO, -1L).takeIf { it > 0 }
         val motoInicial = motoDaNotificacao ?: if (abrirKm) ultimaMoto else null
+        // pedido de apoio ao abrir o app: só na abertura normal (não pela notificação nem pelo
+        // atalho +KM, que são "entra, atualiza, sai") e só na 1ª abertura do dia
+        val pedirApoio = primeiraCriacao && motoInicial == null && !abrirKm &&
+            prefs.getLong(PREF_APOIO_MOSTRADO, 0L) != hojeUtcMillis()
         setContent {
             MotorLogTheme {
                 // Navegação por estado. Tudo aqui é rememberSaveable (sobrevive ao giro e à morte
@@ -90,6 +98,7 @@ class MainActivity : ComponentActivity() {
                 var origemDetalhe by rememberSaveable { mutableStateOf("Garagem") }
                 // a ação nº 1 é uma folha inferior sobre a tela atual, não uma tela
                 var mostrarKm by rememberSaveable { mutableStateOf(abrirKm) }
+                var mostrarApoio by rememberSaveable { mutableStateOf(false) }
 
                 val motoViewModel: MotoViewModel = viewModel()
                 val registroViewModel: RegistroViewModel = viewModel()
@@ -165,6 +174,16 @@ class MainActivity : ComponentActivity() {
                     }
                     if (motoId == null && mostrarKm && motoViewModel.carregou && motos.isEmpty()) mostrarKm = false
                     motoId?.let { id -> prefs.edit { putLong(PREF_ULTIMA_MOTO, id) } }
+                }
+                // quem ainda não cadastrou moto está conhecendo o app: não pede nada antes disso
+                LaunchedEffect(motoViewModel.carregou) {
+                    if (pedirApoio && motoViewModel.carregou && motoViewModel.motos.isNotEmpty()) {
+                        prefs.edit { putLong(PREF_APOIO_MOSTRADO, hojeUtcMillis()) }
+                        mostrarApoio = true
+                    }
+                }
+                if (mostrarApoio) {
+                    SobreDialog(onFechar = { mostrarApoio = false }, onMensagem = { mensagem = it }, lembrete = true)
                 }
 
                 Scaffold(

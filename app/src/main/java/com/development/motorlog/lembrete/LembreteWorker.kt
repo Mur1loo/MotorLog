@@ -34,7 +34,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
-// Roda 1x por dia (fim de tarde): pra cada moto, calcula as recomendações e, se houver troca
+// Roda 2x por dia (começo do dia e fim de tarde): pra cada moto, calcula as recomendações e, se houver troca
 // vencida/perto ou km parado há DIAS_PARA_LEMBRAR_KM dias, notifica. Sem motivo → silêncio.
 class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
@@ -61,8 +61,12 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
     companion object {
         const val CANAL = "lembretes"
         const val EXTRA_MOTO_ID = "motoId"
-        private const val TRABALHO = "lembrete-diario"
-        private val HORA_DO_LEMBRETE = LocalTime.of(19, 0) // fim do expediente do motoboy
+        // nome novo: quem atualiza o app troca o trabalho de 1x/dia pelo de 2x/dia (ver agendar)
+        private const val TRABALHO = "lembrete-2x-dia"
+        private const val TRABALHO_ANTIGO = "lembrete-diario"
+        // antes de sair pra rodar e no fim do expediente do motoboy — 12h de distância, então um
+        // periódico de 12h ancorado no próximo horário cai sempre num dos dois
+        private val HORARIOS = listOf(LocalTime.of(7, 0), LocalTime.of(19, 0))
 
         fun podeNotificar(ctx: Context): Boolean =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -116,7 +120,7 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
             ctx.getSystemService(NotificationManager::class.java).createNotificationChannel(canal)
         }
 
-        // Pra testar sem esperar as 19h:
+        // Pra testar sem esperar as 7h/19h:
         //   adb shell am start -n com.development.motorlog/.MainActivity --ez lembreteAgora true
         const val EXTRA_RODAR_AGORA = "lembreteAgora"
         fun rodarAgora(ctx: Context) {
@@ -126,14 +130,16 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         // Idempotente (KEEP): chamar a cada abertura do app não duplica o trabalho.
         fun agendar(ctx: Context) {
             val agora = LocalDateTime.now()
-            var proximo = agora.with(HORA_DO_LEMBRETE)
-            if (!proximo.isAfter(agora)) proximo = proximo.plusDays(1)
+            val proximo = HORARIOS
+                .map { hora -> agora.with(hora).let { if (it.isAfter(agora)) it else it.plusDays(1) } }
+                .min()
             val atraso = Duration.between(agora, proximo)
-            val pedido = PeriodicWorkRequestBuilder<LembreteWorker>(1, TimeUnit.DAYS)
+            val pedido = PeriodicWorkRequestBuilder<LembreteWorker>(12, TimeUnit.HOURS)
                 .setInitialDelay(atraso.toMinutes(), TimeUnit.MINUTES)
                 .build()
-            WorkManager.getInstance(ctx)
-                .enqueueUniquePeriodicWork(TRABALHO, ExistingPeriodicWorkPolicy.KEEP, pedido)
+            val wm = WorkManager.getInstance(ctx)
+            wm.cancelUniqueWork(TRABALHO_ANTIGO)   // o de 1x/dia (versões até a 1.2.0)
+            wm.enqueueUniquePeriodicWork(TRABALHO, ExistingPeriodicWorkPolicy.KEEP, pedido)
         }
     }
 }

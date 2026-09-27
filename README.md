@@ -18,7 +18,7 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Painel da moto** — quilometragem em destaque, gasto total, serviços, "Próximas trocas" com status por cor (em dia, próximo do vencimento, vencido) e atividade recente.
 - **Trocas por km** — todas as peças agrupadas por urgência (vencidas / perto de vencer / mais adiante / sem registro), cada uma com barra de progresso do intervalo.
 - **Serviços** — registro de visita à oficina (tipo, custo, oficina, data, km) com peças trocadas e preço; histórico e detalhe (peças + mão de obra = total). As peças trocadas num serviço alimentam as recomendações.
-- **Lembrete diário** — notificação quando há troca vencida/perto de vencer ou quando o km está há 3+ dias sem atualizar (WorkManager); tocar abre o painel da moto.
+- **Lembretes 2x por dia (7h e 19h)** — notificação quando há troca vencida/perto de vencer ou quando o km está há 3+ dias sem atualizar (WorkManager); tocar abre o painel da moto.
 - **Ritmo de uso** — km/mês estimado pelo histórico de atualizações, convertendo "faltam 400 km" em "~6 dias".
 - **Alertas na Garagem** — cada moto mostra quantas trocas estão vencidas/perto, sem precisar abrir o painel.
 - **Histórico em PDF** — relatório A4 da moto (foto de capa, resumo de gastos, situação das peças e todo o histórico de oficina e trocas por conta própria) pra mandar no WhatsApp: pro comprador, pro mecânico ou pra guardar.
@@ -49,7 +49,7 @@ Como todo o cálculo parte do km atual, "atualizar km" é a ação mais importan
 | Linguagem | Kotlin 2.2.10 |
 | Interface | Jetpack Compose (Material 3) |
 | Persistência | Room 2.8.1 (processamento via KSP), schema v11 com migrations explícitas e testadas |
-| Tarefas em segundo plano | WorkManager (lembrete diário) |
+| Tarefas em segundo plano | WorkManager (lembretes 2x por dia) |
 | Testes | JUnit 4 (domínio) · `room-testing`/`MigrationTestHelper` (instrumentado) |
 | Build | Gradle (Kotlin DSL) com version catalog, AGP 9.2.1 |
 | SDK | minSdk 28 · targetSdk 36 · compileSdk 36 |

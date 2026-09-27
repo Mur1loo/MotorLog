@@ -32,8 +32,8 @@ android {
         minSdk = 28
         targetSdk = 36
         // Play Store: versionCode sempre cresce a cada envio; versionName é o que o usuário vê
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
