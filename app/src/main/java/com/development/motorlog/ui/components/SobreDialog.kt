@@ -26,8 +26,10 @@ import com.development.motorlog.R
 // (importante pra política da Play Store): é só uma forma de agradecer.
 const val CHAVE_PIX = "0a19a037-e6e6-46b7-9538-c529b6f70fc8"
 
+// lembrete = true: o pedido de apoio que aparece sozinho ao abrir o app (1x por dia) — título e
+// botão de fechar mais leves; o conteúdo (Pix, copiar) é o mesmo do "Sobre".
 @Composable
-fun SobreDialog(onFechar: () -> Unit, onMensagem: (String) -> Unit) {
+fun SobreDialog(onFechar: () -> Unit, onMensagem: (String) -> Unit, lembrete: Boolean = false) {
     val clipboard = LocalClipboard.current
     val escopo = rememberCoroutineScope()
     val contexto = LocalContext.current
@@ -36,7 +38,12 @@ fun SobreDialog(onFechar: () -> Unit, onMensagem: (String) -> Unit) {
     AlertDialog(
         onDismissRequest = onFechar,
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        title = { Text("MotorLog${if (versao.isNotBlank()) " · v$versao" else ""}", style = MaterialTheme.typography.titleLarge) },
+        title = {
+            Text(
+                if (lembrete) "O MotorLog te ajuda? 🏍️" else "MotorLog${if (versao.isNotBlank()) " · v$versao" else ""}",
+                style = MaterialTheme.typography.titleLarge,
+            )
+        },
         text = {
             Column {
                 Text(
@@ -74,6 +81,6 @@ fun SobreDialog(onFechar: () -> Unit, onMensagem: (String) -> Unit) {
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onFechar) { Text("Fechar") } },
+        confirmButton = { TextButton(onClick = onFechar) { Text(if (lembrete) "Agora não" else "Fechar") } },
     )
 }
