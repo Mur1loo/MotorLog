@@ -49,4 +49,26 @@ class ImportacaoTest {
     fun `texto sem secoes e vazio`() {
         assertTrue(lerExportacao("qualquer coisa") { null }.vazio)
     }
+
+    @Test
+    fun `data da troca e cor da moto fazem ida e volta, backup antigo sem as colunas continua valendo`() {
+        val csv = montarExportacao(
+            motos = listOf(Moto(id = 1, modelo = "Fan", placa = "XYZ", anoFabricacao = 2019, kilometragem = 30000, cor = 6)),
+            pecas = listOf(Peca(id = 7, nome = "Vela", intervaloKm = 10000)),
+            registros = listOf(Registro(motoId = 1, pecaId = 7, kmTroca = 29000, servicoId = null, preco = 35, data = 12 * dia)),
+            servicos = emptyList(),
+            formatarData = ::fmt,
+        )
+        val d = lerExportacao(csv, ::parse)
+        assertEquals(6, d.motos.single().cor)
+        assertEquals(TrocaImportada("Fan XYZ", "Vela", 29000, 35, emServico = false, data = 12 * dia), d.trocas.single())
+
+        // formato da v10: MOTOS com 6 colunas, TROCAS com 5
+        val antigo = "MOTOS\nmodelo;placa;ano;km_atual;km_atualizado_em;revisao_a_cada_km\nFan;XYZ;2019;30000;;0\n" +
+            "TROCAS\nmoto;peca;km_troca;preco;em_servico\nFan XYZ;Vela;29000;35;não\n"
+        val v = lerExportacao(antigo, ::parse)
+        assertEquals(-1, v.motos.single().cor)
+        assertEquals(null, v.trocas.single().data)
+        assertTrue(v.avisos.isEmpty())
+    }
 }

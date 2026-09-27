@@ -32,4 +32,6 @@ data class Registro(
     val kmTroca: Int,
     val servicoId: Long?,
     val preco: Int = 0,
+    // meia-noite UTC do dia da troca; 0 = dia desconhecido (trocas anteriores à v11, "não lembro")
+    val data: Long = 0,
 )

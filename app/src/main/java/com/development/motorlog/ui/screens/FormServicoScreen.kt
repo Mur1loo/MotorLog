@@ -13,14 +13,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Moto
+import com.development.motorlog.ui.components.CampoData
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.MlTextField
@@ -44,14 +40,12 @@ import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.util.contemSemAcento
-import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 // o que um motoboy faz na oficina, do mais ao menos frequente; texto livre continua valendo
 private val TIPOS_SUGERIDOS = listOf("Revisão", "Troca de óleo", "Pneu", "Freios", "Relação", "Elétrica", "Alinhamento", "Outro")
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 // servico == null → novo; servico != null → edição (peças marcadas nascem das trocas ligadas a ele)
 fun FormServicoScreen(
@@ -66,9 +60,8 @@ fun FormServicoScreen(
     var local by rememberSaveable { mutableStateOf(servico?.local ?: "") }
     // km nasce do km atual da moto (o serviço normalmente é feito agora)
     var km by rememberSaveable { mutableStateOf((servico?.kilometragem ?: moto.kilometragem).toString()) }
-    // data: o VALOR (Long em millis) — nasce "hoje". mostrarPicker: o calendário está ABERTO?
+    // data: o VALOR (Long em millis) — nasce "hoje"; o CampoData abre o calendário
     var data by rememberSaveable { mutableLongStateOf(servico?.data ?: hojeUtcMillis()) }
-    var mostrarPicker by rememberSaveable { mutableStateOf(false) }
     var busca by rememberSaveable { mutableStateOf("") }
     var erro by remember { mutableStateOf<String?>(null) }
 
@@ -87,7 +80,6 @@ fun FormServicoScreen(
         }
     }
 
-    val dataFormatada = remember(data) { formatarData(data) }
     val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
 
     // O formulário INTEIRO é uma lista rolável e só o Salvar fica fixo. Com campos fixos no topo, o
@@ -119,19 +111,7 @@ fun FormServicoScreen(
                 }
             }
             item { MlTextField(local, { local = it; erro = null }, "Nome da oficina", icone = R.drawable.ic_ml_pin) }
-            item {
-                // campo de DATA: um card que mostra a data e abre o calendário
-                MlCard(onClick = { mostrarPicker = true }, pad = 12.dp) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        IconBox(R.drawable.ic_ml_calendar, cor = MaterialTheme.colorScheme.primary)
-                        Column(Modifier.weight(1f)) {
-                            Text("Data", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(dataFormatada, style = MaterialTheme.typography.titleSmall)
-                        }
-                        Text("alterar", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            }
+            item { CampoData(data, { data = it }) }
             item {
                 // ── Peças trocadas neste serviço (opcional) ──
                 SectionLabel("Peças trocadas lá (opcional) · ${selecionadas.size} marcada(s)", Modifier.padding(top = 6.dp))
@@ -193,25 +173,5 @@ fun FormServicoScreen(
                 onSalvar()
             },
         )
-    }
-
-    // O DIÁLOGO DO CALENDÁRIO — só existe na tela quando o booleano manda
-    if (mostrarPicker) {
-        val pickerState = rememberDatePickerState(initialSelectedDateMillis = data)
-        DatePickerDialog(
-            onDismissRequest = { mostrarPicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    // selectedDateMillis é um Long? em millis — grava no nosso 'data'
-                    pickerState.selectedDateMillis?.let { data = it }
-                    mostrarPicker = false
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarPicker = false }) { Text("Cancelar") }
-            }
-        ) {
-            DatePicker(state = pickerState)
-        }
     }
 }

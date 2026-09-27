@@ -16,14 +16,17 @@ Descrição curta (≤ 80): O caderninho de manutenção da moto que faz a conta
 Descrição completa:
   Você atualiza a quilometragem; o MotorLog avisa quando cada peça vence.
   • Registre trocas de óleo, pneu, pastilha, relação e mais de 50 peças com intervalos ajustáveis.
-  • Registre visitas à oficina com custo, peças trocadas e data.
+  • Trocou a peça em casa? Registre com o valor pago. Foi à oficina? Custo, peças e data.
+  • Histórico completo em PDF pra mandar no WhatsApp — ótimo na hora de vender a moto.
+  • Álbum de fotos da moto: o dia em que ela chegou, as viagens, o antes e depois.
   • Veja o que está vencido, o que vence em breve e quantos dias faltam no seu ritmo.
   • Lembrete diário quando o km está parado ou há troca vencida — atualize direto da notificação.
   • Custo por km e gasto do mês. Backup em texto, restaurável em outro celular.
   Feito por um motoboy, de graça, sem anúncios. Seus dados ficam só no seu celular.
 Categoria: Automóveis e veículos. Classificação: para todos.
 Ícone 512×512: loja/icone_512.png
-Capturas: use o emulador/celular com o app aberto em Garagem, Painel, Atualizar km, Trocas, Histórico.
+Capturas: use o emulador/celular com o app aberto em Garagem (com foto de capa), Painel, Atualizar km,
+  Trocas, Histórico, Álbum e o PDF do histórico aberto.
   (Play exige mín. 2, formato 16:9 ou 9:16, 320–3840 px.)
 Imagem de destaque 1024×500: montar com o ícone sobre fundo #0E1014 e o texto da descrição curta.
 
@@ -31,7 +34,8 @@ Imagem de destaque 1024×500: montar com o ícone sobre fundo #0E1014 e o texto 
 - Política de privacidade: hospedar loja/politica-de-privacidade.html (GitHub Pages do repositório
   serve) e colar a URL.
 - Segurança dos dados: "Não coleta nem compartilha dados". Sem criptografia em trânsito (não há trânsito).
-- Permissões: POST_NOTIFICATIONS (lembrete). Nada sensível.
+- Permissões: POST_NOTIFICATIONS (lembrete). Nada sensível. (Fotos: o app NÃO pede permissão de câmera
+  nem de galeria — usa o app de câmera do sistema e o seletor de fotos do Android.)
 - Público-alvo: 18+ (uso de veículo). Sem anúncios. Sem compras no app (a chave Pix é doação fora do app —
   permitido, pois não desbloqueia nada).
 

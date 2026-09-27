@@ -166,8 +166,8 @@ fun TrocasScreen(
         RegistrarTrocaDialog(
             peca = trocandoPeca,
             kmAtual = moto.kilometragem,
-            onConfirmar = { km ->
-                registroViewModel.registrarTroca(moto, trocandoPeca, km)
+            onConfirmar = { km, preco, data ->
+                registroViewModel.registrarTroca(moto, trocandoPeca, km, preco, data)
                 trocandoPecaId = null
             },
             onEditarPeca = {

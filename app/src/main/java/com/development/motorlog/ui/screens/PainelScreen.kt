@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -47,12 +49,15 @@ import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.domain.ehRevisao
+import com.development.motorlog.domain.escolherCapa
 import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.ui.components.AcaoDeSecao
 import com.development.motorlog.ui.components.BarraDeProgresso
 import com.development.motorlog.ui.components.BotaoPrimario
+import com.development.motorlog.ui.components.BotaoHistoricoPdf
 import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
+import com.development.motorlog.ui.components.FotoArquivo
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
 import com.development.motorlog.ui.components.MlCard
@@ -62,6 +67,7 @@ import com.development.motorlog.ui.components.PillNeutra
 import com.development.motorlog.ui.components.RegistrarTrocaDialog
 import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.components.StatTile
+import com.development.motorlog.ui.theme.MlFormas
 import com.development.motorlog.ui.theme.MlTextFaint
 import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.theme.chakra
@@ -73,6 +79,7 @@ import com.development.motorlog.ui.util.formatarReais
 import com.development.motorlog.ui.util.formatarReaisCentavos
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
+import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 // Painel da moto — variante "Foco no km" do protótipo (DashFoco): herói com odômetro e brilho,
@@ -84,6 +91,7 @@ fun PainelScreen(
     ritmoKmMes: Int?,
     kmRodados: Int,
     registroViewModel: RegistroViewModel = viewModel(),
+    fotoViewModel: FotoViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
     onRegistrarTroca: () -> Unit,
     onRegistrarServico: () -> Unit,
@@ -92,12 +100,14 @@ fun PainelScreen(
     onEditarMoto: () -> Unit,
     onExcluirMoto: () -> Unit,
     onEditarPeca: (Peca) -> Unit,
-    onAbrirServico: (Servico) -> Unit
+    onAbrirServico: (Servico) -> Unit,
+    onAbrirFotos: () -> Unit,
+    onMensagem: (String) -> Unit,
 ) {
     val recomendacoes = registroViewModel.recomendacoes
     val servicos = registroViewModel.servicos
     val pecas = registroViewModel.pecas
-    val accent = accentDaMoto(moto.id)
+    val accent = accentDaMoto(moto)
     // no painel só interessam as peças JÁ com registro (sem as "nunca trocadas")
     val proximasTrocas = recomendacoes.filter { it.statusTroca != StatusTroca.NUNCA_TROCADA }
     val vencidas = proximasTrocas.count { it.statusTroca == StatusTroca.VENCIDA }
@@ -112,10 +122,13 @@ fun PainelScreen(
         registroViewModel.carregarServicos(moto)
         registroViewModel.carregarTrocasAvulsas(moto)
     }
+    LaunchedEffect(moto.id) { fotoViewModel.carregar(moto.id) }
+    val fotos = fotoViewModel.fotos
+    val capa = escolherCapa(fotos, moto.fotoCapaId)
     val hoje = hojeUtcMillis()
     val total = gastoTotal(servicos, registroViewModel.trocasAvulsas)
     val porKm = custoPorKm(total, kmRodados)
-    val noMes = gastoNoMes(servicos, hoje)
+    val noMes = gastoNoMes(servicos, registroViewModel.trocasAvulsas, hoje)
 
     Column(
         modifier = modifier
@@ -125,6 +138,24 @@ fun PainelScreen(
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        // ── capa: a foto da moto numa faixa larga (abre o álbum) ──
+        if (capa != null) {
+            Box(Modifier.fillMaxWidth().height(136.dp).clip(MlFormas.card).clickable { onAbrirFotos() }) {
+                FotoArquivo(capa.arquivo, Modifier.fillMaxSize(), ladoMaxPx = 1080, descricao = "Foto da moto")
+                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.4f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.7f))))
+                Pill(
+                    "${fotos.size} foto${if (fotos.size == 1) "" else "s"}", Color.White,
+                    Modifier.align(Alignment.BottomEnd).padding(10.dp), fundo = Color.Black.copy(alpha = 0.45f),
+                )
+                if (capa.legenda.isNotBlank()) {
+                    Text(
+                        capa.legenda, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.align(Alignment.BottomStart).padding(start = 12.dp, bottom = 12.dp, end = 96.dp),
+                    )
+                }
+            }
+        }
+
         // ── HERO: brilho radial da cor da moto + odômetro + ação protagonista ──
         Box(
             Modifier.fillMaxWidth().drawBehind {
@@ -229,6 +260,40 @@ fun PainelScreen(
             }
         }
 
+        // ── Card: álbum da moto (sem fotos, o convite) ──
+        MlCard {
+            SectionLabel("Álbum da moto", direita = { AcaoDeSecao(if (fotos.isEmpty()) "Abrir" else "Ver todas", onAbrirFotos) })
+            if (fotos.isEmpty()) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    IconBox(R.drawable.ic_ml_moto, cor = accent, tamanho = 44.dp)
+                    Text(
+                        "Guarde fotos da sua moto: o dia em que ela chegou, as viagens, o antes e depois. A melhor vira a capa.",
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                BotaoSecundario("Adicionar a primeira foto", onAbrirFotos, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_plus)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val mostradas = fotos.take(4)
+                    mostradas.forEachIndexed { i, foto ->
+                        Box(Modifier.weight(1f).aspectRatio(1f).clip(MlFormas.campo).clickable { onAbrirFotos() }) {
+                            FotoArquivo(foto.arquivo, Modifier.fillMaxSize(), ladoMaxPx = 256)
+                            val resto = fotos.size - mostradas.size
+                            if (i == mostradas.lastIndex && resto > 0) {
+                                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
+                                    Text("+$resto", style = chakra(18.sp), color = Color.White)
+                                }
+                            }
+                        }
+                    }
+                    // menos de 4 fotos: completa a linha com espaço vazio (as miniaturas não esticam)
+                    repeat(4 - mostradas.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+
         // ── Card: últimas visitas à oficina ──
         MlCard {
             SectionLabel("Últimas visitas à oficina", direita = { AcaoDeSecao("Histórico", onVerHistorico) })
@@ -257,6 +322,8 @@ fun PainelScreen(
             }
         }
 
+        BotaoHistoricoPdf(moto, onMensagem, Modifier.fillMaxWidth())
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = onEditarMoto, modifier = Modifier.weight(1f)) { Text("Editar dados") }
             TextButton(onClick = { confirmarExclusao = true }, modifier = Modifier.weight(1f)) {
@@ -269,8 +336,8 @@ fun PainelScreen(
         RegistrarTrocaDialog(
             peca = trocandoPeca,
             kmAtual = moto.kilometragem,
-            onConfirmar = { km ->
-                registroViewModel.registrarTroca(moto, trocandoPeca, km)
+            onConfirmar = { km, preco, data ->
+                registroViewModel.registrarTroca(moto, trocandoPeca, km, preco, data)
                 trocandoPecaId = null
             },
             onEditarPeca = {

@@ -1,6 +1,7 @@
 package com.development.motorlog.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -13,14 +14,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.development.motorlog.R
+import com.development.motorlog.ui.theme.MlFormas
 
 // Cabeçalho do protótipo (Header): título em Chakra Petch (27 "big" na Garagem, 19 nas outras),
 // subtítulo apagado, seta de voltar e ações à direita.
@@ -57,5 +62,20 @@ fun MlTopBar(
             }
         }
         acoes?.invoke(this)
+    }
+}
+
+// Ação de cabeçalho com texto (ícone sozinho gera dúvida sobre o que faz): contorno pill, ícone + rótulo
+@Composable
+fun BotaoDeCabecalho(texto: String, icone: Int, descricao: String, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        shape = MlFormas.pill,
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+        modifier = Modifier.heightIn(min = 40.dp).semantics { contentDescription = descricao },
+    ) {
+        Icon(painterResource(icone), contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(texto, style = MaterialTheme.typography.labelLarge)
     }
 }

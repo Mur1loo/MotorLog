@@ -25,8 +25,10 @@ fun custoPorKm(gastoTotal: Int, kmRodados: Int): Double? =
 fun inicioDoMes(hoje: Long): Long =
     LocalDate.ofEpochDay(hoje / MILLIS_POR_DIA).withDayOfMonth(1).toEpochDay() * MILLIS_POR_DIA
 
-// Só serviços têm data; trocas avulsas não entram (não sabemos o dia)
-fun gastoNoMes(servicos: List<Servico>, hoje: Long): Int {
+// Visitas à oficina + trocas por conta própria do mês. Troca sem dia conhecido (data 0, anterior
+// à v11) não entra; troca de dentro de um serviço já está no custo dele.
+fun gastoNoMes(servicos: List<Servico>, trocasAvulsas: List<Registro>, hoje: Long): Int {
     val inicio = inicioDoMes(hoje)
-    return servicos.filter { it.data in inicio..hoje }.sumOf { it.custo }
+    return servicos.filter { it.data in inicio..hoje }.sumOf { it.custo } +
+        trocasAvulsas.filter { it.servicoId == null && it.data > 0 && it.data in inicio..hoje }.sumOf { it.preco }
 }

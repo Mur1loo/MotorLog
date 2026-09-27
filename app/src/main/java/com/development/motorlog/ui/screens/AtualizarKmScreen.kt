@@ -67,7 +67,7 @@ fun AtualizarKmSheet(
     var intocado by rememberSaveable { mutableStateOf(true) }
     // km menor que o atual quase sempre é erro de digitação; pede um 2º toque pra confirmar
     var confirmarMenor by rememberSaveable { mutableStateOf(false) }
-    val accent = accentDaMoto(moto.id)
+    val accent = accentDaMoto(moto)
     val novoKm = texto.toIntOrNull() ?: 0
     val delta = novoKm - moto.kilometragem
 

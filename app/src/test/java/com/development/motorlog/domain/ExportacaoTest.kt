@@ -19,7 +19,7 @@ class ExportacaoTest {
             formatarData = { "D$it" },
         )
         assertTrue(csv.contains("Crosser;ABC1D23;2020;16000;D5;0"))
-        assertTrue(csv.contains("Crosser ABC1D23;Óleo, sintético;15000;60;não"))
+        assertTrue(csv.contains("Crosser ABC1D23;Óleo, sintético;15000;60;não;"))
         assertTrue(csv.contains("Crosser ABC1D23;Revisão;D9;16000;250;Zé"))
         assertTrue(csv.contains("Óleo, sintético;3000"))
     }
@@ -27,6 +27,22 @@ class ExportacaoTest {
     @Test
     fun `moto sem kmAtualizadoEm exporta campo vazio`() {
         val csv = montarExportacao(listOf(Moto(id = 1, modelo = "X", placa = "P", anoFabricacao = 2020, kilometragem = 1)), emptyList(), emptyList(), emptyList()) { "nunca" }
-        assertEquals(true, csv.lines().any { it == "X;P;2020;1;;0" })
+        assertEquals(true, csv.lines().any { it == "X;P;2020;1;;0;-1" })
+    }
+
+    @Test
+    fun `troca com dia conhecido exporta a data, sem dia fica vazio`() {
+        val csv = montarExportacao(
+            motos = listOf(Moto(id = 1, modelo = "X", placa = "P", anoFabricacao = 2020, kilometragem = 1, cor = 5)),
+            pecas = listOf(Peca(id = 7, nome = "Vela", intervaloKm = 10000)),
+            registros = listOf(
+                Registro(motoId = 1, pecaId = 7, kmTroca = 100, servicoId = null, preco = 30, data = 4),
+                Registro(motoId = 1, pecaId = 7, kmTroca = 50, servicoId = null, preco = 0),
+            ),
+            servicos = emptyList(),
+        ) { "D$it" }
+        assertTrue(csv.lines().contains("X P;Vela;100;30;não;D4"))
+        assertTrue(csv.lines().contains("X P;Vela;50;0;não;"))
+        assertTrue(csv.lines().contains("X;P;2020;1;;0;5"))
     }
 }

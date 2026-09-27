@@ -13,6 +13,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MotorLog">
+        <!-- entrega arquivos temporários a outros apps: a câmera (foto do álbum) e o compartilhar (PDF) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.arquivos"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/arquivos_compartilhados" />
+        </provider>
+
         <!-- resposta rápida "Atualizar km" da notificação -->
         <receiver
             android:name=".lembrete.AtualizarKmReceiver"

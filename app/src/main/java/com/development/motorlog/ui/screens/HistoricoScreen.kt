@@ -41,10 +41,12 @@ import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Registro
 import com.development.motorlog.data.Servico
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.ui.components.BotaoHistoricoPdf
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.components.LinhaDeTiles
 import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.PillNeutra
+import com.development.motorlog.ui.components.RegistrarTrocaDialog
 import com.development.motorlog.ui.components.StatTile
 import com.development.motorlog.ui.theme.MlBorder
 import com.development.motorlog.ui.theme.MlFormas
@@ -56,25 +58,30 @@ import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.formatarReais
+import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
-private enum class Filtro(val rotulo: String) { TODAS("Tudo"), SERVICOS("Oficina"), AVULSAS("Avulsas") }
+private enum class Filtro(val rotulo: String) { TODAS("Tudo"), SERVICOS("Oficina"), AVULSAS("Por conta") }
 
-// Histórico da moto no estilo do protótipo: tiles (registros/total), filtro em chips e uma linha
-// do tempo com nó-ícone à esquerda. Serviço abre o detalhe; troca avulsa oferece excluir.
+// Histórico da moto no estilo do protótipo: tiles (registros/total), filtro em chips, o PDF pra
+// compartilhar e uma linha do tempo com nó-ícone à esquerda. Serviço abre o detalhe; troca feita
+// por conta própria abre a edição (km, valor, dia) com a opção de excluir.
 @Composable
 fun HistoricoScreen(
     moto: Moto,
     onAbrirServico: (Servico) -> Unit,
+    onMensagem: (String) -> Unit,
     modifier: Modifier = Modifier,
     registroViewModel: RegistroViewModel = viewModel(),
 ) {
     val servicos = registroViewModel.servicos
     val trocas = registroViewModel.trocasAvulsas
     val pecas = registroViewModel.pecas
-    val accent = accentDaMoto(moto.id)
+    val accent = accentDaMoto(moto)
     var filtro by rememberSaveable { mutableStateOf(Filtro.TODAS) }
+    var editandoId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val editando = trocas.find { it.id == editandoId }
     var excluindoId by rememberSaveable { mutableStateOf<Long?>(null) }
     val excluindo = trocas.find { it.id == excluindoId }
 
@@ -97,6 +104,9 @@ fun HistoricoScreen(
                 StatTile("Total investido", formatarReais(totalGasto), Modifier.weight(1.6f), icone = R.drawable.ic_ml_dollar)
             }
         }
+        if (servicos.isNotEmpty() || trocas.isNotEmpty()) {
+            item { BotaoHistoricoPdf(moto, onMensagem, Modifier.fillMaxWidth().padding(bottom = 12.dp)) }
+        }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 12.dp)) {
                 Filtro.entries.forEach { f ->
@@ -109,7 +119,7 @@ fun HistoricoScreen(
                 MlCard {
                     Text(
                         when (filtro) {
-                            Filtro.AVULSAS -> "Nenhuma troca registrada fora da oficina. Use \"Troquei uma peça\" no painel."
+                            Filtro.AVULSAS -> "Nenhuma troca feita por conta própria. Trocou em casa? Use \"Troquei uma peça\" no painel."
                             Filtro.SERVICOS -> "Nenhuma visita à oficina registrada. Use \"Fui à oficina\" no painel."
                             Filtro.TODAS -> "Nada registrado ainda. Cada troca e cada visita à oficina aparecem aqui, na ordem em que aconteceram."
                         },
@@ -127,14 +137,17 @@ fun HistoricoScreen(
                 val troca = item as Registro
                 val nome = pecas.find { it.id == troca.pecaId }?.nome ?: "Peça #${troca.pecaId}"
                 LinhaDoTempo(icone = iconeDaPeca(nome), cor = StatusTroca.OK.cor()) {
-                    MlCard(onClick = { excluindoId = troca.id }, pad = 13.dp) {
+                    MlCard(onClick = { editandoId = troca.id }, pad = 13.dp) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
                                 Text(nome, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text("${formatarKm(troca.kmTroca)} · fora da oficina", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    listOfNotNull(troca.data.takeIf { it > 0 }?.let(::formatarData), formatarKm(troca.kmTroca)).joinToString(" · "),
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                PillNeutra("Avulsa")
+                                PillNeutra("Por conta")
                                 if (troca.preco > 0) Text(formatarReais(troca.preco), style = chakra(13.5.sp))
                             }
                         }
@@ -143,6 +156,27 @@ fun HistoricoScreen(
             }
         }
         item { Spacer(Modifier.height(8.dp)) }
+    }
+
+    if (editando != null) {
+        val peca = pecas.find { it.id == editando.pecaId }
+        if (peca != null) {
+            RegistrarTrocaDialog(
+                peca = peca,
+                kmAtual = editando.kmTroca,
+                precoInicial = editando.preco,
+                dataInicial = editando.data.takeIf { it > 0 } ?: hojeUtcMillis(),
+                onConfirmar = { km, preco, data ->
+                    registroViewModel.atualizarTrocaAvulsa(editando.copy(kmTroca = km, preco = preco, data = data), moto)
+                    editandoId = null
+                },
+                onExcluir = {
+                    excluindoId = editando.id
+                    editandoId = null
+                },
+                onCancelar = { editandoId = null },
+            )
+        }
     }
 
     if (excluindo != null) {

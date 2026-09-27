@@ -1,6 +1,7 @@
 package com.development.motorlog.ui.theme
 
 import androidx.compose.ui.graphics.Color
+import com.development.motorlog.data.Moto
 
 // Paleta do protótipo (MotorLog_design2/theme.jsx) — tema dark, accent laranja
 val MlBg = Color(0xFF0E1014)
@@ -22,6 +23,18 @@ val MlOk = Color(0xFF5FD08A)
 val MlSoon = Color(0xFFFFC24B)
 val MlOver = Color(0xFFFF6B6B)
 
-// accent por moto (ACCENTS do protótipo). Sem campo no banco: escolhido pelo id da moto.
-val MlAccentsMoto = listOf(MlAccent, Color(0xFF23E0C8), Color(0xFFB6FF3D), Color(0xFFFF3B3B))
-fun accentDaMoto(motoId: Long): Color = MlAccentsMoto[(motoId % MlAccentsMoto.size).toInt()]
+// accent por moto: o dono escolhe no cadastro (Moto.cor = índice aqui). As 4 primeiras são as
+// ACCENTS do protótipo e continuam sendo a cor automática (pelo id) de quem não escolheu — não
+// mude a ordem delas, senão a moto de quem já usa o app troca de cor sozinha.
+val MlAccentsMoto = listOf(
+    MlAccent, Color(0xFF23E0C8), Color(0xFFB6FF3D), Color(0xFFFF3B3B),
+    Color(0xFF4D8DFF), Color(0xFFB07CFF), Color(0xFFFFD23F), Color(0xFFFF5FA2),
+)
+private const val CORES_AUTOMATICAS = 4
+val NOMES_DAS_CORES = listOf("Laranja", "Turquesa", "Verde-limão", "Vermelho", "Azul", "Roxo", "Amarelo", "Rosa")
+
+// índice da cor que a moto mostra hoje (a escolhida, ou a automática pelo id)
+fun indiceDaCor(moto: Moto): Int =
+    if (moto.cor in MlAccentsMoto.indices) moto.cor else (moto.id % CORES_AUTOMATICAS).toInt()
+
+fun accentDaMoto(moto: Moto): Color = MlAccentsMoto[indiceDaCor(moto)]

@@ -8,20 +8,23 @@ Projeto de aprendizado de desenvolvimento mobile (Kotlin/Android nativo), em evo
 
 ## Status
 
-MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v9) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
+MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v11) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
 
 ## Funcionalidades
 
 - **Garagem** — cadastro e listagem de motos (modelo, placa, ano, quilometragem).
 - **Atualizar km** — a ação central do app: rápida e com o valor atual pré-preenchido.
-- **Registrar troca** — seleção da peça por busca (evitando erros de digitação) e informação do km da troca.
+- **Troquei uma peça** — a troca feita por conta própria (em casa, com um amigo): peça por busca, km, **valor pago na peça** (opcional) e dia. Entra no gasto total e no gasto do mês; dá pra corrigir ou excluir no Histórico.
 - **Painel da moto** — quilometragem em destaque, gasto total, serviços, "Próximas trocas" com status por cor (em dia, próximo do vencimento, vencido) e atividade recente.
 - **Trocas por km** — todas as peças agrupadas por urgência (vencidas / perto de vencer / mais adiante / sem registro), cada uma com barra de progresso do intervalo.
 - **Serviços** — registro de visita à oficina (tipo, custo, oficina, data, km) com peças trocadas e preço; histórico e detalhe (peças + mão de obra = total). As peças trocadas num serviço alimentam as recomendações.
 - **Lembrete diário** — notificação quando há troca vencida/perto de vencer ou quando o km está há 3+ dias sem atualizar (WorkManager); tocar abre o painel da moto.
 - **Ritmo de uso** — km/mês estimado pelo histórico de atualizações, convertendo "faltam 400 km" em "~6 dias".
 - **Alertas na Garagem** — cada moto mostra quantas trocas estão vencidas/perto, sem precisar abrir o painel.
-- **Exportar dados** — CSV com motos, trocas, serviços e catálogo, via compartilhar.
+- **Histórico em PDF** — relatório A4 da moto (foto de capa, resumo de gastos, situação das peças e todo o histórico de oficina e trocas por conta própria) pra mandar no WhatsApp: pro comprador, pro mecânico ou pra guardar.
+- **Álbum da moto** (aba Fotos) — fotos pela câmera ou galeria (sem pedir permissão: câmera do sistema e seletor de fotos do Android), com legenda, dia e km. A capa aparece na Garagem, no Painel e no PDF. Ficam só no armazenamento privado do app.
+- **Cor da moto** — cada moto tem a sua cor no app (8 opções), usada no painel, no odômetro e no PDF.
+- **Backup** — CSV com motos, trocas, serviços e catálogo, via compartilhar, restaurável em outro celular (as fotos não entram no CSV).
 - **Catálogo de peças** — cerca de 50 itens com intervalos de manutenção realistas, editáveis pelo usuário, com busca sem acento.
 - **Exclusão com confirmação** de moto, peça e serviço, com cascata via foreign keys.
 
@@ -45,7 +48,7 @@ Como todo o cálculo parte do km atual, "atualizar km" é a ação mais importan
 | --- | --- |
 | Linguagem | Kotlin 2.2.10 |
 | Interface | Jetpack Compose (Material 3) |
-| Persistência | Room 2.8.1 (processamento via KSP), schema v9 com migrations explícitas e testadas |
+| Persistência | Room 2.8.1 (processamento via KSP), schema v11 com migrations explícitas e testadas |
 | Tarefas em segundo plano | WorkManager (lembrete diário) |
 | Testes | JUnit 4 (domínio) · `room-testing`/`MigrationTestHelper` (instrumentado) |
 | Build | Gradle (Kotlin DSL) com version catalog, AGP 9.2.1 |
@@ -59,15 +62,17 @@ O código é organizado em camadas, mantendo a regra de negócio independente da
 
 ```
 com.development.motorlog
-├── data/         Room: entidades (Moto, Peca, Registro, Servico, HistoricoKm), DAOs, migrations e AppDatabase
+├── data/         Room: entidades (Moto, Peca, Registro, Servico, HistoricoKm, FotoMoto), DAOs, migrations e AppDatabase
+├── fotos/        ArmazemDeFotos (salva reduzida/girada em filesDir/fotos, miniaturas com cache)
+├── relatorio/    HistoricoPdf (desenha o PDF com o PdfDocument do Android e abre o compartilhar)
 ├── lembrete/     LembreteWorker (notificação diária via WorkManager)
 ├── domain/       regra de negócio pura, sem Android (cálculo de recomendações)
 ├── ui/           telas Compose e ViewModels (state holders)
 └── MainActivity  hospeda a navegação por estado
 ```
 
-- **`data`** — `Moto`, `Peca`, `Registro` (associação N–N moto×peça, com FK opcional para o serviço em que a troca aconteceu) e `Servico` (visita à oficina). DAOs com `@Insert`, `@Update`, `@Delete` e `@Query`. Toda mudança de schema é uma `Migration` explícita com o JSON exportado em `app/schemas/` e um teste em `MigrationTest`.
-- **`domain`** — `calcularRecomendacoes(...)`, `Recomendacao` e `StatusTroca`. Não conhece Compose nem Room: recebe dados e devolve recomendações.
+- **`data`** — `Moto`, `Peca`, `Registro` (associação N–N moto×peça, com FK opcional para o serviço em que a troca aconteceu, preço e dia), `Servico` (visita à oficina) e `FotoMoto` (álbum; o arquivo fica em `filesDir/fotos`). DAOs com `@Insert`, `@Update`, `@Delete` e `@Query`. Toda mudança de schema é uma `Migration` explícita com o JSON exportado em `app/schemas/` e um teste em `MigrationTest`.
+- **`domain`** — `calcularRecomendacoes(...)`, `Recomendacao` e `StatusTroca`; também custos, alertas, ritmo, exportação/importação, a escolha da capa e o conteúdo do PDF (`montarRelatorio`). Não conhece Compose nem Room: recebe dados e devolve resultados.
 - **`ui`** — uma tela por arquivo (`GaragemScreen`, `PainelScreen`, `RegistroScreen`, etc.) e ViewModels que mantêm o estado e acessam os DAOs por meio de `viewModelScope`.
 
 ## Executando localmente
@@ -83,13 +88,13 @@ cd MotorLog
 2. Conecte um dispositivo com depuração USB habilitada, ou inicie um emulador.
 3. Execute a configuração `app`.
 
-O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v9) são explícitas e não destrutivas.
+O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v11) são explícitas e não destrutivas.
 
 ### Testes
 
 ```bash
 ./gradlew testDebugUnitTest                 # regra de negócio (calcularRecomendacoes)
-./gradlew connectedDebugAndroidTest         # migrations 5→…→9 (precisa de emulador/dispositivo)
+./gradlew connectedDebugAndroidTest         # migrations 5→…→11 (precisa de emulador/dispositivo)
 ./gradlew assembleDebug testDebugUnitTest lint
 ```
 
@@ -101,10 +106,10 @@ O público-alvo é quem usa a moto para trabalhar, não quem gosta de tecnologia
 
 ## Roadmap
 
-- Recomendação a partir de serviço periódico (revisão a cada X km).
-- Atalho/widget na tela inicial para atualizar o km sem abrir o app.
-- Importar o CSV exportado (restauração em aparelho novo).
-- Fonte e ícones do protótipo; bottom navigation; navegação com back stack real.
+- Widget na tela inicial para atualizar o km sem abrir o app.
+- Backup completo em arquivo único (dados + fotos do álbum).
+- Marcos da moto ("passou dos 50.000 km!") e foto do painel junto da atualização de km.
+- Navegação com back stack real.
 - Leitura reativa com `Flow`; índice de cuidado.
 
 ## Contribuindo
