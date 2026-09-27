@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.data.AppDatabase
+import com.development.motorlog.domain.deveMostrarPedidoDeApoio
 import com.development.motorlog.lembrete.LembreteWorker
 import com.development.motorlog.ui.components.AbaMoto
 import com.development.motorlog.ui.components.BarraInferior
@@ -59,7 +61,7 @@ private val TELAS_DA_MOTO = setOf("Painel", "Historico", "Trocas", "Fotos")
 // extra do atalho da tela inicial (res/xml/shortcuts.xml) e chave da última moto aberta
 const val EXTRA_ABRIR_KM = "abrirKm"
 private const val PREF_ULTIMA_MOTO = "ultima_moto"
-// dia (meia-noite UTC) em que o pedido de apoio apareceu pela última vez: no máximo 1x por dia
+// dia (meia-noite UTC) em que o pedido de apoio apareceu pela última vez (regra em domain/Apoio.kt)
 private const val PREF_APOIO_MOSTRADO = "apoio_mostrado_em"
 
 class MainActivity : ComponentActivity() {
@@ -82,9 +84,8 @@ class MainActivity : ComponentActivity() {
         val ultimaMoto = prefs.getLong(PREF_ULTIMA_MOTO, -1L).takeIf { it > 0 }
         val motoInicial = motoDaNotificacao ?: if (abrirKm) ultimaMoto else null
         // pedido de apoio ao abrir o app: só na abertura normal (não pela notificação nem pelo
-        // atalho +KM, que são "entra, atualiza, sai") e só na 1ª abertura do dia
-        val pedirApoio = primeiraCriacao && motoInicial == null && !abrirKm &&
-            prefs.getLong(PREF_APOIO_MOSTRADO, 0L) != hojeUtcMillis()
+        // atalho +KM, que são "entra, atualiza, sai"); se é a hora, decide deveMostrarPedidoDeApoio
+        val podePedirApoio = primeiraCriacao && motoInicial == null && !abrirKm
         setContent {
             MotorLogTheme {
                 // Navegação por estado. Tudo aqui é rememberSaveable (sobrevive ao giro e à morte
@@ -175,10 +176,13 @@ class MainActivity : ComponentActivity() {
                     if (motoId == null && mostrarKm && motoViewModel.carregou && motos.isEmpty()) mostrarKm = false
                     motoId?.let { id -> prefs.edit { putLong(PREF_ULTIMA_MOTO, id) } }
                 }
-                // quem ainda não cadastrou moto está conhecendo o app: não pede nada antes disso
-                LaunchedEffect(motoViewModel.carregou) {
-                    if (pedirApoio && motoViewModel.carregou && motoViewModel.motos.isNotEmpty()) {
-                        prefs.edit { putLong(PREF_APOIO_MOSTRADO, hojeUtcMillis()) }
+                // só pra quem já usa o app de verdade (dias com km registrado), no máximo 1x por mês
+                LaunchedEffect(Unit) {
+                    if (!podePedirApoio) return@LaunchedEffect
+                    val hoje = hojeUtcMillis()
+                    val diasComKm = AppDatabase.getDatabase(this@MainActivity).historicoKmDao().listarDiasComKm()
+                    if (deveMostrarPedidoDeApoio(diasComKm, prefs.getLong(PREF_APOIO_MOSTRADO, 0L), hoje)) {
+                        prefs.edit { putLong(PREF_APOIO_MOSTRADO, hoje) }
                         mostrarApoio = true
                     }
                 }

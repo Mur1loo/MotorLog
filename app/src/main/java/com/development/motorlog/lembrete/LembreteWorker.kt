@@ -12,12 +12,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.development.motorlog.MainActivity
 import com.development.motorlog.R
 import com.development.motorlog.data.AppDatabase
@@ -35,7 +37,9 @@ import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
 // Roda 2x por dia (começo do dia e fim de tarde): pra cada moto, calcula as recomendações e, se houver troca
-// vencida/perto ou km parado há DIAS_PARA_LEMBRAR_KM dias, notifica. Sem motivo → silêncio.
+// vencida/perto, notifica. O km parado há DIAS_PARA_LEMBRAR_KM dias só é cobrado à noite (fim do
+// expediente, com o painel na frente). Sem motivo → silêncio; mesmo aviso já dado hoje → silêncio.
+// Notificação demais = o usuário desliga todas, e aí perde o lembrete que importa.
 class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -45,15 +49,25 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val db = AppDatabase.getDatabase(ctx)
         val pecas = db.pecaDao().listarPecas()
         val hoje = hojeUtcMillis()
+        // o teste manual (rodarAgora) mostra tudo, sem depender da hora nem do que já foi avisado
+        val forcar = inputData.getBoolean(CHAVE_FORCAR, false)
+        val turnoDaNoite = forcar || LocalTime.now().hour >= HORA_TURNO_DA_NOITE
+        val prefs = ctx.getSharedPreferences("motorlog", Context.MODE_PRIVATE)
         criarCanal(ctx)
 
         db.motoDao().listarTodas().forEach { moto ->
             val recsPecas = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
             val recs = comRevisao(recsPecas, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, db.servicoDao().query(moto.id)))
             val ritmo = calcularRitmoKmMes(db.historicoKmDao().listarPorMoto(moto.id), hoje)
-            val texto = montarLembrete(moto.modelo, moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData) ?: return@forEach
+            val texto = montarLembrete(moto.modelo, moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData, lembrarKmParado = turnoDaNoite)
+                ?: return@forEach
+            // ex.: "Óleo vencido" às 7h não se repete às 19h; se à noite entrou o km parado, o texto muda e avisa
+            val marca = "$hoje|$texto"
+            val chave = PREF_ULTIMO_LEMBRETE + moto.id
+            if (!forcar && prefs.getString(chave, null) == marca) return@forEach
             // o título da notificação já é o modelo; o corpo não precisa repetir
             notificar(ctx, moto, texto.removePrefix("${moto.modelo}: "), comResposta = true)
+            prefs.edit { putString(chave, marca) }
         }
         return Result.success()
     }
@@ -67,6 +81,11 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         // antes de sair pra rodar e no fim do expediente do motoboy — 12h de distância, então um
         // periódico de 12h ancorado no próximo horário cai sempre num dos dois
         private val HORARIOS = listOf(LocalTime.of(7, 0), LocalTime.of(19, 0))
+        // a partir de que hora a execução conta como "a da noite" (o periódico pode escorregar um pouco)
+        private const val HORA_TURNO_DA_NOITE = 13
+        // "dia|texto" do último aviso de cada moto (chave + id da moto), pra não repetir no mesmo dia
+        private const val PREF_ULTIMO_LEMBRETE = "ultimo_lembrete_"
+        private const val CHAVE_FORCAR = "forcar"
 
         fun podeNotificar(ctx: Context): Boolean =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -124,7 +143,8 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         //   adb shell am start -n com.development.motorlog/.MainActivity --ez lembreteAgora true
         const val EXTRA_RODAR_AGORA = "lembreteAgora"
         fun rodarAgora(ctx: Context) {
-            WorkManager.getInstance(ctx).enqueue(OneTimeWorkRequestBuilder<LembreteWorker>().build())
+            val pedido = OneTimeWorkRequestBuilder<LembreteWorker>().setInputData(workDataOf(CHAVE_FORCAR to true)).build()
+            WorkManager.getInstance(ctx).enqueue(pedido)
         }
 
         // Idempotente (KEEP): chamar a cada abertura do app não duplica o trabalho.

@@ -26,8 +26,9 @@ import com.development.motorlog.R
 // (importante pra política da Play Store): é só uma forma de agradecer.
 const val CHAVE_PIX = "0a19a037-e6e6-46b7-9538-c529b6f70fc8"
 
-// lembrete = true: o pedido de apoio que aparece sozinho ao abrir o app (1x por dia) — título e
-// botão de fechar mais leves; o conteúdo (Pix, copiar) é o mesmo do "Sobre".
+// lembrete = true: o pedido de apoio que aparece sozinho ao abrir o app (só pra quem já usa o app,
+// no máximo 1x por mês — domain/Apoio.kt) — título e botão de fechar mais leves; o conteúdo (Pix,
+// copiar) é o mesmo do "Sobre".
 @Composable
 fun SobreDialog(onFechar: () -> Unit, onMensagem: (String) -> Unit, lembrete: Boolean = false) {
     val clipboard = LocalClipboard.current

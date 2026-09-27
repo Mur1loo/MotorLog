@@ -15,4 +15,8 @@ interface HistoricoKmDao {
 
     @Query("SELECT * FROM HistoricoKm WHERE motoId = :motoId ORDER BY data")
     suspend fun listarPorMoto(motoId: Long): List<HistoricoKm>
+
+    // dias em que o usuário registrou km em qualquer moto: sinal de retenção pro pedido de apoio
+    @Query("SELECT DISTINCT data FROM HistoricoKm ORDER BY data")
+    suspend fun listarDiasComKm(): List<Long>
 }

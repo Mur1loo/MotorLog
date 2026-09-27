@@ -18,13 +18,14 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Painel da moto** — quilometragem em destaque, gasto total, serviços, "Próximas trocas" com status por cor (em dia, próximo do vencimento, vencido) e atividade recente.
 - **Trocas por km** — todas as peças agrupadas por urgência (vencidas / perto de vencer / mais adiante / sem registro), cada uma com barra de progresso do intervalo.
 - **Serviços** — registro de visita à oficina (tipo, custo, oficina, data, km) com peças trocadas e preço; histórico e detalhe (peças + mão de obra = total). As peças trocadas num serviço alimentam as recomendações.
-- **Lembretes 2x por dia (7h e 19h)** — notificação quando há troca vencida/perto de vencer ou quando o km está há 3+ dias sem atualizar (WorkManager); tocar abre o painel da moto.
+- **Lembretes 2x por dia (7h e 19h)** — notificação quando há troca vencida/perto de vencer (WorkManager); o km parado há 3+ dias só é cobrado no lembrete das 19h, e o mesmo aviso não se repete no mesmo dia. Tocar abre o painel da moto.
 - **Ritmo de uso** — km/mês estimado pelo histórico de atualizações, convertendo "faltam 400 km" em "~6 dias".
 - **Alertas na Garagem** — cada moto mostra quantas trocas estão vencidas/perto, sem precisar abrir o painel.
 - **Histórico em PDF** — relatório A4 da moto (foto de capa, resumo de gastos, situação das peças e todo o histórico de oficina e trocas por conta própria) pra mandar no WhatsApp: pro comprador, pro mecânico ou pra guardar.
 - **Álbum da moto** (aba Fotos) — fotos pela câmera ou galeria (sem pedir permissão: câmera do sistema e seletor de fotos do Android), com legenda, dia e km. A capa aparece na Garagem, no Painel e no PDF. Ficam só no armazenamento privado do app.
 - **Cor da moto** — cada moto tem a sua cor no app (8 opções), usada no painel, no odômetro e no PDF.
-- **Backup** — CSV com motos, trocas, serviços e catálogo, via compartilhar, restaurável em outro celular (as fotos não entram no CSV).
+- **Backup** — CSV com motos, trocas, serviços e catálogo, via compartilhar, restaurável em outro celular (as fotos não entram no CSV). O backup automático do Google também fica sem as fotos, pra não passar do teto de 25 MB, acima do qual nada seria salvo; a transferência direta entre celulares leva tudo.
+- **Apoio solidário (Pix)** — sempre disponível no "Sobre". O pedido automático ao abrir o app só aparece para quem já usa o app há 2+ semanas, atualizou o km em 6+ dias e segue ativo, no máximo 1x por mês (`domain/Apoio.kt`).
 - **Catálogo de peças** — cerca de 50 itens com intervalos de manutenção realistas, editáveis pelo usuário, com busca sem acento.
 - **Exclusão com confirmação** de moto, peça e serviço, com cascata via foreign keys.
 

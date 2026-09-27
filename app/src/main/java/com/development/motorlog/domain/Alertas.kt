@@ -22,6 +22,7 @@ const val DIAS_PARA_LEMBRAR_KM = 3
 // kmAtualizadoEm = 0 significa "nunca registrado" (moto anterior à v9): não cobra atualização.
 // Com ritmo (km/mês) conhecido, a troca mais próxima é dita em DIAS e com a data prevista —
 // é assim que o motoboy planeja a semana. formatarData vem de fora (a UI formata em UTC).
+// lembrarKmParado = false: só trocas (o lembrete da manhã; o km parado é cobrado 1x por dia, à noite).
 fun montarLembrete(
     modelo: String,
     kmAtualizadoEm: Long,
@@ -29,6 +30,7 @@ fun montarLembrete(
     recomendacoes: List<Recomendacao>,
     ritmoKmMes: Int? = null,
     formatarData: ((Long) -> String)? = null,
+    lembrarKmParado: Boolean = true,
 ): String? {
     val alertas = resumirAlertas(recomendacoes)
     val diasSemKm = if (kmAtualizadoEm > 0) diasEntre(kmAtualizadoEm, hoje) else null
@@ -49,7 +51,7 @@ fun montarLembrete(
                 add(if (alertas.perto == 1) "1 troca perto de vencer" else "${alertas.perto} trocas perto de vencer")
             }
         }
-        if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) add("faz $diasSemKm dias que o km não é atualizado")
+        if (lembrarKmParado && diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) add("faz $diasSemKm dias que o km não é atualizado")
     }
     if (partes.isEmpty()) return null
     return "$modelo: " + partes.joinToString(" · ")

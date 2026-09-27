@@ -42,6 +42,15 @@ class AlertasTest {
     }
 
     @Test
+    fun `lembrete da manha nao cobra km parado, mas avisa troca`() {
+        assertNull(montarLembrete("Crosser", 10 * dia, 13 * dia, emptyList(), lembrarKmParado = false))
+        assertEquals(
+            "Crosser: Óleo vencido",
+            montarLembrete("Crosser", 10 * dia, 13 * dia, listOf(rec("Óleo", StatusTroca.VENCIDA)), lembrarKmParado = false),
+        )
+    }
+
+    @Test
     fun `vencida e perto entram no texto`() {
         val texto = montarLembrete("Crosser", 10 * dia, 10 * dia, listOf(rec("Óleo do motor", StatusTroca.VENCIDA), rec("Vela", StatusTroca.PERTO)))
         assertEquals("Crosser: Óleo do motor vencido · 1 troca perto de vencer", texto)

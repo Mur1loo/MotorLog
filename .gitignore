@@ -15,6 +15,7 @@
 local.properties
 *.md
 !README.md
+!CLAUDE.md
 
 # assinatura de release (nunca no git)
 keystore.properties
