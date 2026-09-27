@@ -38,11 +38,12 @@ enum class AbaMoto(val rotulo: String, val icone: Int) {
     PAINEL("Painel", R.drawable.ic_ml_gauge),
     HISTORICO("Histórico", R.drawable.ic_ml_doc),
     TROCAS("Trocas", R.drawable.ic_ml_wrench),
-    GARAGEM("Garagem", R.drawable.ic_ml_moto),
+    FOTOS("Fotos", R.drawable.ic_ml_camera),
 }
 
 // Barra inferior do protótipo (BottomNav): 2 abas + FAB "+KM" central + 2 abas.
-// Só aparece no contexto de uma moto; o FAB é a ação nº 1 do app.
+// Só aparece no contexto de uma moto; o FAB é a ação nº 1 do app. A Garagem virou o ícone de
+// moto no cabeçalho, pra dar lugar à aba Fotos (o álbum merece destaque, não o fim do Painel).
 @Composable
 fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: () -> Unit) {
     val accent = MaterialTheme.colorScheme.primary
@@ -72,7 +73,7 @@ fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: (
                 Text("+KM", style = chakra(9.sp), color = MaterialTheme.colorScheme.onPrimary)
             }
             ItemAba(AbaMoto.TROCAS, ativa == AbaMoto.TROCAS) { aoNavegar(AbaMoto.TROCAS) }
-            ItemAba(AbaMoto.GARAGEM, ativa == AbaMoto.GARAGEM) { aoNavegar(AbaMoto.GARAGEM) }
+            ItemAba(AbaMoto.FOTOS, ativa == AbaMoto.FOTOS) { aoNavegar(AbaMoto.FOTOS) }
         }
     }
 }

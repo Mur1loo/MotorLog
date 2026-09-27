@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.lembrete.LembreteWorker
 import com.development.motorlog.ui.components.AbaMoto
 import com.development.motorlog.ui.components.BarraInferior
+import com.development.motorlog.ui.components.BotaoDeCabecalho
 import com.development.motorlog.ui.components.MlTopBar
 import com.development.motorlog.ui.screens.AtualizarKmSheet
 import com.development.motorlog.ui.screens.CadastroScreen
@@ -52,7 +53,7 @@ import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
 // telas que vivem "dentro de uma moto" e mostram a barra inferior com o FAB +KM
-private val TELAS_DA_MOTO = setOf("Painel", "Historico", "Trocas")
+private val TELAS_DA_MOTO = setOf("Painel", "Historico", "Trocas", "Fotos")
 // extra do atalho da tela inicial (res/xml/shortcuts.xml) e chave da última moto aberta
 const val EXTRA_ABRIR_KM = "abrirKm"
 private const val PREF_ULTIMA_MOTO = "ultima_moto"
@@ -175,14 +176,22 @@ class MainActivity : ComponentActivity() {
                             subtitulo = subtitulo,
                             grande = telaAtual == "Garagem",
                             onVoltar = if (telaAtual != "Garagem") irParaTras else null,
-                            acoes = if (telaAtual == "Garagem") {
-                                {
-                                    // engrenagem do protótipo: catálogo de peças e intervalos
-                                    IconButton(onClick = { telaAtual = "GerenciarPecas" }) {
-                                        Icon(painterResource(R.drawable.ic_ml_cog), contentDescription = "Peças e intervalos", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            acoes = when {
+                                // catálogo de peças e intervalos: chave + texto. A engrenagem antiga
+                                // (círculo com raios) era confundida com o botão de tema claro/escuro.
+                                telaAtual == "Garagem" -> {
+                                    { BotaoDeCabecalho("Peças", R.drawable.ic_ml_wrench, "Peças e intervalos") { telaAtual = "GerenciarPecas" } }
+                                }
+                                // a Garagem saiu da barra inferior (entrou Fotos): volta por aqui, 1 toque
+                                telaAtual in TELAS_DA_MOTO -> {
+                                    {
+                                        IconButton(onClick = { telaAtual = "Garagem" }) {
+                                            Icon(painterResource(R.drawable.ic_ml_moto), contentDescription = "Garagem", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
                                     }
                                 }
-                            } else null,
+                                else -> null
+                            },
                         )
                     },
                     bottomBar = {
@@ -191,6 +200,7 @@ class MainActivity : ComponentActivity() {
                                 ativa = when (telaAtual) {
                                     "Historico" -> AbaMoto.HISTORICO
                                     "Trocas" -> AbaMoto.TROCAS
+                                    "Fotos" -> AbaMoto.FOTOS
                                     else -> AbaMoto.PAINEL
                                 },
                                 aoNavegar = { aba ->
@@ -198,7 +208,7 @@ class MainActivity : ComponentActivity() {
                                         AbaMoto.PAINEL -> "Painel"
                                         AbaMoto.HISTORICO -> "Historico"
                                         AbaMoto.TROCAS -> "Trocas"
-                                        AbaMoto.GARAGEM -> "Garagem"
+                                        AbaMoto.FOTOS -> "Fotos"
                                     }
                                 },
                                 aoAtualizarKm = { mostrarKm = true },

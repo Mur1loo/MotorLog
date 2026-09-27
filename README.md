@@ -22,7 +22,7 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Ritmo de uso** — km/mês estimado pelo histórico de atualizações, convertendo "faltam 400 km" em "~6 dias".
 - **Alertas na Garagem** — cada moto mostra quantas trocas estão vencidas/perto, sem precisar abrir o painel.
 - **Histórico em PDF** — relatório A4 da moto (foto de capa, resumo de gastos, situação das peças e todo o histórico de oficina e trocas por conta própria) pra mandar no WhatsApp: pro comprador, pro mecânico ou pra guardar.
-- **Álbum da moto** — fotos pela câmera ou galeria (sem pedir permissão: câmera do sistema e seletor de fotos do Android), com legenda, dia e km. A capa aparece na Garagem, no Painel e no PDF. Ficam só no armazenamento privado do app.
+- **Álbum da moto** (aba Fotos) — fotos pela câmera ou galeria (sem pedir permissão: câmera do sistema e seletor de fotos do Android), com legenda, dia e km. A capa aparece na Garagem, no Painel e no PDF. Ficam só no armazenamento privado do app.
 - **Cor da moto** — cada moto tem a sua cor no app (8 opções), usada no painel, no odômetro e no PDF.
 - **Backup** — CSV com motos, trocas, serviços e catálogo, via compartilhar, restaurável em outro celular (as fotos não entram no CSV).
 - **Catálogo de peças** — cerca de 50 itens com intervalos de manutenção realistas, editáveis pelo usuário, com busca sem acento.

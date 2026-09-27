@@ -260,34 +260,6 @@ fun PainelScreen(
             }
         }
 
-        // ── Card: últimas visitas à oficina ──
-        MlCard {
-            SectionLabel("Últimas visitas à oficina", direita = { AcaoDeSecao("Histórico", onVerHistorico) })
-            val ultimos = servicos.sortedByDescending { it.data }.take(3)
-            if (ultimos.isEmpty()) {
-                Text(
-                    "Quando for à oficina, registre aqui: custo, peças trocadas e data ficam guardados.",
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                ultimos.forEachIndexed { i, servico ->
-                    if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onAbrirServico(servico) }.padding(vertical = 11.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        IconBox(R.drawable.ic_ml_wrench, cor = MaterialTheme.colorScheme.primary)
-                        Column(Modifier.weight(1f)) {
-                            Text(servico.tipoServico, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text("${formatarKm(servico.kilometragem)} · ${formatarData(servico.data)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Text(formatarReais(servico.custo), style = chakra(14.sp))
-                    }
-                }
-            }
-        }
-
         // ── Card: álbum da moto (sem fotos, o convite) ──
         MlCard {
             SectionLabel("Álbum da moto", direita = { AcaoDeSecao(if (fotos.isEmpty()) "Abrir" else "Ver todas", onAbrirFotos) })
@@ -318,6 +290,34 @@ fun PainelScreen(
                     }
                     // menos de 4 fotos: completa a linha com espaço vazio (as miniaturas não esticam)
                     repeat(4 - mostradas.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+        }
+
+        // ── Card: últimas visitas à oficina ──
+        MlCard {
+            SectionLabel("Últimas visitas à oficina", direita = { AcaoDeSecao("Histórico", onVerHistorico) })
+            val ultimos = servicos.sortedByDescending { it.data }.take(3)
+            if (ultimos.isEmpty()) {
+                Text(
+                    "Quando for à oficina, registre aqui: custo, peças trocadas e data ficam guardados.",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                ultimos.forEachIndexed { i, servico ->
+                    if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { onAbrirServico(servico) }.padding(vertical = 11.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        IconBox(R.drawable.ic_ml_wrench, cor = MaterialTheme.colorScheme.primary)
+                        Column(Modifier.weight(1f)) {
+                            Text(servico.tipoServico, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text("${formatarKm(servico.kilometragem)} · ${formatarData(servico.data)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(formatarReais(servico.custo), style = chakra(14.sp))
+                    }
                 }
             }
         }
