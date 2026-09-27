@@ -20,7 +20,7 @@ Descrição completa:
   • Histórico completo em PDF pra mandar no WhatsApp — ótimo na hora de vender a moto.
   • Álbum de fotos da moto: o dia em que ela chegou, as viagens, o antes e depois.
   • Veja o que está vencido, o que vence em breve e quantos dias faltam no seu ritmo.
-  • Lembretes de manhã e à noite quando o km está parado ou há troca vencida — atualize direto da notificação.
+  • Lembrete de manhã e à noite quando há troca vencida; à noite, se o km está parado — atualize direto da notificação.
   • Custo por km e gasto do mês. Backup em texto, restaurável em outro celular.
   Feito por um motoboy, de graça, sem anúncios. Seus dados ficam só no seu celular.
 Categoria: Automóveis e veículos. Classificação: para todos.
