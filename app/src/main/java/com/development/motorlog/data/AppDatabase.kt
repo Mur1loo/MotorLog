@@ -91,6 +91,15 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
     }
 }
 
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // colunas simples → ADD COLUMN. Motos que já existem: sem apelido, chegada desconhecida
+        db.execSQL("ALTER TABLE `Moto` ADD COLUMN `apelido` TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE `Moto` ADD COLUMN `chegouEm` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `Moto` ADD COLUMN `kmChegada` INTEGER NOT NULL DEFAULT -1")
+    }
+}
+
 @Database(
     entities = [Moto::class,
         Registro::class,
@@ -99,7 +108,7 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
         HistoricoKm::class,
         FotoMoto::class,
         Abastecimento::class],
-    version = 13,
+    version = 14,
     exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun motoDao(): MotoDao
@@ -122,7 +131,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 context = context.applicationContext,
                                 klass = AppDatabase::class.java,
                                 name = "motorlog.db"
-                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13).build()
+                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14).build()
 
                 INSTANCE = instance
                 instance

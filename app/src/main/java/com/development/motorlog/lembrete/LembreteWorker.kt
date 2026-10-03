@@ -27,8 +27,9 @@ import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.calcularRitmoKmMes
 import com.development.motorlog.domain.comRevisao
-import com.development.motorlog.domain.recomendacaoDeRevisao
 import com.development.motorlog.domain.montarLembrete
+import com.development.motorlog.domain.nomeDaMoto
+import com.development.motorlog.domain.recomendacaoDeRevisao
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.hojeUtcMillis
 import java.time.Duration
@@ -59,14 +60,14 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
             val recsPecas = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
             val recs = comRevisao(recsPecas, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, db.servicoDao().query(moto.id)))
             val ritmo = calcularRitmoKmMes(db.historicoKmDao().listarPorMoto(moto.id), hoje)
-            val texto = montarLembrete(moto.modelo, moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData, lembrarKmParado = turnoDaNoite)
+            val texto = montarLembrete(nomeDaMoto(moto), moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData, lembrarKmParado = turnoDaNoite)
                 ?: return@forEach
             // ex.: "Óleo vencido" às 7h não se repete às 19h; se à noite entrou o km parado, o texto muda e avisa
             val marca = "$hoje|$texto"
             val chave = PREF_ULTIMO_LEMBRETE + moto.id
             if (!forcar && prefs.getString(chave, null) == marca) return@forEach
             // o título da notificação já é o modelo; o corpo não precisa repetir
-            notificar(ctx, moto, texto.removePrefix("${moto.modelo}: "), comResposta = true)
+            notificar(ctx, moto, texto.removePrefix("${nomeDaMoto(moto)}: "), comResposta = true)
             prefs.edit { putString(chave, marca) }
         }
         return Result.success()
@@ -105,7 +106,7 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
             )
             val builder = NotificationCompat.Builder(ctx, CANAL)
                 .setSmallIcon(R.drawable.ic_notificacao)
-                .setContentTitle(moto.modelo)
+                .setContentTitle(nomeDaMoto(moto))
                 .setContentText(texto)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
                 .setContentIntent(pendente)

@@ -8,11 +8,12 @@ Projeto de aprendizado de desenvolvimento mobile (Kotlin/Android nativo), em evo
 
 ## Status
 
-MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v13) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
+MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v14) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
 
 ## Funcionalidades
 
 - **Garagem** — cadastro e listagem de motos (modelo, placa, ano, quilometragem).
+- **Nome e chegada da moto** — apelido ("Pretinha"), dia em que ela chegou e km na chegada. O Painel mostra "Juntos há 1 ano e 3 meses · 23.400 km", e o apelido aparece na Garagem, no Painel e nas notificações.
 - **Atualizar km** — a ação central do app: rápida e com o valor atual pré-preenchido.
 - **Troquei uma peça** — a troca feita por conta própria (em casa, com um amigo): peça por busca, km, **valor pago na peça** (opcional) e dia. Entra no gasto total e no gasto do mês; dá pra corrigir ou excluir no Histórico.
 - **Abastecimento e consumo** — "Abasteci" registra litros, valor (opcional), km do painel e se encheu o tanque; o km da moto se atualiza junto. A tela Combustível mostra o consumo médio e do último tanque (método tanque cheio a tanque cheio: os litros que entram num tanque cheio, somados aos parciais do meio, são o que a moto gastou desde o tanque cheio anterior; trechos fora de 5–100 km/l são ignorados), o preço do litro e o custo de combustível por km.
@@ -50,7 +51,7 @@ Como todo o cálculo parte do km atual, "atualizar km" é a ação mais importan
 | --- | --- |
 | Linguagem | Kotlin 2.2.10 |
 | Interface | Jetpack Compose (Material 3) |
-| Persistência | Room 2.8.1 (processamento via KSP), schema v13 com migrations explícitas e testadas |
+| Persistência | Room 2.8.1 (processamento via KSP), schema v14 com migrations explícitas e testadas |
 | Tarefas em segundo plano | WorkManager (lembretes 2x por dia) |
 | Testes | JUnit 4 (domínio) · `room-testing`/`MigrationTestHelper` (instrumentado) |
 | Build | Gradle (Kotlin DSL) com version catalog, AGP 9.2.1 |
@@ -90,7 +91,7 @@ cd MotorLog
 2. Conecte um dispositivo com depuração USB habilitada, ou inicie um emulador.
 3. Execute a configuração `app`.
 
-O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v13) são explícitas e não destrutivas.
+O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v14) são explícitas e não destrutivas.
 
 ### Testes
 

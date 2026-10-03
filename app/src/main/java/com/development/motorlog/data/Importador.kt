@@ -26,7 +26,7 @@ suspend fun AppDatabase.importar(dados: DadosImportados): ResumoImportacao {
     fun motoPorChave(chave: String) = motos.find { "${it.modelo} ${it.placa}".trim().equals(chave.trim(), ignoreCase = true) }
     dados.motos.forEach { m ->
         if (motoPorChave(m.chave) == null) {
-            val id = motoDao().inserir(Moto(modelo = m.modelo, placa = m.placa, anoFabricacao = m.ano, kilometragem = m.km, kmAtualizadoEm = m.kmAtualizadoEm ?: 0, intervaloRevisaoKm = m.intervaloRevisaoKm, cor = m.cor))
+            val id = motoDao().inserir(Moto(modelo = m.modelo, placa = m.placa, anoFabricacao = m.ano, kilometragem = m.km, kmAtualizadoEm = m.kmAtualizadoEm ?: 0, intervaloRevisaoKm = m.intervaloRevisaoKm, cor = m.cor, apelido = m.apelido, chegouEm = m.chegouEm ?: 0, kmChegada = m.kmChegada))
             if (m.kmAtualizadoEm != null) historicoKmDao().inserir(HistoricoKm(motoId = id, km = m.km, data = m.kmAtualizadoEm))
             novasMotos++
         } else ignorados++

@@ -14,12 +14,13 @@ fun erroDeKm(texto: String): String? = when {
     else -> null
 }
 
-data class ErrosMoto(val modelo: String?, val ano: String?, val km: String?, val revisao: String?) {
-    val ok get() = modelo == null && ano == null && km == null && revisao == null
+data class ErrosMoto(val modelo: String?, val ano: String?, val km: String?, val revisao: String?, val kmChegada: String? = null) {
+    val ok get() = modelo == null && ano == null && km == null && revisao == null && kmChegada == null
 }
 
-// km = null quando o campo não existe (edição: o km muda em "Atualizar km")
-fun validarMoto(modelo: String, ano: String, km: String?, revisao: String) = ErrosMoto(
+// km = null quando o campo não existe (edição: o km muda em "Atualizar km").
+// kmChegada é opcional (vazio = não lembra).
+fun validarMoto(modelo: String, ano: String, km: String?, revisao: String, kmChegada: String = "") = ErrosMoto(
     modelo = if (modelo.isBlank()) "Informe o modelo, ex.: Fan 160" else null,
     ano = when {
         ano.isBlank() -> "Informe o ano"
@@ -29,6 +30,8 @@ fun validarMoto(modelo: String, ano: String, km: String?, revisao: String) = Err
     km = km?.let(::erroDeKm),
     revisao = if (revisao.isNotBlank() && revisao.trim().toIntOrNull()?.takeIf { it >= 0 } == null)
         "Use só números, ou deixe vazio pra não avisar" else null,
+    kmChegada = if (kmChegada.isNotBlank() && kmChegada.trim().toIntOrNull()?.takeIf { it >= 0 } == null)
+        "Use só números, ou deixe vazio se não lembrar" else null,
 )
 
 data class ErrosServico(val tipo: String?, val custo: String?, val km: String?) {

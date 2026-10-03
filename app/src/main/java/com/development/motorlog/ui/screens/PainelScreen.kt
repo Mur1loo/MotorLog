@@ -48,12 +48,14 @@ import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.custoPorKm
 import com.development.motorlog.domain.descreverDias
+import com.development.motorlog.domain.descreverTempoJuntos
 import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.escolherCapa
 import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.domain.gastoNoMes
 import com.development.motorlog.domain.gastoTotal
+import com.development.motorlog.domain.kmJuntos
 import com.development.motorlog.ui.components.AcaoDeSecao
 import com.development.motorlog.ui.components.BarraDeProgresso
 import com.development.motorlog.ui.components.BotaoHistoricoPdf
@@ -186,6 +188,20 @@ fun PainelScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                // a moto como alguém: o tempo e os km de vida juntos (nome e chegada vêm do cadastro)
+                val tempoJuntos = descreverTempoJuntos(moto.chegouEm, hojeUtcMillis())
+                if (tempoJuntos != null) {
+                    val km = kmJuntos(moto.kmChegada, moto.kilometragem)?.takeIf { it > 0 }
+                    Text(
+                        (if (tempoJuntos == "hoje") "Chegou hoje" else "Juntos há $tempoJuntos") + (km?.let { " · ${formatarKm(it)}" } ?: ""),
+                        style = MaterialTheme.typography.labelLarge, color = accent,
+                    )
+                } else {
+                    TextButton(onClick = onEditarMoto) {
+                        Text("Quando ela chegou? Conte aqui", style = MaterialTheme.typography.labelMedium, color = accent)
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
                 Text("QUILOMETRAGEM ATUAL", style = MaterialTheme.typography.labelSmall, color = MlTextFaint, letterSpacing = 1.6.sp)
                 Spacer(Modifier.height(16.dp))
                 Odometer(moto.kilometragem, accent = accent)

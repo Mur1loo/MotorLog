@@ -37,6 +37,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.domain.deveMostrarPedidoDeApoio
+import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.lembrete.LembreteWorker
 import com.development.motorlog.ui.components.AbaMoto
 import com.development.motorlog.ui.components.BarraInferior
@@ -146,7 +147,7 @@ class MainActivity : ComponentActivity() {
                     "Cadastro" -> "Nova moto"
                     "EditarMoto" -> "Editar moto"
                     "EditarServico" -> "Editar visita"
-                    "Painel" -> motoSelecionada?.modelo ?: "Painel"
+                    "Painel" -> motoSelecionada?.let(::nomeDaMoto) ?: "Painel"
                     "Registro" -> "Troquei uma peça"
                     "RegistrarServico" -> "Fui à oficina"
                     "Historico" -> "Histórico"
@@ -160,9 +161,9 @@ class MainActivity : ComponentActivity() {
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
-                    "Painel" -> motoSelecionada?.let { juntarComPonto(it.anoFabricacao.toString(), it.placa) }
-                    "Trocas" -> motoSelecionada?.let { "${it.modelo} · ${formatarKm(it.kilometragem)}" }
-                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento" -> motoSelecionada?.modelo
+                    "Painel" -> motoSelecionada?.let { juntarComPonto(if (it.apelido.isNotBlank()) it.modelo else "", it.anoFabricacao.toString(), it.placa) }
+                    "Trocas" -> motoSelecionada?.let { "${nomeDaMoto(it)} · ${formatarKm(it.kilometragem)}" }
+                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento" -> motoSelecionada?.let(::nomeDaMoto)
                     "Cadastro" -> "Cadastre sua motocicleta"
                     else -> null
                 }

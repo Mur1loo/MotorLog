@@ -21,4 +21,10 @@ data class Moto(
     val cor: Int = -1,
     // foto de capa escolhida no álbum; 0 = a foto mais recente
     val fotoCapaId: Long = 0,
+    // como o dono chama a moto ("Pretinha"); vazio = sem apelido, o app usa o modelo
+    val apelido: String = "",
+    // meia-noite UTC do dia em que ela chegou; 0 = não informado (motos anteriores à v14)
+    val chegouEm: Long = 0,
+    // km do painel quando ela chegou; -1 = não informado
+    val kmChegada: Int = -1,
 )
