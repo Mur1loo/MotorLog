@@ -11,9 +11,14 @@ val MlSurfaceAlt = Color(0xFF20242D)
 val MlSurfaceHi = Color(0xFF262B35)
 val MlText = Color(0xFFF3F5F8)
 val MlTextMuted = Color(0xFF9AA3B0)
-val MlTextFaint = Color(0xFF5E6675)
+// "apagado" (rótulos de seção, abas inativas, dicas): era #5E6675 (3,0:1 no card, abaixo do mínimo
+// de leitura). #8A93A0 dá 4,6:1 a 6,1:1 em todos os fundos do app (WCAG AA pra texto pequeno)
+val MlTextFaint = Color(0xFF8A93A0)
 val MlBorder = Color(0xFF272C36)
 val MlBorderHi = Color(0xFF333A46)
+// borda do campo de texto parado: precisa de 3:1 contra o fundo pra se ver onde digitar (WCAG
+// 1.4.11). MlBorderHi dava 1,5:1 e o campo sumia no sol. Esta dá 3,4:1 no card e 3,0:1 no diálogo.
+val MlBordaCampo = Color(0xFF666E7D)
 val MlOdoBg = Color(0xFF05070A)      // fundo dos dígitos do odômetro
 val MlAccent = Color(0xFFFF6A2B)
 val MlOnAccent = Color(0xFF1A0A00)
