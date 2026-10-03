@@ -53,6 +53,7 @@ import com.development.motorlog.ui.navegacao.voltar
 import com.development.motorlog.ui.screens.AtualizarKmSheet
 import com.development.motorlog.ui.screens.CadastroScreen
 import com.development.motorlog.ui.screens.CombustivelScreen
+import com.development.motorlog.ui.screens.DiarioCuidadosScreen
 import com.development.motorlog.ui.screens.FormAbastecimentoScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
 import com.development.motorlog.ui.screens.FormServicoScreen
@@ -157,13 +158,14 @@ class MainActivity : ComponentActivity() {
                     "EditarPeca" -> if (pecaId != null) "Editar peça" else "Nova peça"
                     "Fotos" -> "Álbum da moto"
                     "Combustivel" -> "Combustível"
+                    "DiarioCuidados" -> "Diário de cuidados"
                     "Abastecimento" -> if (abastecimentoId != null) "Editar abastecimento" else "Abasteci"
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
                     "Painel" -> motoSelecionada?.let { juntarComPonto(if (it.apelido.isNotBlank()) it.modelo else "", it.anoFabricacao.toString(), it.placa) }
                     "Trocas" -> motoSelecionada?.let { "${nomeDaMoto(it)} · ${formatarKm(it.kilometragem)}" }
-                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento" -> motoSelecionada?.let(::nomeDaMoto)
+                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento", "DiarioCuidados" -> motoSelecionada?.let(::nomeDaMoto)
                     "Cadastro" -> "Cadastre sua motocicleta"
                     else -> null
                 }
@@ -371,6 +373,7 @@ class MainActivity : ComponentActivity() {
                                     onAbrirFotos = { trocarAba("Fotos") },
                                     onAbasteci = { abastecimentoId = null; abrirTela("Abastecimento") },
                                     onAbrirCombustivel = { abrirTela("Combustivel") },
+                                    onAbrirDiario = { abrirTela("DiarioCuidados") },
                                     onMensagem = { mensagem = it },
                                 )
                             }
@@ -464,6 +467,10 @@ class MainActivity : ComponentActivity() {
                                     onEditar = { a -> abastecimentoId = a.id; abrirTela("Abastecimento") },
                                 )
                             }
+                        }
+                        "DiarioCuidados" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null) DiarioCuidadosScreen(moto = motoSel, modifier = Modifier.padding(innerPadding))
                         }
                         "Abastecimento" -> {
                             val motoSel = motoSelecionada

@@ -123,6 +123,7 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
                     registros = registroDao.listarTodos(),
                     servicos = servicoDao.listarTodos(),
                     abastecimentos = db.abastecimentoDao().listarTodos(),
+                    cuidados = db.cuidadoDao().listarTodos(),
                     formatarData = ::formatarData,
                 )
             )

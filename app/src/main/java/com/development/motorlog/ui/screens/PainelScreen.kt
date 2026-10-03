@@ -56,11 +56,14 @@ import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.domain.gastoNoMes
 import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.domain.kmJuntos
+import com.development.motorlog.domain.nomeDaMoto
+import com.development.motorlog.domain.situacaoDosCuidados
 import com.development.motorlog.ui.components.AcaoDeSecao
 import com.development.motorlog.ui.components.BarraDeProgresso
 import com.development.motorlog.ui.components.BotaoHistoricoPdf
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoSecundario
+import com.development.motorlog.ui.components.CardDeCuidados
 import com.development.motorlog.ui.components.CardNaoLembra
 import com.development.motorlog.ui.components.ConfirmarEstimativaDialog
 import com.development.motorlog.ui.components.FotoArquivo
@@ -87,6 +90,7 @@ import com.development.motorlog.ui.util.formatarReaisCentavos
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.AbastecimentoViewModel
+import com.development.motorlog.ui.viewModels.CuidadoViewModel
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
@@ -103,6 +107,7 @@ fun PainelScreen(
     registroViewModel: RegistroViewModel = viewModel(),
     fotoViewModel: FotoViewModel = viewModel(),
     abastecimentoViewModel: AbastecimentoViewModel = viewModel(),
+    cuidadoViewModel: CuidadoViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
     onRegistrarTroca: () -> Unit,
     onRegistrarServico: () -> Unit,
@@ -114,6 +119,7 @@ fun PainelScreen(
     onAbrirFotos: () -> Unit,
     onAbasteci: () -> Unit,
     onAbrirCombustivel: () -> Unit,
+    onAbrirDiario: () -> Unit,
     onMensagem: (String) -> Unit,
 ) {
     val recomendacoes = registroViewModel.recomendacoes
@@ -138,6 +144,7 @@ fun PainelScreen(
     }
     LaunchedEffect(moto.id) { fotoViewModel.carregar(moto.id) }
     LaunchedEffect(moto.id) { abastecimentoViewModel.carregar(moto.id) }
+    LaunchedEffect(moto.id) { cuidadoViewModel.carregar(moto.id) }
     val consumo = abastecimentoViewModel.resumo
     val fotos = fotoViewModel.fotos
     val capa = escolherCapa(fotos, moto.fotoCapaId)
@@ -319,6 +326,20 @@ fun PainelScreen(
                 }
             }
         }
+
+        // ── Card: cuidados (os rituais de quem trata bem a moto, em 1 toque) ──
+        CardDeCuidados(
+            titulo = "Cuidados com a ${nomeDaMoto(moto)}",
+            situacoes = situacaoDosCuidados(cuidadoViewModel.cuidados, moto.kilometragem, hojeUtcMillis()),
+            accent = accent,
+            onRegistrar = { s ->
+                cuidadoViewModel.registrar(moto, s.tipo, hojeUtcMillis()) { registrado ->
+                    val oQue = s.tipo.nome.lowercase()
+                    onMensagem(if (registrado) "Anotado no diário: $oQue." else "Já estava anotado hoje: $oQue.")
+                }
+            },
+            onAbrirDiario = onAbrirDiario,
+        )
 
         // ── Card: consumo (abre a tela Combustível) ──
         MlCard(onClick = onAbrirCombustivel, pad = 14.dp) {
