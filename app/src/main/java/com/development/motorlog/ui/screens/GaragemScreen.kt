@@ -61,6 +61,7 @@ import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.util.juntarComPonto
 
 @Composable
 fun GaragemScreen(
@@ -198,7 +199,7 @@ fun MotoCard(moto: Moto, alertas: ResumoAlertas?, ritmoKmMes: Int?, capa: String
             AvatarDaMoto(capa, accent, tamanho = 68.dp)
             Column(Modifier.weight(1f)) {
                 Text(moto.modelo, style = MaterialTheme.typography.titleLarge)
-                Text("${moto.anoFabricacao} · ${moto.placa}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(juntarComPonto(moto.anoFabricacao.toString(), moto.placa), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(9.dp))
                 Odometer(moto.kilometragem, tamanho = TamanhoOdometro.PEQUENO, accent = accent)
             }

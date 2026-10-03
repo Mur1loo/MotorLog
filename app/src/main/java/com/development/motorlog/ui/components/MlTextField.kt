@@ -26,16 +26,23 @@ fun MlTextField(
     numerico: Boolean = false,
     erro: Boolean = false,
     textoApoio: (@Composable () -> Unit)? = null,
+    // mensagem de erro do campo (domain/Validacao.kt): deixa o campo vermelho e diz o que corrigir
+    ajuda: String? = null,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     keyboardOptions: KeyboardOptions? = null,
 ) {
+    val apoio: (@Composable () -> Unit)? = when {
+        textoApoio != null -> textoApoio
+        ajuda != null -> { { Text(ajuda) } }
+        else -> null
+    }
     OutlinedTextField(
         value = valor,
         onValueChange = aoMudar,
         label = { Text(rotulo) },
         singleLine = true,
-        isError = erro,
-        supportingText = textoApoio,
+        isError = erro || ajuda != null,
+        supportingText = apoio,
         leadingIcon = icone?.let { { Icon(painterResource(it), contentDescription = null) } },
         keyboardOptions = keyboardOptions ?: KeyboardOptions(keyboardType = if (numerico) KeyboardType.Number else KeyboardType.Text),
         keyboardActions = keyboardActions,

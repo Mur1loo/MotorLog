@@ -61,6 +61,7 @@ import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.util.juntarComPonto
 
 // telas que vivem "dentro de uma moto" e mostram a barra inferior com o FAB +KM
 private val TELAS_DA_MOTO = setOf("Painel", "Historico", "Trocas", "Fotos")
@@ -135,7 +136,7 @@ class MainActivity : ComponentActivity() {
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
-                    "Painel" -> motoSelecionada?.let { "${it.anoFabricacao} · ${it.placa}" }
+                    "Painel" -> motoSelecionada?.let { juntarComPonto(it.anoFabricacao.toString(), it.placa) }
                     "Trocas" -> motoSelecionada?.let { "${it.modelo} · ${formatarKm(it.kilometragem)}" }
                     "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos" -> motoSelecionada?.modelo
                     "Cadastro" -> "Cadastre sua motocicleta"

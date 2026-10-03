@@ -78,7 +78,7 @@ fun RevisaoDetailScreen(
             Row(Modifier.fillMaxWidth()) {
                 ColunaResumo(R.drawable.ic_ml_gauge, formatarNumero(servico.kilometragem), "km", accent, Modifier.weight(1f), numero = true)
                 ColunaResumo(R.drawable.ic_ml_calendar, formatarData(servico.data), null, accent, Modifier.weight(1f))
-                ColunaResumo(R.drawable.ic_ml_pin, servico.local, null, accent, Modifier.weight(1f))
+                ColunaResumo(R.drawable.ic_ml_pin, servico.local.ifBlank { "Oficina não informada" }, null, accent, Modifier.weight(1f))
             }
         }
 

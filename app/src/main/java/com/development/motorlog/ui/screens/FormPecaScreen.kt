@@ -30,6 +30,7 @@ import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.domain.validarPeca
 
 @Composable
 fun FormPecaScreen(
@@ -40,17 +41,19 @@ fun FormPecaScreen(
 ) {
     var nome by rememberSaveable { mutableStateOf(peca?.nome ?: "") }
     var intervalo by rememberSaveable { mutableStateOf(peca?.intervaloKm?.toString() ?: "") }
-    var erro by rememberSaveable { mutableStateOf<String?>(null) }
+    // os erros só aparecem depois da 1ª tentativa de salvar
+    var tentouSalvar by rememberSaveable { mutableStateOf(false) }
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
-    val intervaloInt = intervalo.toIntOrNull()
+    val intervaloInt = intervalo.trim().toIntOrNull()
+    val erros = validarPeca(nome, intervalo)
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             SectionLabel("Peça")
-            MlTextField(nome, { nome = it; erro = null }, "Nome da peça", icone = iconeDaPeca(nome.ifBlank { "peça" }))
+            MlTextField(nome, { nome = it }, "Nome da peça", icone = iconeDaPeca(nome.ifBlank { "peça" }), ajuda = erros.nome.takeIf { tentouSalvar })
             Spacer(Modifier.height(12.dp))
             SectionLabel("Intervalo")
-            MlTextField(intervalo, { intervalo = it; erro = null }, "Troca a cada quantos km?", icone = R.drawable.ic_ml_gauge, numerico = true)
+            MlTextField(intervalo, { intervalo = it }, "Troca a cada quantos km?", icone = R.drawable.ic_ml_gauge, numerico = true, ajuda = erros.intervalo.takeIf { tentouSalvar })
             Spacer(Modifier.height(12.dp))
             MlCard(pad = 14.dp, cor = MaterialTheme.colorScheme.surfaceContainerHigh, borda = androidx.compose.ui.graphics.Color.Transparent) {
                 Text(
@@ -70,17 +73,14 @@ fun FormPecaScreen(
         }
         RodapeDeForm(
             textoBotao = if (peca != null) "Salvar alterações" else "Salvar peça",
-            erro = erro,
+            erro = if (tentouSalvar && !erros.ok) "Corrija os campos em vermelho." else null,
             icone = R.drawable.ic_ml_check,
             onClick = {
-                // intervalo 0 marcaria VENCIDA no instante da troca; negativo inverte a conta
-                if (intervaloInt == null || intervaloInt <= 0 || nome.isBlank()) {
-                    erro = "Informe o nome e um intervalo em km maior que zero."
-                    return@RodapeDeForm
-                }
-                erro = null
-                if (peca != null) viewModel.atualizarPeca(peca.copy(nome = nome, intervaloKm = intervaloInt))
-                else viewModel.inserirPeca(Peca(nome = nome, intervaloKm = intervaloInt))
+                tentouSalvar = true
+                // validarPeca: nome preenchido e intervalo > 0 (0 marcaria VENCIDA no instante da troca)
+                if (!erros.ok || intervaloInt == null) return@RodapeDeForm
+                if (peca != null) viewModel.atualizarPeca(peca.copy(nome = nome.trim(), intervaloKm = intervaloInt))
+                else viewModel.inserirPeca(Peca(nome = nome.trim(), intervaloKm = intervaloInt))
                 onSalvar()
             },
         )

@@ -19,6 +19,7 @@ fun CampoReais(
     modifier: Modifier = Modifier,
     icone: Int? = null,
     explicar: Boolean = true,
+    ajuda: String? = null,   // erro vindo do formulário (ex.: "Informe o valor pago")
 ) {
     val invalido = valor.isNotBlank() && lerReais(valor) == null
     MlTextField(
@@ -26,6 +27,7 @@ fun CampoReais(
         icone = icone,
         erro = invalido,
         textoApoio = if (invalido && explicar) { { Text("Use só números, ex.: 45,90") } } else null,
+        ajuda = if (invalido) null else ajuda,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     )
 }
