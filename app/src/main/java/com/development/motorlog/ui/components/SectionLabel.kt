@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,13 +35,14 @@ fun SectionLabel(
     }
 }
 
-// Ação de texto em accent ao lado do rótulo ("Ver todas", "Histórico")
+// Ação de texto em accent ao lado do rótulo ("Ver todas", "Histórico"). Área de toque de 48 dp
+// (o texto sozinho dava ~32 dp: difícil de acertar com luva ou com a moto ligada)
 @Composable
 fun AcaoDeSecao(texto: String, onClick: () -> Unit) {
     Text(
         texto,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.clickable(role = Role.Button) { onClick() }.padding(horizontal = 6.dp, vertical = 8.dp),
+        modifier = Modifier.minimumInteractiveComponentSize().clickable(role = Role.Button) { onClick() }.padding(horizontal = 6.dp, vertical = 8.dp),
     )
 }

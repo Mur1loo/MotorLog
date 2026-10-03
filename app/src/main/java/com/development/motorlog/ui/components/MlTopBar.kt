@@ -72,7 +72,7 @@ fun BotaoDeCabecalho(texto: String, icone: Int, descricao: String, onClick: () -
         onClick = onClick,
         shape = MlFormas.pill,
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-        modifier = Modifier.heightIn(min = 40.dp).semantics { contentDescription = descricao },
+        modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = descricao },
     ) {
         Icon(painterResource(icone), contentDescription = null, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
