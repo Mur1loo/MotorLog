@@ -23,6 +23,7 @@ import com.development.motorlog.R
 import com.development.motorlog.data.Peca
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.hojeUtcMillis
+import com.development.motorlog.domain.reaisParaTexto
 
 // "Troquei agora" (troca por conta própria de UMA peça, sem sair da tela) e também a edição de
 // uma troca já registrada (onExcluir != null). km nasce com o atual da moto; preço é opcional
@@ -35,15 +36,15 @@ fun RegistrarTrocaDialog(
     onCancelar: () -> Unit,
     onEditarPeca: (() -> Unit)? = null,
     onExcluir: (() -> Unit)? = null,
-    precoInicial: Int = 0,
+    precoInicial: Int = 0,   // centavos
     dataInicial: Long = hojeUtcMillis(),
 ) {
     val editando = onExcluir != null
     var km by rememberSaveable { mutableStateOf(kmAtual.toString()) }
-    var preco by rememberSaveable { mutableStateOf(if (precoInicial > 0) precoInicial.toString() else "") }
+    var preco by rememberSaveable { mutableStateOf(if (precoInicial > 0) reaisParaTexto(precoInicial) else "") }
     var data by rememberSaveable { mutableLongStateOf(dataInicial) }
     val kmInt = km.toIntOrNull()
-    val precoInt = if (preco.isBlank()) 0 else preco.toIntOrNull()
+    val precoInt = reaisOpcional(preco)   // centavos
 
     AlertDialog(
         onDismissRequest = onCancelar,
@@ -59,7 +60,7 @@ fun RegistrarTrocaDialog(
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     MlTextField(km, { km = it }, "Km da troca", Modifier.weight(1f), numerico = true, erro = kmInt == null)
-                    MlTextField(preco, { preco = it }, "Peça (R$)", Modifier.weight(1f), numerico = true, erro = precoInt == null)
+                    CampoReais(preco, { preco = it }, "Valor da peça", Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(8.dp))
                 CampoData(data, { data = it }, rotulo = "Quando", cor = MaterialTheme.colorScheme.surfaceContainerHighest)

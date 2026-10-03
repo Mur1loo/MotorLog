@@ -42,6 +42,10 @@ import com.development.motorlog.data.Servico
 import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.components.CampoReais
+import com.development.motorlog.ui.components.reaisOpcional
+import com.development.motorlog.domain.lerReais
+import com.development.motorlog.domain.reaisParaTexto
 
 // o que um motoboy faz na oficina, do mais ao menos frequente; texto livre continua valendo
 private val TIPOS_SUGERIDOS = listOf("Revisão", "Troca de óleo", "Pneu", "Freios", "Relação", "Elétrica", "Alinhamento", "Outro")
@@ -56,7 +60,7 @@ fun FormServicoScreen(
     onSalvar: () -> Unit,
 ) {
     var tipoServico by rememberSaveable { mutableStateOf(servico?.tipoServico ?: "") }
-    var custo by rememberSaveable { mutableStateOf(servico?.custo?.toString() ?: "") }
+    var custo by rememberSaveable { mutableStateOf(servico?.custo?.let(::reaisParaTexto) ?: "") }
     var local by rememberSaveable { mutableStateOf(servico?.local ?: "") }
     // km nasce do km atual da moto (o serviço normalmente é feito agora)
     var km by rememberSaveable { mutableStateOf((servico?.kilometragem ?: moto.kilometragem).toString()) }
@@ -75,7 +79,7 @@ fun FormServicoScreen(
         LaunchedEffect(servico) { viewModel.carregarRegistrosDoServico(servico.id) }
         val registros = viewModel.registrosDoServico
         if (!carregouSelecao && registros.isNotEmpty() && registros.all { it.servicoId == servico.id }) {
-            selecionadas = registros.associate { it.pecaId to it.preco.toString() }
+            selecionadas = registros.associate { it.pecaId to if (it.preco > 0) reaisParaTexto(it.preco) else "" }
             carregouSelecao = true
         }
     }
@@ -106,7 +110,7 @@ fun FormServicoScreen(
             item { SectionLabel("Quanto e onde") }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    MlTextField(custo, { custo = it; erro = null }, "Valor pago (R$)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, numerico = true)
+                    CampoReais(custo, { custo = it; erro = null }, "Valor pago (R$)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar)
                     MlTextField(km, { km = it; erro = null }, "Km", Modifier.weight(0.8f), icone = R.drawable.ic_ml_gauge, numerico = true)
                 }
             }
@@ -134,9 +138,9 @@ fun FormServicoScreen(
                         IconBox(iconeDaPeca(peca.nome), cor = if (marcada) MaterialTheme.colorScheme.primary else null, tamanho = 34.dp)
                         Text(peca.nome, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                         if (marcada) {
-                            MlTextField(
-                                selecionadas[peca.id] ?: "", { selecionadas = selecionadas + (peca.id to it) }, "R$",
-                                Modifier.width(112.dp), numerico = true,
+                            CampoReais(
+                                selecionadas[peca.id] ?: "", { selecionadas = selecionadas + (peca.id to it); erro = null }, "R$",
+                                Modifier.width(112.dp), explicar = false,
                             )
                         }
                     }
@@ -150,10 +154,16 @@ fun FormServicoScreen(
             erro = erro,
             icone = R.drawable.ic_ml_check,
             onClick = {
-                val custoInt = custo.toIntOrNull()
+                val custoInt = lerReais(custo)   // centavos
                 val kmInt = km.toIntOrNull()
                 if (custoInt == null || kmInt == null || tipoServico.isBlank() || local.isBlank()) {
                     erro = "Preencha todos os campos corretamente!"
+                    return@RodapeDeForm
+                }
+                // preço de peça ilegível não vira R$ 0 escondido: avisa e não salva
+                val pecasComPreco = selecionadas.mapValues { reaisOpcional(it.value) }
+                if (pecasComPreco.values.any { it == null }) {
+                    erro = "Confira o valor das peças marcadas em vermelho (ex.: 45,90)."
                     return@RodapeDeForm
                 }
                 erro = null
@@ -166,10 +176,9 @@ fun FormServicoScreen(
                     data = data,
                     local = local,
                 )
-                // texto do preço -> Int (vazio/invalid vira 0)
-                val pecasComPreco = selecionadas.mapValues { it.value.toIntOrNull() ?: 0 }
-                if (servico != null) viewModel.atualizarServicoComPecas(moto, novo, pecasComPreco)
-                else viewModel.inserirServicoComPecas(moto, novo, pecasComPreco)
+                val precos = pecasComPreco.mapValues { it.value ?: 0 }
+                if (servico != null) viewModel.atualizarServicoComPecas(moto, novo, precos)
+                else viewModel.inserirServicoComPecas(moto, novo, precos)
                 onSalvar()
             },
         )

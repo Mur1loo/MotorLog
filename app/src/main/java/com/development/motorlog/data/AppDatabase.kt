@@ -74,6 +74,15 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     }
 }
 
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // sem mudar colunas: dinheiro passa de reais inteiros pra CENTAVOS (domain/Dinheiro.kt),
+        // pra aceitar "45,90". R$ 60 vira 6000; o valor que a pessoa vê não muda.
+        db.execSQL("UPDATE `Servico` SET `custo` = `custo` * 100")
+        db.execSQL("UPDATE `Registro` SET `preco` = `preco` * 100")
+    }
+}
+
 @Database(
     entities = [Moto::class,
         Registro::class,
@@ -81,7 +90,7 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
         Servico::class,
         HistoricoKm::class,
         FotoMoto::class],
-    version = 11,
+    version = 12,
     exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun motoDao(): MotoDao
@@ -103,7 +112,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 context = context.applicationContext,
                                 klass = AppDatabase::class.java,
                                 name = "motorlog.db"
-                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11).build()
+                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12).build()
 
                 INSTANCE = instance
                 instance

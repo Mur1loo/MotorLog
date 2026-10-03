@@ -34,10 +34,10 @@ class ImportadorTest {
         motos = listOf(MotoImportada("Crosser", "ABC1D23", 2020, 16000, kmAtualizadoEm = 86_400_000L * 5)),
         trocas = listOf(
             TrocaImportada("Crosser ABC1D23", "Óleo do motor", 12000, 0, emServico = false),
-            TrocaImportada("Crosser ABC1D23", "Óleo do motor", 16000, 60, emServico = true),
+            TrocaImportada("Crosser ABC1D23", "Óleo do motor", 16000, 6000, emServico = true),
             TrocaImportada("Crosser ABC1D23", "Peça que não existe", 15000, 0, emServico = false),
         ),
-        servicos = listOf(ServicoImportado("Crosser ABC1D23", "Revisão", 86_400_000L * 9, 16000, 250, "Zé")),
+        servicos = listOf(ServicoImportado("Crosser ABC1D23", "Revisão", 86_400_000L * 9, 16000, 25000, "Zé")),
         pecas = listOf(PecaImportada("Óleo do motor", 3000)),
         avisos = emptyList(),
     )
@@ -57,7 +57,7 @@ class ImportadorTest {
         val trocas = db.registroDao().listarRegistros(moto.id)
         val noServico = trocas.single { it.kmTroca == 16000 }
         assertEquals(servico.id, noServico.servicoId)
-        assertEquals(60, noServico.preco)
+        assertEquals(6000, noServico.preco)
         assertNotNull(trocas.single { it.kmTroca == 12000 }.let { it.servicoId ?: 0L })
 
         // segunda vez: tudo já existe

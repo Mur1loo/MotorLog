@@ -21,9 +21,9 @@ class ImportacaoTest {
             pecas = listOf(Peca(id = 7, nome = "Óleo do motor", intervaloKm = 3000), Peca(id = 8, nome = "Vela", intervaloKm = 10000)),
             registros = listOf(
                 Registro(motoId = 1, pecaId = 7, kmTroca = 12000, servicoId = null, preco = 0),
-                Registro(motoId = 1, pecaId = 7, kmTroca = 16000, servicoId = 3, preco = 60),
+                Registro(motoId = 1, pecaId = 7, kmTroca = 16000, servicoId = 3, preco = 6090),
             ),
-            servicos = listOf(Servico(id = 3, motoId = 1, custo = 250, kilometragem = 16000, tipoServico = "Revisão", data = 9 * dia, local = "Zé")),
+            servicos = listOf(Servico(id = 3, motoId = 1, custo = 25000, kilometragem = 16000, tipoServico = "Revisão", data = 9 * dia, local = "Zé")),
             formatarData = ::fmt,
         )
         val d = lerExportacao(csv, ::parse)
@@ -31,8 +31,8 @@ class ImportacaoTest {
         assertEquals(listOf(MotoImportada("Crosser", "ABC1D23", 2020, 16000, 5 * dia, 5000)), d.motos)
         assertEquals(2, d.trocas.size)
         assertEquals(TrocaImportada("Crosser ABC1D23", "Óleo do motor", 12000, 0, emServico = false), d.trocas[0])
-        assertEquals(TrocaImportada("Crosser ABC1D23", "Óleo do motor", 16000, 60, emServico = true), d.trocas[1])
-        assertEquals(listOf(ServicoImportado("Crosser ABC1D23", "Revisão", 9 * dia, 16000, 250, "Zé")), d.servicos)
+        assertEquals(TrocaImportada("Crosser ABC1D23", "Óleo do motor", 16000, 6090, emServico = true), d.trocas[1])
+        assertEquals(listOf(ServicoImportado("Crosser ABC1D23", "Revisão", 9 * dia, 16000, 25000, "Zé")), d.servicos)
         assertEquals(listOf(PecaImportada("Óleo do motor", 3000), PecaImportada("Vela", 10000)), d.pecas)
         assertTrue(d.avisos.isEmpty())
     }
@@ -55,13 +55,13 @@ class ImportacaoTest {
         val csv = montarExportacao(
             motos = listOf(Moto(id = 1, modelo = "Fan", placa = "XYZ", anoFabricacao = 2019, kilometragem = 30000, cor = 6)),
             pecas = listOf(Peca(id = 7, nome = "Vela", intervaloKm = 10000)),
-            registros = listOf(Registro(motoId = 1, pecaId = 7, kmTroca = 29000, servicoId = null, preco = 35, data = 12 * dia)),
+            registros = listOf(Registro(motoId = 1, pecaId = 7, kmTroca = 29000, servicoId = null, preco = 3500, data = 12 * dia)),
             servicos = emptyList(),
             formatarData = ::fmt,
         )
         val d = lerExportacao(csv, ::parse)
         assertEquals(6, d.motos.single().cor)
-        assertEquals(TrocaImportada("Fan XYZ", "Vela", 29000, 35, emServico = false, data = 12 * dia), d.trocas.single())
+        assertEquals(TrocaImportada("Fan XYZ", "Vela", 29000, 3500, emServico = false, data = 12 * dia), d.trocas.single())
 
         // formato da v10: MOTOS com 6 colunas, TROCAS com 5
         val antigo = "MOTOS\nmodelo;placa;ano;km_atual;km_atualizado_em;revisao_a_cada_km\nFan;XYZ;2019;30000;;0\n" +
@@ -69,6 +69,7 @@ class ImportacaoTest {
         val v = lerExportacao(antigo, ::parse)
         assertEquals(-1, v.motos.single().cor)
         assertEquals(null, v.trocas.single().data)
+        assertEquals("backup de antes dos centavos: 35 = R$ 35,00", 3500, v.trocas.single().preco)
         assertTrue(v.avisos.isEmpty())
     }
 }

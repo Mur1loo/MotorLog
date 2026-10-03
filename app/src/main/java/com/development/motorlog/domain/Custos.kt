@@ -6,8 +6,8 @@ import com.development.motorlog.data.Servico
 import java.time.LocalDate
 
 // Quanto a moto custa pra rodar: o motoboy pensa em "quanto gasto por km / por mês".
-// Gasto total = visitas à oficina + trocas avulsas com preço. Km rodados = km atual − 1º km
-// registrado no app (HistoricoKm). Sem km rodado ainda, não há custo por km (null).
+// Gasto total = visitas à oficina + trocas avulsas com preço, em CENTAVOS (Dinheiro.kt). Km rodados =
+// km atual − 1º km registrado no app (HistoricoKm). Sem km rodado ainda, não há custo por km (null).
 
 fun gastoTotal(servicos: List<Servico>, trocasAvulsas: List<Registro>): Int =
     servicos.sumOf { it.custo } + trocasAvulsas.filter { it.servicoId == null }.sumOf { it.preco }
@@ -17,9 +17,9 @@ fun kmRodadosNoApp(historico: List<HistoricoKm>, kmAtual: Int): Int {
     return (kmAtual - primeiro.km).coerceAtLeast(0)
 }
 
-// R$ por km (ex.: 0.42). null quando ainda não há km rodado registrado.
+// R$ por km (ex.: 0.42), a partir do gasto em centavos. null quando ainda não há km rodado registrado.
 fun custoPorKm(gastoTotal: Int, kmRodados: Int): Double? =
-    if (kmRodados <= 0 || gastoTotal <= 0) null else gastoTotal.toDouble() / kmRodados
+    if (kmRodados <= 0 || gastoTotal <= 0) null else gastoTotal / 100.0 / kmRodados
 
 // Primeiro dia do mês de 'hoje' (meia-noite UTC), na mesma convenção de todas as datas do app
 fun inicioDoMes(hoje: Long): Long =
