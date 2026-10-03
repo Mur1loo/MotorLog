@@ -128,12 +128,16 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
         }
     }
 
-    fun inserirMoto(moto: Moto) {
+    // aoSalvar recebe o id da moto nova depois que ela já está na lista (quem abre o Painel dela
+    // logo em seguida não pode achar a lista sem ela — MainActivity volta pra Garagem nesse caso)
+    fun inserirMoto(moto: Moto, aoSalvar: (Long) -> Unit = {}) {
         viewModelScope.launch {
             val hoje = hojeUtcMillis()
             val id = dao.inserir(moto.copy(kmAtualizadoEm = hoje))
             historicoDao.inserir(HistoricoKm(motoId = id, km = moto.kilometragem, data = hoje))
             carregarMotos()
+            carga?.join()
+            aoSalvar(id)
         }
     }
 

@@ -253,7 +253,12 @@ class MainActivity : ComponentActivity() {
                         "Cadastro" -> {
                             CadastroScreen(
                                 modifier = Modifier.padding(innerPadding),
-                                onSalvar = { mensagem = "Moto cadastrada. Toque nela pra ver o painel."; irParaTras() })
+                                // moto nova: direto pro Painel dela (Garagem → Painel; o voltar leva à Garagem)
+                                onSalvar = { id ->
+                                    mensagem = "Moto cadastrada. Agora é só manter o km em dia."
+                                    motoId = id
+                                    trocarAba("Painel")
+                                })
                         }
                         "EditarMoto" -> {
                             val motoSel = motoSelecionada
@@ -261,7 +266,7 @@ class MainActivity : ComponentActivity() {
                                 CadastroScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
-                                    onSalvar = { mensagem = "Dados da moto salvos."; irParaTras() })
+                                    onSalvar = { _ -> mensagem = "Dados da moto salvos."; irParaTras() })
                             }
                         }
                         "EditarServico" -> {

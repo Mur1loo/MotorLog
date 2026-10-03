@@ -81,6 +81,8 @@ import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.components.ConfirmarEstimativaDialog
+import com.development.motorlog.ui.components.CardNaoLembra
 
 // Painel da moto — variante "Foco no km" do protótipo (DashFoco): herói com odômetro e brilho,
 // ação protagonista, pills de contexto, tiles, próximas trocas e últimas visitas à oficina.
@@ -115,6 +117,9 @@ fun PainelScreen(
     val proxima = proximasTrocas.firstOrNull()
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
     var trocandoPecaId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var confirmarEstimativa by rememberSaveable { mutableStateOf(false) }
+    // peças que nunca tiveram troca registrada (sem a revisão, que se registra em "Fui à oficina")
+    val semRegistro = recomendacoes.filter { it.statusTroca == StatusTroca.NUNCA_TROCADA && !it.ehRevisao }
     val trocandoPeca = trocandoPecaId?.let { id -> pecas.find { it.id == id } }
 
     LaunchedEffect(moto) {
@@ -252,6 +257,11 @@ fun PainelScreen(
                     "Toque em \"Troquei uma peça\" pra registrar a primeira. A partir daí eu aviso quando cada uma vence.",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                // primeiro uso: o atalho que tira o painel do vazio, sem ter que achar a aba Trocas
+                if (semRegistro.isNotEmpty()) {
+                    Spacer(Modifier.height(12.dp))
+                    CardNaoLembra(semRegistro.size, moto.kilometragem, { confirmarEstimativa = true }, Modifier.fillMaxWidth())
+                }
             } else {
                 proximasTrocas.take(4).forEachIndexed { i, rec ->
                     if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outline)
@@ -345,6 +355,19 @@ fun PainelScreen(
                 onEditarPeca(trocandoPeca)
             },
             onCancelar = { trocandoPecaId = null },
+        )
+    }
+
+    if (confirmarEstimativa) {
+        ConfirmarEstimativaDialog(
+            semRegistro.size, moto.kilometragem,
+            onConfirmar = {
+                confirmarEstimativa = false
+                val pecasAlvo = semRegistro.mapNotNull { rec -> pecas.find { it.id == rec.pecaId } }
+                registroViewModel.registrarTrocasEmLote(moto, pecasAlvo, moto.kilometragem)
+                onMensagem("Pronto: ${pecasAlvo.size} peças marcadas aos ${formatarKm(moto.kilometragem)}. Corrija as que lembrar em Trocas.")
+            },
+            onCancelar = { confirmarEstimativa = false },
         )
     }
 
