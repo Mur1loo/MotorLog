@@ -43,6 +43,7 @@ import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import com.development.motorlog.ui.components.CampoReais
 import com.development.motorlog.ui.components.reaisOpcional
+import com.development.motorlog.domain.erroDeKm
 
 // "Troquei uma peça" (por conta própria: em casa, com um amigo): busca + lista de peças em cards
 // (ícone, nome, intervalo); km, valor da peça e dia fixos embaixo e o Salvar no rodapé — sempre
@@ -86,7 +87,7 @@ fun RegistroScreen(
             Spacer(Modifier.height(8.dp))
             SectionLabel("Km, valor e dia")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MlTextField(km, { km = it }, "Km da troca", Modifier.weight(1f), icone = R.drawable.ic_ml_gauge, numerico = true, erro = km.toIntOrNull() == null)
+                MlTextField(km, { km = it }, "Km da troca", Modifier.weight(1f), icone = R.drawable.ic_ml_gauge, numerico = true, ajuda = erroDeKm(km))
                 CampoReais(preco, { preco = it }, "Valor (opcional)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar)
             }
             Spacer(Modifier.height(8.dp))
@@ -96,13 +97,13 @@ fun RegistroScreen(
         RodapeDeForm(
             textoBotao = if (pecaSelecionada == null) "Escolha a peça" else "Salvar: ${pecaSelecionada.nome}",
             onClick = {
-                val novoKm = km.toIntOrNull() ?: return@RodapeDeForm
+                val novoKm = km.trim().toIntOrNull() ?: return@RodapeDeForm
                 val peca = pecaSelecionada ?: return@RodapeDeForm
                 val novoPreco = precoInt ?: return@RodapeDeForm
                 viewModel.registrarTroca(moto, peca, novoKm, novoPreco, data)
                 onSalvar()
             },
-            enabled = pecaSelecionada != null && km.toIntOrNull() != null && precoInt != null,
+            enabled = pecaSelecionada != null && erroDeKm(km) == null && precoInt != null,
             icone = R.drawable.ic_ml_check,
         )
     }

@@ -61,6 +61,7 @@ import com.development.motorlog.ui.util.formatarReais
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.util.juntarComPonto
 
 private enum class Filtro(val rotulo: String) { TODAS("Tudo"), SERVICOS("Oficina"), AVULSAS("Por conta") }
 
@@ -216,7 +217,7 @@ private fun ServicoCard(servico: Servico, totalPecasCatalogo: Int, vm: RegistroV
         Row(verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f)) {
                 Text(servico.tipoServico, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${formatarData(servico.data)} · ${servico.local}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(juntarComPonto(formatarData(servico.data), servico.local), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(formatarNumero(servico.kilometragem), style = chakra(15.sp))

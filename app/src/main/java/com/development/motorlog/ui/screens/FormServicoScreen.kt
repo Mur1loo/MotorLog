@@ -21,7 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -46,6 +45,7 @@ import com.development.motorlog.ui.components.CampoReais
 import com.development.motorlog.ui.components.reaisOpcional
 import com.development.motorlog.domain.lerReais
 import com.development.motorlog.domain.reaisParaTexto
+import com.development.motorlog.domain.validarServico
 
 // o que um motoboy faz na oficina, do mais ao menos frequente; texto livre continua valendo
 private val TIPOS_SUGERIDOS = listOf("Revisão", "Troca de óleo", "Pneu", "Freios", "Relação", "Elétrica", "Alinhamento", "Outro")
@@ -67,7 +67,8 @@ fun FormServicoScreen(
     // data: o VALOR (Long em millis) — nasce "hoje"; o CampoData abre o calendário
     var data by rememberSaveable { mutableLongStateOf(servico?.data ?: hojeUtcMillis()) }
     var busca by rememberSaveable { mutableStateOf("") }
-    var erro by remember { mutableStateOf<String?>(null) }
+    // os erros só aparecem depois da 1ª tentativa de salvar (não grita com quem ainda está digitando)
+    var tentouSalvar by rememberSaveable { mutableStateOf(false) }
 
     val pecas = viewModel.pecas
     // peça marcada -> texto do preço digitado (presença na chave = selecionada).
@@ -85,6 +86,11 @@ fun FormServicoScreen(
     }
 
     val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
+    val erros = validarServico(tipoServico, custo, km)
+    // preço de peça ilegível não vira R$ 0 escondido: o campo fica vermelho e não deixa salvar
+    val pecasComPreco = selecionadas.mapValues { reaisOpcional(it.value) }
+    val pecaComPrecoInvalido = pecasComPreco.values.any { it == null }
+    fun ajuda(msg: String?) = msg.takeIf { tentouSalvar }
 
     // O formulário INTEIRO é uma lista rolável e só o Salvar fica fixo. Com campos fixos no topo, o
     // teclado espremia a lista de peças a zero e cobria o campo de preço que estava sendo digitado.
@@ -106,15 +112,15 @@ fun FormServicoScreen(
                     }
                 }
             }
-            item { MlTextField(tipoServico, { tipoServico = it; erro = null }, "Tipo do serviço", icone = R.drawable.ic_ml_wrench) }
+            item { MlTextField(tipoServico, { tipoServico = it }, "Tipo do serviço", icone = R.drawable.ic_ml_wrench, ajuda = ajuda(erros.tipo)) }
             item { SectionLabel("Quanto e onde") }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    CampoReais(custo, { custo = it; erro = null }, "Valor pago (R$)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar)
-                    MlTextField(km, { km = it; erro = null }, "Km", Modifier.weight(0.8f), icone = R.drawable.ic_ml_gauge, numerico = true)
+                    CampoReais(custo, { custo = it }, "Valor pago (R$)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, ajuda = ajuda(erros.custo))
+                    MlTextField(km, { km = it }, "Km", Modifier.weight(0.8f), icone = R.drawable.ic_ml_gauge, numerico = true, ajuda = ajuda(erros.km))
                 }
             }
-            item { MlTextField(local, { local = it; erro = null }, "Nome da oficina", icone = R.drawable.ic_ml_pin) }
+            item { MlTextField(local, { local = it }, "Nome da oficina (opcional)", icone = R.drawable.ic_ml_pin) }
             item { CampoData(data, { data = it }) }
             item {
                 // ── Peças trocadas neste serviço (opcional) ──
@@ -139,7 +145,7 @@ fun FormServicoScreen(
                         Text(peca.nome, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                         if (marcada) {
                             CampoReais(
-                                selecionadas[peca.id] ?: "", { selecionadas = selecionadas + (peca.id to it); erro = null }, "R$",
+                                selecionadas[peca.id] ?: "", { selecionadas = selecionadas + (peca.id to it) }, "R$",
                                 Modifier.width(112.dp), explicar = false,
                             )
                         }
@@ -151,30 +157,25 @@ fun FormServicoScreen(
 
         RodapeDeForm(
             textoBotao = if (servico != null) "Salvar alterações" else "Salvar visita",
-            erro = erro,
+            erro = when {
+                !tentouSalvar -> null
+                !erros.ok -> "Corrija os campos em vermelho."
+                pecaComPrecoInvalido -> "Confira o valor das peças marcadas em vermelho (ex.: 45,90)."
+                else -> null
+            },
             icone = R.drawable.ic_ml_check,
             onClick = {
-                val custoInt = lerReais(custo)   // centavos
-                val kmInt = km.toIntOrNull()
-                if (custoInt == null || kmInt == null || tipoServico.isBlank() || local.isBlank()) {
-                    erro = "Preencha todos os campos corretamente!"
-                    return@RodapeDeForm
-                }
-                // preço de peça ilegível não vira R$ 0 escondido: avisa e não salva
-                val pecasComPreco = selecionadas.mapValues { reaisOpcional(it.value) }
-                if (pecasComPreco.values.any { it == null }) {
-                    erro = "Confira o valor das peças marcadas em vermelho (ex.: 45,90)."
-                    return@RodapeDeForm
-                }
-                erro = null
+                tentouSalvar = true
+                if (!erros.ok || pecaComPrecoInvalido) return@RodapeDeForm
+                // validarServico já garantiu que valor e km leem
                 val novo = Servico(
                     id = servico?.id ?: 0,
                     motoId = moto.id,
-                    custo = custoInt,
-                    kilometragem = kmInt,
-                    tipoServico = tipoServico,
+                    custo = lerReais(custo)!!,   // centavos
+                    kilometragem = km.trim().toInt(),
+                    tipoServico = tipoServico.trim(),
                     data = data,
-                    local = local,
+                    local = local.trim(),
                 )
                 val precos = pecasComPreco.mapValues { it.value ?: 0 }
                 if (servico != null) viewModel.atualizarServicoComPecas(moto, novo, precos)

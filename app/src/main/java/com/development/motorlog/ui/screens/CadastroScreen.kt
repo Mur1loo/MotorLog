@@ -47,6 +47,7 @@ import com.development.motorlog.ui.theme.MlAccentsMoto
 import com.development.motorlog.ui.theme.NOMES_DAS_CORES
 import com.development.motorlog.ui.theme.indiceDaCor
 import com.development.motorlog.ui.viewModels.MotoViewModel
+import com.development.motorlog.domain.validarMoto
 
 // moto == null → cadastro; moto != null → edição de identificação (o km se edita em "Atualizar km")
 @Composable
@@ -61,10 +62,13 @@ fun CadastroScreen(
     var ano by rememberSaveable { mutableStateOf(moto?.anoFabricacao?.toString() ?: "") }
     var km by rememberSaveable { mutableStateOf(moto?.kilometragem?.toString() ?: "") }
     var revisao by rememberSaveable { mutableStateOf(moto?.intervaloRevisaoKm?.takeIf { it > 0 }?.toString() ?: "") }
-    var erro by rememberSaveable { mutableStateOf<String?>(null) }
+    // os erros só aparecem depois da 1ª tentativa de salvar (não grita com quem ainda está digitando)
+    var tentouSalvar by rememberSaveable { mutableStateOf(false) }
     // cor da moto no app: a atual (escolhida ou automática); moto nova ganha a próxima da fila
     var cor by rememberSaveable { mutableIntStateOf(moto?.let(::indiceDaCor) ?: (viewModel.motos.size % 4)) }
     val accent = MlAccentsMoto[cor]
+    val erros = validarMoto(modelo, ano, if (moto == null) km else null, revisao)
+    fun ajuda(msg: String?) = msg.takeIf { tentouSalvar }
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
@@ -83,11 +87,11 @@ fun CadastroScreen(
             }
             Spacer(Modifier.height(16.dp))
             SectionLabel("Identificação")
-            MlTextField(modelo, { modelo = it; erro = null }, "Modelo (ex.: Fan 160, Crosser)", icone = R.drawable.ic_ml_moto)
+            MlTextField(modelo, { modelo = it }, "Modelo (ex.: Fan 160, Crosser)", icone = R.drawable.ic_ml_moto, ajuda = ajuda(erros.modelo))
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MlTextField(placa, { placa = it.uppercase(); erro = null }, "Placa", Modifier.weight(1.3f), icone = R.drawable.ic_ml_tag)
-                MlTextField(ano, { ano = it; erro = null }, "Ano", Modifier.weight(1f), numerico = true)
+                MlTextField(placa, { placa = it.uppercase() }, "Placa (opcional)", Modifier.weight(1.3f), icone = R.drawable.ic_ml_tag)
+                MlTextField(ano, { ano = it }, "Ano", Modifier.weight(1f), numerico = true, ajuda = ajuda(erros.ano))
             }
             Spacer(Modifier.height(16.dp))
             SectionLabel("Cor da moto no app")
@@ -116,7 +120,7 @@ fun CadastroScreen(
             )
             Spacer(Modifier.height(16.dp))
             SectionLabel("Revisão na oficina")
-            MlTextField(revisao, { revisao = it; erro = null }, "Revisão a cada quantos km? (opcional)", icone = R.drawable.ic_ml_wrench, numerico = true)
+            MlTextField(revisao, { revisao = it }, "Revisão a cada quantos km? (opcional)", icone = R.drawable.ic_ml_wrench, numerico = true, ajuda = ajuda(erros.revisao))
             Spacer(Modifier.height(6.dp))
             Text(
                 "Ex.: 5.000. Eu aviso quando a próxima revisão estiver chegando, contando da última visita registrada como \"Revisão\". Vazio = não avisar.",
@@ -126,7 +130,7 @@ fun CadastroScreen(
             if (moto == null) {
                 Spacer(Modifier.height(16.dp))
                 SectionLabel("Quilometragem")
-                MlTextField(km, { km = it; erro = null }, "Km que aparece no painel", icone = R.drawable.ic_ml_gauge, numerico = true)
+                MlTextField(km, { km = it }, "Km que aparece no painel", icone = R.drawable.ic_ml_gauge, numerico = true, ajuda = ajuda(erros.km))
                 Spacer(Modifier.height(8.dp))
                 MlCard(pad = 14.dp, cor = MaterialTheme.colorScheme.surfaceContainerHigh, borda = Color.Transparent) {
                     Text(
@@ -139,29 +143,19 @@ fun CadastroScreen(
         }
         RodapeDeForm(
             textoBotao = if (moto != null) "Salvar alterações" else "Salvar moto",
-            erro = erro,
+            erro = if (tentouSalvar && !erros.ok) "Corrija os campos em vermelho." else null,
             icone = R.drawable.ic_ml_check,
             onClick = {
-                val newAno = ano.toIntOrNull()
-                val newKm = km.toIntOrNull()
-                if (newAno == null || (moto == null && newKm == null) || modelo.isBlank() || placa.isBlank()) {
-                    erro = "Preencha modelo, placa, ano" + if (moto == null) " e o km do painel." else "."
-                    return@RodapeDeForm
-                }
-                if ((newKm ?: 0) < 0 || newAno !in 1900..2100) {
-                    erro = "Ano ou quilometragem inválidos."
-                    return@RodapeDeForm
-                }
-                val newRevisao = if (revisao.isBlank()) 0 else revisao.toIntOrNull()
-                if (newRevisao == null || newRevisao < 0) {
-                    erro = "Intervalo de revisão inválido (deixe vazio pra não avisar)."
-                    return@RodapeDeForm
-                }
-                erro = null
+                tentouSalvar = true
+                if (!erros.ok) return@RodapeDeForm
+                // validarMoto já garantiu que os números leem
+                val newAno = ano.trim().toInt()
+                val newKm = km.trim().toIntOrNull()
+                val newRevisao = revisao.trim().toIntOrNull() ?: 0
                 if (moto != null) {
-                    viewModel.atualizarMoto(moto.copy(modelo = modelo, placa = placa, anoFabricacao = newAno, intervaloRevisaoKm = newRevisao, cor = cor))
+                    viewModel.atualizarMoto(moto.copy(modelo = modelo.trim(), placa = placa.trim(), anoFabricacao = newAno, intervaloRevisaoKm = newRevisao, cor = cor))
                 } else {
-                    viewModel.inserirMoto(Moto(modelo = modelo, anoFabricacao = newAno, placa = placa, kilometragem = newKm!!, intervaloRevisaoKm = newRevisao, cor = cor))
+                    viewModel.inserirMoto(Moto(modelo = modelo.trim(), anoFabricacao = newAno, placa = placa.trim(), kilometragem = newKm!!, intervaloRevisaoKm = newRevisao, cor = cor))
                 }
                 onSalvar()
             },

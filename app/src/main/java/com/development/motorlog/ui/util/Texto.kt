@@ -10,3 +10,6 @@ fun semAcento(texto: String): String =
 
 fun String.contemSemAcento(busca: String): Boolean =
     semAcento(this).contains(semAcento(busca), ignoreCase = true)
+
+// "2020 · ABC1D23" pulando o que estiver vazio (placa e nome da oficina são opcionais)
+fun juntarComPonto(vararg partes: String): String = partes.filter { it.isNotBlank() }.joinToString(" · ")
