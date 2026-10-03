@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,9 +60,9 @@ import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.theme.cor
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.hojeUtcMillis
+import com.development.motorlog.ui.util.juntarComPonto
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
-import com.development.motorlog.ui.util.juntarComPonto
 
 @Composable
 fun GaragemScreen(
@@ -206,7 +207,8 @@ fun MotoCard(moto: Moto, alertas: ResumoAlertas?, ritmoKmMes: Int?, capa: String
             Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.height(13.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        // FlowRow: com 3-4 etiquetas (ou fonte grande) a última quebra a linha em vez de ser espremida
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             when {
                 alertas == null -> {}
                 alertas.vencidas > 0 -> Pill("${alertas.vencidas} vencida${if (alertas.vencidas > 1) "s" else ""}", StatusTroca.VENCIDA.cor(), icone = R.drawable.ic_ml_bell)

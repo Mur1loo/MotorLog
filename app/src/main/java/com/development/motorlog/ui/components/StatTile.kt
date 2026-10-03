@@ -2,15 +2,17 @@ package com.development.motorlog.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,8 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.development.motorlog.ui.theme.MlTextFaint
@@ -47,7 +49,12 @@ fun StatTile(
         Spacer(Modifier.height(6.dp))
         if (valor != null) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(valor, style = chakra(25.sp), color = cor, maxLines = 1)
+                // com fonte grande o número encolhe pra caber no bloco, em vez de ser cortado
+                BasicText(
+                    valor, style = chakra(25.sp).copy(color = cor), maxLines = 1,
+                    autoSize = TextAutoSize.StepBased(minFontSize = 14.sp, maxFontSize = 25.sp),
+                    modifier = Modifier.weight(1f, fill = false),
+                )
                 if (unidade != null) {
                     Spacer(Modifier.width(4.dp))
                     Text(unidade, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 3.dp))
