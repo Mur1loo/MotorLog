@@ -281,6 +281,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 aoAtualizarKm = { mostrarKm = true },
+                                mostrarAtualizarKm = telaAtual != "Painel",
                             )
                         }
                     },
@@ -314,7 +315,13 @@ class MainActivity : ComponentActivity() {
                                 CadastroScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
-                                    onSalvar = { _ -> mensagem = "Dados da moto salvos."; irParaTras() })
+                                    onSalvar = { _ -> mensagem = "Dados da moto salvos."; irParaTras() },
+                                    onExcluir = {
+                                        motoViewModel.deletarMoto(motoSel)
+                                        motoId = null
+                                        irParaGaragem()
+                                    },
+                                )
                             }
                         }
                         "EditarServico" -> {
@@ -345,11 +352,6 @@ class MainActivity : ComponentActivity() {
                                     onVerHistorico = { trocarAba("Historico") },
                                     onVerTrocas = { trocarAba("Trocas") },
                                     onEditarMoto = { abrirTela("EditarMoto") },
-                                    onExcluirMoto = {
-                                        motoViewModel.deletarMoto(motoSel)
-                                        motoId = null
-                                        irParaGaragem()
-                                    },
                                     onEditarPeca = { peca ->
                                         pecaId = peca.id
                                         abrirTela("EditarPeca")

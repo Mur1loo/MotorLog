@@ -44,8 +44,10 @@ enum class AbaMoto(val rotulo: String, val icone: Int) {
 // Barra inferior do protótipo (BottomNav): 2 abas + FAB "+KM" central + 2 abas.
 // Só aparece no contexto de uma moto; o FAB é a ação nº 1 do app. A Garagem virou o ícone de
 // moto no cabeçalho, pra dar lugar à aba Fotos (o álbum merece destaque, não o fim do Painel).
+// mostrarAtualizarKm = false na aba Painel: lá o "Atualizar km" grande já é a ação principal, e dois
+// botões laranja iguais na mesma tela disputam a atenção.
 @Composable
-fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: () -> Unit) {
+fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: () -> Unit, mostrarAtualizarKm: Boolean = true) {
     val accent = MaterialTheme.colorScheme.primary
     Column(Modifier.fillMaxWidth().background(MlBgElev)) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(MlBorder))
@@ -58,19 +60,21 @@ fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: (
         ) {
             ItemAba(AbaMoto.PAINEL, ativa == AbaMoto.PAINEL) { aoNavegar(AbaMoto.PAINEL) }
             ItemAba(AbaMoto.HISTORICO, ativa == AbaMoto.HISTORICO) { aoNavegar(AbaMoto.HISTORICO) }
-            Column(
-                modifier = Modifier
-                    .offset(y = (-18).dp)
-                    .shadow(12.dp, RoundedCornerShape(20.dp), ambientColor = accent, spotColor = accent)
-                    .size(60.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(accent)
-                    .clickable { aoAtualizarKm() },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Icon(painterResource(R.drawable.ic_ml_gauge), contentDescription = "Atualizar km", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(23.dp))
-                Text("+KM", style = chakra(9.sp), color = MaterialTheme.colorScheme.onPrimary)
+            if (mostrarAtualizarKm) {
+                Column(
+                    modifier = Modifier
+                        .offset(y = (-18).dp)
+                        .shadow(12.dp, RoundedCornerShape(20.dp), ambientColor = accent, spotColor = accent)
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(accent)
+                        .clickable { aoAtualizarKm() },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(painterResource(R.drawable.ic_ml_gauge), contentDescription = "Atualizar km", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(23.dp))
+                    Text("+KM", style = chakra(9.sp), color = MaterialTheme.colorScheme.onPrimary)
+                }
             }
             ItemAba(AbaMoto.TROCAS, ativa == AbaMoto.TROCAS) { aoNavegar(AbaMoto.TROCAS) }
             ItemAba(AbaMoto.FOTOS, ativa == AbaMoto.FOTOS) { aoNavegar(AbaMoto.FOTOS) }
