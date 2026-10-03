@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -43,18 +44,20 @@ import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.custoPorKm
-import com.development.motorlog.domain.gastoNoMes
-import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.escolherCapa
 import com.development.motorlog.domain.estimarDiasAteTroca
+import com.development.motorlog.domain.gastoNoMes
+import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.ui.components.AcaoDeSecao
 import com.development.motorlog.ui.components.BarraDeProgresso
-import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoHistoricoPdf
+import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoSecundario
+import com.development.motorlog.ui.components.CardNaoLembra
+import com.development.motorlog.ui.components.ConfirmarEstimativaDialog
 import com.development.motorlog.ui.components.FotoArquivo
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
@@ -79,8 +82,6 @@ import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
-import com.development.motorlog.ui.components.ConfirmarEstimativaDialog
-import com.development.motorlog.ui.components.CardNaoLembra
 
 // Painel da moto — variante "Foco no km" do protótipo (DashFoco): herói com odômetro e brilho,
 // ação protagonista, pills de contexto, tiles, próximas trocas e últimas visitas à oficina.
@@ -194,7 +195,7 @@ fun PainelScreen(
                 Spacer(Modifier.height(16.dp))
                 BotaoPrimario("Atualizar agora", onAtualizarKm, icone = R.drawable.ic_ml_gauge, altura = 58.dp)
                 Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (ritmoKmMes != null) PillNeutra("${formatarNumero(ritmoKmMes)} km/mês", icone = R.drawable.ic_ml_road)
                     when {
                         vencidas > 0 -> Pill("$vencidas vencida${if (vencidas > 1) "s" else ""}", StatusTroca.VENCIDA.cor(), icone = R.drawable.ic_ml_bell)

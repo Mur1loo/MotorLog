@@ -2,7 +2,7 @@ package com.development.motorlog.ui.components
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
@@ -42,7 +42,7 @@ fun BotaoPrimario(
         ),
         modifier = modifier
             .fillMaxWidth()
-            .height(altura)
+            .heightIn(min = altura)
             .then(if (enabled) Modifier.shadow(10.dp, MlFormas.botao, ambientColor = accent, spotColor = accent) else Modifier),
     ) {
         if (icone != null) {
@@ -56,7 +56,7 @@ fun BotaoPrimario(
 // Ação secundária: contorno, ícone + texto, 48dp
 @Composable
 fun BotaoSecundario(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, icone: Int? = null, enabled: Boolean = true) {
-    OutlinedButton(onClick = onClick, enabled = enabled, shape = MlFormas.botao, modifier = modifier.height(48.dp)) {
+    OutlinedButton(onClick = onClick, enabled = enabled, shape = MlFormas.botao, modifier = modifier.heightIn(min = 48.dp)) {
         if (icone != null) {
             Icon(painterResource(icone), contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(7.dp))

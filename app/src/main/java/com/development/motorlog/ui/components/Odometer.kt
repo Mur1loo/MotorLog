@@ -23,9 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.development.motorlog.ui.theme.MlAccent
 import com.development.motorlog.ui.theme.MlOdoBg
 import com.development.motorlog.ui.theme.MlTextFaint
@@ -43,11 +43,15 @@ enum class TamanhoOdometro(val altura: Dp, val largura: Dp, val fonte: Int, val 
 @Composable
 fun Odometer(km: Int, modifier: Modifier = Modifier, tamanho: TamanhoOdometro = TamanhoOdometro.GRANDE, accent: Color = MlAccent) {
     val digitos = formatarNumero(km)
+    // Os dígitos ficam em células de tamanho fixo (dp). Texto em sp cresce com a fonte do sistema e
+    // era cortado dentro da célula; aqui o tamanho é travado (o odômetro já é o maior número da tela).
+    val densidade = LocalDensity.current
+    fun fixo(tamanhoDp: Double) = with(densidade) { tamanhoDp.dp.toSp() }
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         digitos.forEachIndexed { i, ch ->
             if (i > 0) Spacer(Modifier.width(tamanho.vao))
             if (ch == '.') {
-                Text(".", style = chakra((tamanho.fonte * 0.7).sp), color = MlTextFaint,
+                Text(".", style = chakra(fixo(tamanho.fonte * 0.7)), color = MlTextFaint,
                     modifier = Modifier.width(tamanho.largura * 0.34f).padding(top = tamanho.altura * 0.25f))
             } else {
                 Box(
@@ -73,13 +77,13 @@ fun Odometer(km: Int, modifier: Modifier = Modifier, tamanho: TamanhoOdometro = 
                             (slideInVertically { -it } + fadeIn()) togetherWith (slideOutVertically { it } + fadeOut())
                         },
                         label = "digito",
-                    ) { d -> Text(d.toString(), style = chakra(tamanho.fonte.sp), color = Color.White) }
+                    ) { d -> Text(d.toString(), style = chakra(fixo(tamanho.fonte.toDouble())), color = Color.White) }
                 }
             }
         }
         Spacer(Modifier.width(6.dp))
         Text(
-            "KM", style = chakra((tamanho.fonte * 0.4).sp), color = accent,
+            "KM", style = chakra(fixo(tamanho.fonte * 0.4)), color = accent,
             modifier = Modifier.padding(top = tamanho.altura * 0.3f),
         )
     }

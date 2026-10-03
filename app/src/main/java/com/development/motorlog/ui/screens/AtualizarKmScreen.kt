@@ -10,10 +10,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.theme.MlBgElev
 import com.development.motorlog.ui.theme.MlBorder
@@ -43,7 +47,6 @@ import com.development.motorlog.ui.theme.MlOdoBg
 import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.theme.chakra
 import com.development.motorlog.ui.theme.cor
-import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.viewModels.MotoViewModel
@@ -112,7 +115,12 @@ fun AtualizarKmSheet(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(formatarNumero(novoKm), style = chakra(46.sp), color = Color.White)
+                    // fonte grande: o número encolhe pra caber no visor, em vez de quebrar a linha
+                    BasicText(
+                        formatarNumero(novoKm), style = chakra(46.sp).copy(color = Color.White), maxLines = 1,
+                        autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 46.sp),
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
                     Spacer(Modifier.size(6.dp))
                     Text("km", style = chakra(18.sp), color = accent, modifier = Modifier.padding(bottom = 6.dp))
                 }
@@ -153,7 +161,7 @@ fun AtualizarKmSheet(
                     linha.forEach { k ->
                         if (k == "del") {
                             Box(
-                                modifier = Modifier.weight(1f).height(48.dp).clip(RoundedCornerShape(12.dp))
+                                modifier = Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
                                     .background(MaterialTheme.colorScheme.surfaceContainerHigh).clickable { tecla(k) },
                                 contentAlignment = Alignment.Center,
                             ) {
@@ -183,7 +191,7 @@ fun AtualizarKmSheet(
 @Composable
 private fun Tecla(rotulo: String, modifier: Modifier, altura: androidx.compose.ui.unit.Dp = 48.dp, fonte: androidx.compose.ui.unit.TextUnit = 21.sp, onClick: () -> Unit) {
     Box(
-        modifier = modifier.height(altura).clip(RoundedCornerShape(12.dp))
+        modifier = modifier.heightIn(min = altura).clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MlBorder, RoundedCornerShape(12.dp))
             .clickable { onClick() },

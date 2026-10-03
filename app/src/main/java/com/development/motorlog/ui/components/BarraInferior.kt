@@ -91,6 +91,6 @@ private fun ItemAba(aba: AbaMoto, ativa: Boolean, onClick: () -> Unit) {
     ) {
         Icon(painterResource(aba.icone), contentDescription = aba.rotulo, tint = cor, modifier = Modifier.size(23.dp))
         Spacer(Modifier.height(3.dp))
-        Text(aba.rotulo, fontSize = 10.5.sp, fontWeight = if (ativa) FontWeight.Bold else FontWeight.Medium, color = cor)
+        Text(aba.rotulo, fontSize = 10.5.sp, fontWeight = if (ativa) FontWeight.Bold else FontWeight.Medium, color = cor, maxLines = 1)
     }
 }
