@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,20 +31,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
+import com.development.motorlog.domain.erroDeKm
+import com.development.motorlog.domain.ordenarPecasPorUso
 import com.development.motorlog.ui.components.CampoData
+import com.development.motorlog.ui.components.CampoReais
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.MlTextField
 import com.development.motorlog.ui.components.RodapeDeForm
 import com.development.motorlog.ui.components.SectionLabel
+import com.development.motorlog.ui.components.reaisOpcional
 import com.development.motorlog.ui.util.contemSemAcento
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
-import com.development.motorlog.ui.components.CampoReais
-import com.development.motorlog.ui.components.reaisOpcional
-import com.development.motorlog.domain.erroDeKm
 
 // "Troquei uma peça" (por conta própria: em casa, com um amigo): busca + lista de peças em cards
 // (ícone, nome, intervalo); km, valor da peça e dia fixos embaixo e o Salvar no rodapé — sempre
@@ -65,7 +67,9 @@ fun RegistroScreen(
     var data by rememberSaveable { mutableLongStateOf(hojeUtcMillis()) }
     var busca by rememberSaveable { mutableStateOf("") }
     val pecaSelecionada = pecas.find { it.id == pecaSelecionadaId }
-    val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
+    LaunchedEffect(moto.id) { viewModel.carregarUsoDasPecas(moto) }
+    // as que esta moto mais troca primeiro, depois as do dia a dia (óleo, relação, pneus, freios)
+    val pecasFiltradas = ordenarPecasPorUso(pecas, viewModel.usoPorPeca).filter { it.nome.contemSemAcento(busca) }
     val precoInt = reaisOpcional(preco)   // centavos
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
