@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.development.motorlog.ui.theme.MlTextFaint
 
@@ -40,6 +41,6 @@ fun AcaoDeSecao(texto: String, onClick: () -> Unit) {
         texto,
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.clickable { onClick() }.padding(horizontal = 6.dp, vertical = 8.dp),
+        modifier = Modifier.clickable(role = Role.Button) { onClick() }.padding(horizontal = 6.dp, vertical = 8.dp),
     )
 }

@@ -2,7 +2,6 @@ package com.development.motorlog.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +15,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -104,7 +106,7 @@ fun CadastroScreen(
             }
             Spacer(Modifier.height(16.dp))
             SectionLabel("Cor da moto no app")
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            FlowRow(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 MlAccentsMoto.forEachIndexed { i, c ->
                     val escolhida = i == cor
                     Box(
@@ -113,8 +115,9 @@ fun CadastroScreen(
                             .clip(CircleShape)
                             .background(c)
                             .then(if (escolhida) Modifier.border(3.dp, Color.White, CircleShape) else Modifier)
-                            .clickable { cor = i }
-                            .semantics { contentDescription = NOMES_DAS_CORES[i] + if (escolhida) " (escolhida)" else "" },
+                            // opção única: o leitor de tela diz "Laranja, selecionado, 1 de 8"
+                            .selectable(selected = escolhida, role = Role.RadioButton) { cor = i }
+                            .semantics { contentDescription = NOMES_DAS_CORES[i] },
                         contentAlignment = Alignment.Center,
                     ) {
                         if (escolhida) Icon(painterResource(R.drawable.ic_ml_check), contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))

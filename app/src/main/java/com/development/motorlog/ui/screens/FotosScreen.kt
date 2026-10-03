@@ -144,7 +144,7 @@ fun FotosScreen(
                 }
             } else {
                 // ── capa em destaque ──
-                Box(Modifier.fillMaxWidth().aspectRatio(16f / 10f).clip(MlFormas.card).clickable { abertaId = capa.id }) {
+                Box(Modifier.fillMaxWidth().aspectRatio(16f / 10f).clip(MlFormas.card).clickable(onClickLabel = "ver a foto") { abertaId = capa.id }) {
                     FotoArquivo(capa.arquivo, Modifier.fillMaxSize(), ladoMaxPx = 1280, descricao = "Capa da moto")
                     Box(
                         Modifier.fillMaxSize().background(
@@ -179,7 +179,7 @@ fun FotosScreen(
             }
         }
         items(fotos, key = { it.id }) { foto ->
-            Column(Modifier.clickable { abertaId = foto.id }) {
+            Column(Modifier.clickable(onClickLabel = "ver a foto") { abertaId = foto.id }) {
                 FotoArquivo(foto.arquivo, Modifier.fillMaxWidth().aspectRatio(1f).clip(MlFormas.campo), descricao = foto.legenda.ifBlank { null })
                 Spacer(Modifier.height(5.dp))
                 Text(foto.legenda.ifBlank { formatarData(foto.data) }, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
