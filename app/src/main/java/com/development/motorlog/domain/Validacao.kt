@@ -54,3 +54,18 @@ fun validarPeca(nome: String, intervalo: String) = ErrosPeca(
     nome = if (nome.isBlank()) "Informe o nome da peça" else null,
     intervalo = if (intervalo.trim().toIntOrNull()?.takeIf { it > 0 } == null) "Informe os km entre uma troca e outra, ex.: 3000" else null,
 )
+
+data class ErrosAbastecimento(val km: String?, val litros: String?, val valor: String?) {
+    val ok get() = km == null && litros == null && valor == null
+}
+
+// valor é opcional (sem ele não dá custo por km, mas o consumo sai igual)
+fun validarAbastecimento(km: String, litros: String, valor: String) = ErrosAbastecimento(
+    km = erroDeKm(km),
+    litros = when {
+        litros.isBlank() -> "Informe quantos litros entraram"
+        lerLitros(litros) == null -> "Use só números, ex.: 8,5"
+        else -> null
+    },
+    valor = if (valor.isNotBlank() && lerReais(valor) == null) "Use só números, ex.: 45,90" else null,
+)

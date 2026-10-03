@@ -9,6 +9,7 @@ data class MotoImportada(val modelo: String, val placa: String, val ano: Int, va
 data class TrocaImportada(val motoChave: String, val peca: String, val km: Int, val preco: Int, val emServico: Boolean, val data: Long? = null)
 data class ServicoImportado(val motoChave: String, val tipo: String, val data: Long?, val km: Int, val custo: Int, val oficina: String)
 data class PecaImportada(val nome: String, val intervaloKm: Int)
+data class AbastecimentoImportado(val motoChave: String, val km: Int, val mililitros: Int, val valor: Int, val tanqueCheio: Boolean, val data: Long?)
 
 data class DadosImportados(
     val motos: List<MotoImportada>,
@@ -16,17 +17,20 @@ data class DadosImportados(
     val servicos: List<ServicoImportado>,
     val pecas: List<PecaImportada>,
     val avisos: List<String>,
+    // backups de antes do abastecimento não têm a seção
+    val abastecimentos: List<AbastecimentoImportado> = emptyList(),
 ) {
-    val vazio get() = motos.isEmpty() && trocas.isEmpty() && servicos.isEmpty() && pecas.isEmpty()
+    val vazio get() = motos.isEmpty() && trocas.isEmpty() && servicos.isEmpty() && pecas.isEmpty() && abastecimentos.isEmpty()
 }
 
-private enum class Secao { NENHUMA, MOTOS, TROCAS, SERVICOS, PECAS }
+private enum class Secao { NENHUMA, MOTOS, TROCAS, SERVICOS, ABASTECIMENTOS, PECAS }
 
 fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados {
     val motos = mutableListOf<MotoImportada>()
     val trocas = mutableListOf<TrocaImportada>()
     val servicos = mutableListOf<ServicoImportado>()
     val pecas = mutableListOf<PecaImportada>()
+    val abastecimentos = mutableListOf<AbastecimentoImportado>()
     val avisos = mutableListOf<String>()
     var secao = Secao.NENHUMA
     var pularCabecalho = false
@@ -38,6 +42,7 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
             "MOTOS" -> Secao.MOTOS
             "TROCAS" -> Secao.TROCAS
             "SERVIÇOS", "SERVICOS" -> Secao.SERVICOS
+            "ABASTECIMENTOS" -> Secao.ABASTECIMENTOS
             "PEÇAS (CATÁLOGO)", "PECAS (CATALOGO)", "PEÇAS", "PECAS" -> Secao.PECAS
             else -> null
         }
@@ -57,6 +62,12 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
             Secao.SERVICOS -> if (c.size >= 5 && int(3) != null && reais(4) != null) {
                 servicos += ServicoImportado(c[0], c[1], parseData(c[2]), int(3)!!, reais(4)!!, c.getOrNull(5) ?: ""); true
             } else false
+            Secao.ABASTECIMENTOS -> if (c.size >= 3 && int(1) != null && c.getOrNull(2)?.let(::lerLitros) != null) {
+                abastecimentos += AbastecimentoImportado(
+                    c[0], int(1)!!, lerLitros(c[2])!!, reais(3) ?: 0,
+                    tanqueCheio = c.getOrNull(4)?.lowercase() != "não", data = c.getOrNull(5)?.takeIf { it.isNotBlank() }?.let(parseData),
+                ); true
+            } else false
             Secao.PECAS -> if (c.size >= 2 && int(1) != null && int(1)!! > 0) {
                 pecas += PecaImportada(c[0], int(1)!!); true
             } else false
@@ -64,5 +75,5 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
         }
         if (!ok) avisos += "linha ${i + 1} ignorada: \"${linha.take(40)}\""
     }
-    return DadosImportados(motos, trocas, servicos, pecas, avisos)
+    return DadosImportados(motos, trocas, servicos, pecas, avisos, abastecimentos)
 }

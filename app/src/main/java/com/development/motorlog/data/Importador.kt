@@ -2,10 +2,11 @@ package com.development.motorlog.data
 
 import com.development.motorlog.domain.DadosImportados
 
-data class ResumoImportacao(val motos: Int, val trocas: Int, val servicos: Int, val pecas: Int, val ignorados: Int)
+data class ResumoImportacao(val motos: Int, val trocas: Int, val servicos: Int, val pecas: Int, val ignorados: Int, val abastecimentos: Int = 0)
 
 // Aplica um DadosImportados no banco SEM duplicar: peça casa por nome, moto por modelo+placa,
-// serviço por (moto, km, data, tipo), troca por (moto, peça, km). O que já existe é ignorado —
+// serviço por (moto, km, data, tipo), troca por (moto, peça, km), abastecimento por (moto, km, litros).
+// O que já existe é ignorado —
 // restaurar um backup duas vezes não dobra nada.
 suspend fun AppDatabase.importar(dados: DadosImportados): ResumoImportacao {
     var novasPecas = 0; var novasMotos = 0; var novosServicos = 0; var novasTrocas = 0; var ignorados = 0
@@ -60,5 +61,14 @@ suspend fun AppDatabase.importar(dados: DadosImportados): ResumoImportacao {
         registroDao().inserirRegistro(Registro(motoId = moto.id, pecaId = peca.id, kmTroca = t.km, servicoId = servicoId, preco = t.preco, data = t.data ?: 0))
         novasTrocas++
     }
-    return ResumoImportacao(novasMotos, novasTrocas, novosServicos, novasPecas, ignorados)
+    // 5. abastecimentos
+    var novosAbastecimentos = 0
+    dados.abastecimentos.forEach { a ->
+        val moto = motoPorChave(a.motoChave) ?: run { ignorados++; return@forEach }
+        val existentes = abastecimentoDao().listarPorMoto(moto.id)
+        if (existentes.any { it.km == a.km && it.mililitros == a.mililitros }) { ignorados++; return@forEach }
+        abastecimentoDao().inserir(Abastecimento(motoId = moto.id, km = a.km, mililitros = a.mililitros, valor = a.valor, tanqueCheio = a.tanqueCheio, data = a.data ?: 0))
+        novosAbastecimentos++
+    }
+    return ResumoImportacao(novasMotos, novasTrocas, novosServicos, novasPecas, ignorados, novosAbastecimentos)
 }

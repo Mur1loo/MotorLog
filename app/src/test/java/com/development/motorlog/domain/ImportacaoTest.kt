@@ -1,5 +1,6 @@
 package com.development.motorlog.domain
 
+import com.development.motorlog.data.Abastecimento
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
@@ -71,5 +72,31 @@ class ImportacaoTest {
         assertEquals(null, v.trocas.single().data)
         assertEquals("backup de antes dos centavos: 35 = R$ 35,00", 3500, v.trocas.single().preco)
         assertTrue(v.avisos.isEmpty())
+    }
+
+    @Test
+    fun `abastecimentos fazem ida e volta, backup sem a secao continua valendo`() {
+        val csv = montarExportacao(
+            motos = listOf(Moto(id = 1, modelo = "Fan", placa = "XYZ", anoFabricacao = 2019, kilometragem = 30000)),
+            pecas = emptyList(),
+            registros = emptyList(),
+            servicos = emptyList(),
+            abastecimentos = listOf(
+                Abastecimento(motoId = 1, km = 29700, mililitros = 8734, valor = 5240, tanqueCheio = true, data = 3 * dia),
+                Abastecimento(motoId = 1, km = 30000, mililitros = 3000, valor = 0, tanqueCheio = false, data = 4 * dia),
+            ),
+            formatarData = ::fmt,
+        )
+        assertTrue(csv.contains("Fan XYZ;29700;8,734;52,40;sim;D3"))
+        val d = lerExportacao(csv, ::parse)
+        assertEquals(
+            listOf(
+                AbastecimentoImportado("Fan XYZ", 29700, 8734, 5240, tanqueCheio = true, data = 3 * dia),
+                AbastecimentoImportado("Fan XYZ", 30000, 3000, 0, tanqueCheio = false, data = 4 * dia),
+            ),
+            d.abastecimentos,
+        )
+        assertTrue(d.avisos.isEmpty())
+        assertTrue(lerExportacao("MOTOS\nmodelo;placa;ano;km_atual\nFan;XYZ;2019;30000\n", ::parse).abastecimentos.isEmpty())
     }
 }

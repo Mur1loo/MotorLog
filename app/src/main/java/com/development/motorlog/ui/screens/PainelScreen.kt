@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,6 +34,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,11 +78,13 @@ import com.development.motorlog.ui.theme.chakra
 import com.development.motorlog.ui.theme.cor
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarKmPorLitro
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.formatarReais
 import com.development.motorlog.ui.util.formatarReaisCentavos
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
+import com.development.motorlog.ui.viewModels.AbastecimentoViewModel
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
@@ -95,6 +100,7 @@ fun PainelScreen(
     onLigarLembretes: () -> Unit,
     registroViewModel: RegistroViewModel = viewModel(),
     fotoViewModel: FotoViewModel = viewModel(),
+    abastecimentoViewModel: AbastecimentoViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
     onRegistrarTroca: () -> Unit,
     onRegistrarServico: () -> Unit,
@@ -104,6 +110,8 @@ fun PainelScreen(
     onEditarPeca: (Peca) -> Unit,
     onAbrirServico: (Servico) -> Unit,
     onAbrirFotos: () -> Unit,
+    onAbasteci: () -> Unit,
+    onAbrirCombustivel: () -> Unit,
     onMensagem: (String) -> Unit,
 ) {
     val recomendacoes = registroViewModel.recomendacoes
@@ -127,6 +135,8 @@ fun PainelScreen(
         registroViewModel.carregarTrocasAvulsas(moto)
     }
     LaunchedEffect(moto.id) { fotoViewModel.carregar(moto.id) }
+    LaunchedEffect(moto.id) { abastecimentoViewModel.carregar(moto.id) }
+    val consumo = abastecimentoViewModel.resumo
     val fotos = fotoViewModel.fotos
     val capa = escolherCapa(fotos, moto.fotoCapaId)
     val hoje = hojeUtcMillis()
@@ -194,6 +204,9 @@ fun PainelScreen(
                 )
                 Spacer(Modifier.height(16.dp))
                 BotaoPrimario("Atualizar km", onAtualizarKm, icone = R.drawable.ic_ml_gauge, altura = 58.dp)
+                Spacer(Modifier.height(8.dp))
+                // abastecer também atualiza o km: o outro jeito de manter o painel em dia
+                BotaoSecundario("Abasteci", onAbasteci, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_fuel)
                 Spacer(Modifier.height(10.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (ritmoKmMes != null) PillNeutra("${formatarNumero(ritmoKmMes)} km/mês", icone = R.drawable.ic_ml_road)
@@ -288,6 +301,25 @@ fun PainelScreen(
                     if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                     LinhaDeAlerta(rec, ritmoKmMes) { if (rec.ehRevisao) onRegistrarServico() else trocandoPecaId = rec.pecaId }
                 }
+            }
+        }
+
+        // ── Card: consumo (abre a tela Combustível) ──
+        MlCard(onClick = onAbrirCombustivel, pad = 14.dp) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconBox(R.drawable.ic_ml_fuel, cor = MaterialTheme.colorScheme.primary)
+                Column(Modifier.weight(1f)) {
+                    Text("Consumo", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        consumo?.let { c ->
+                            c.mediaKmPorLitro?.let { media ->
+                                "${formatarKmPorLitro(media)} em média" + (c.custoPorKm?.let { " · ${formatarReaisCentavos(it)} por km" } ?: "")
+                            }
+                        } ?: "Registre dois tanques cheios pra ver o km/l",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(18.dp))
             }
         }
 

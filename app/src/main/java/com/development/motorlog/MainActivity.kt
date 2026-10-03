@@ -51,6 +51,8 @@ import com.development.motorlog.ui.navegacao.podeVoltar
 import com.development.motorlog.ui.navegacao.voltar
 import com.development.motorlog.ui.screens.AtualizarKmSheet
 import com.development.motorlog.ui.screens.CadastroScreen
+import com.development.motorlog.ui.screens.CombustivelScreen
+import com.development.motorlog.ui.screens.FormAbastecimentoScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
 import com.development.motorlog.ui.screens.FormServicoScreen
 import com.development.motorlog.ui.screens.FotosScreen
@@ -66,6 +68,7 @@ import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.juntarComPonto
+import com.development.motorlog.ui.viewModels.AbastecimentoViewModel
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
@@ -121,12 +124,14 @@ class MainActivity : ComponentActivity() {
                 var motoId by rememberSaveable { mutableStateOf(motoInicial) }
                 var pecaId by rememberSaveable { mutableStateOf<Long?>(null) }   // null = peça nova
                 var servicoId by rememberSaveable { mutableStateOf<Long?>(null) }
+                var abastecimentoId by rememberSaveable { mutableStateOf<Long?>(null) }   // null = novo
                 // a ação nº 1 é uma folha inferior sobre a tela atual, não uma tela
                 var mostrarKm by rememberSaveable { mutableStateOf(abrirKm) }
                 var mostrarApoio by rememberSaveable { mutableStateOf(false) }
 
                 val motoViewModel: MotoViewModel = viewModel()
                 val registroViewModel: RegistroViewModel = viewModel()
+                val abastecimentoViewModel: AbastecimentoViewModel = viewModel()
                 val motoSelecionada = motoId?.let { id -> motoViewModel.motos.find { it.id == id } }
                 val pecaSelecionada = pecaId?.let { id -> registroViewModel.pecas.find { it.id == id } }
                 val servicoSelecionado = servicoId?.let { id -> registroViewModel.servicos.find { it.id == id } }
@@ -150,12 +155,14 @@ class MainActivity : ComponentActivity() {
                     "GerenciarPecas" -> "Peças e intervalos"
                     "EditarPeca" -> if (pecaId != null) "Editar peça" else "Nova peça"
                     "Fotos" -> "Álbum da moto"
+                    "Combustivel" -> "Combustível"
+                    "Abastecimento" -> if (abastecimentoId != null) "Editar abastecimento" else "Abasteci"
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
                     "Painel" -> motoSelecionada?.let { juntarComPonto(it.anoFabricacao.toString(), it.placa) }
                     "Trocas" -> motoSelecionada?.let { "${it.modelo} · ${formatarKm(it.kilometragem)}" }
-                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos" -> motoSelecionada?.modelo
+                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento" -> motoSelecionada?.modelo
                     "Cadastro" -> "Cadastre sua motocicleta"
                     else -> null
                 }
@@ -361,6 +368,8 @@ class MainActivity : ComponentActivity() {
                                         abrirTela("RevisaoDetail")
                                     },
                                     onAbrirFotos = { trocarAba("Fotos") },
+                                    onAbasteci = { abastecimentoId = null; abrirTela("Abastecimento") },
+                                    onAbrirCombustivel = { abrirTela("Combustivel") },
                                     onMensagem = { mensagem = it },
                                 )
                             }
@@ -442,6 +451,42 @@ class MainActivity : ComponentActivity() {
                                     onDefinirCapa = { foto -> motoViewModel.atualizarMoto(motoSel.copy(fotoCapaId = foto.id)) },
                                     onMensagem = { mensagem = it },
                                 )
+                            }
+                        }
+                        "Combustivel" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null) {
+                                CombustivelScreen(
+                                    moto = motoSel,
+                                    modifier = Modifier.padding(innerPadding),
+                                    onAbasteci = { abastecimentoId = null; abrirTela("Abastecimento") },
+                                    onEditar = { a -> abastecimentoId = a.id; abrirTela("Abastecimento") },
+                                )
+                            }
+                        }
+                        "Abastecimento" -> {
+                            val motoSel = motoSelecionada
+                            val abastecimentoSel = abastecimentoId?.let { id -> abastecimentoViewModel.abastecimentos.find { it.id == id } }
+                            if (motoSel != null && (abastecimentoId == null || abastecimentoSel != null)) {
+                                FormAbastecimentoScreen(
+                                    moto = motoSel,
+                                    abastecimento = abastecimentoSel,
+                                    modifier = Modifier.padding(innerPadding),
+                                    onSalvar = { kmAtualizado ->
+                                        mensagem = if (kmAtualizado) "Abastecimento salvo. Km da moto atualizado." else "Abastecimento salvo."
+                                        if (kmAtualizado) motoViewModel.carregarMotos()
+                                        abastecimentoId = null
+                                        irParaTras()
+                                    },
+                                    onExcluido = {
+                                        mensagem = "Abastecimento excluído."
+                                        abastecimentoId = null
+                                        irParaTras()
+                                    },
+                                )
+                            } else if (motoSel != null) {
+                                // voltou da morte do processo direto na edição: a lista ainda não carregou
+                                LaunchedEffect(motoSel.id) { abastecimentoViewModel.carregar(motoSel.id) }
                             }
                         }
                         "GerenciarPecas" -> {
