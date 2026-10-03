@@ -193,10 +193,24 @@ class MigrationTest {
     }
 
     @Test
-    fun migra5para14_caminhoCompletoDoCelular() {
+    fun migra14para15_tabelaCuidado_comCascade() {
+        helper.createDatabase(nomeBanco, 14).apply {
+            execSQL("INSERT INTO Moto (id, modelo, placa, anoFabricacao, kilometragem, kmAtualizadoEm, intervaloRevisaoKm, cor, fotoCapaId, apelido, chegouEm, kmChegada) VALUES (1, 'Crosser', 'ABC1D23', 2020, 16000, 0, 0, -1, 0, '', 0, -1)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(nomeBanco, 15, true, MIGRATION_14_15)
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL("INSERT INTO Cuidado (motoId, tipo, data, km, nota) VALUES (1, 'lavagem', 0, 16000, '')")
+        db.query("SELECT tipo, km FROM Cuidado").use { c -> c.moveToFirst(); assertEquals("lavagem", c.getString(0)); assertEquals(16000, c.getInt(1)) }
+        db.execSQL("DELETE FROM Moto WHERE id = 1")
+        db.query("SELECT COUNT(*) FROM Cuidado").use { c -> c.moveToFirst(); assertEquals(0, c.getInt(0)) }
+    }
+
+    @Test
+    fun migra5para15_caminhoCompletoDoCelular() {
         helper.createDatabase(nomeBanco, 5).apply { semearV5(this); close() }
         val db = helper.runMigrationsAndValidate(
-            nomeBanco, 14, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
+            nomeBanco, 15, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
         )
         db.query("SELECT kmTroca, preco, data FROM Registro WHERE id = 7").use { c ->
             c.moveToFirst(); assertEquals(15000, c.getInt(0)); assertEquals(0, c.getInt(1)); assertEquals(0L, c.getLong(2))

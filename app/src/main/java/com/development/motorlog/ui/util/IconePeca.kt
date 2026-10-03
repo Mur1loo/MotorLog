@@ -1,6 +1,7 @@
 package com.development.motorlog.ui.util
 
 import com.development.motorlog.R
+import com.development.motorlog.domain.TipoCuidado
 
 // Nome da peça → ícone do protótipo (partIcon do data.jsx), por palavra-chave. Sem campo no banco.
 fun iconeDaPeca(nome: String): Int {
@@ -18,4 +19,12 @@ fun iconeDaPeca(nome: String): Int {
         "fluido" in n || "liquido" in n -> R.drawable.ic_ml_fluid
         else -> R.drawable.ic_ml_wrench
     }
+}
+
+// ícone de cada cuidado do diário (TipoCuidado)
+fun iconeDoCuidado(tipo: TipoCuidado): Int = when (tipo) {
+    TipoCuidado.LAVAGEM -> R.drawable.ic_ml_fluid
+    TipoCuidado.CERA -> R.drawable.ic_ml_spark
+    TipoCuidado.CORRENTE -> R.drawable.ic_ml_chain
+    TipoCuidado.CALIBRAGEM -> R.drawable.ic_ml_tire
 }

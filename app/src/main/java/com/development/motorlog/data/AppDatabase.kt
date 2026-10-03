@@ -100,6 +100,14 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
     }
 }
 
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // tabela nova (diário de cuidados); SQL igual ao createSql do 15.json exportado pelo Room
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Cuidado` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `motoId` INTEGER NOT NULL, `tipo` TEXT NOT NULL, `data` INTEGER NOT NULL, `km` INTEGER NOT NULL, `nota` TEXT NOT NULL, FOREIGN KEY(`motoId`) REFERENCES `Moto`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Cuidado_motoId` ON `Cuidado` (`motoId`)")
+    }
+}
+
 @Database(
     entities = [Moto::class,
         Registro::class,
@@ -107,8 +115,9 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
         Servico::class,
         HistoricoKm::class,
         FotoMoto::class,
-        Abastecimento::class],
-    version = 14,
+        Abastecimento::class,
+        Cuidado::class],
+    version = 15,
     exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun motoDao(): MotoDao
@@ -119,6 +128,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun historicoKmDao(): HistoricoKmDao
     abstract fun fotoMotoDao(): FotoMotoDao
     abstract fun abastecimentoDao(): AbastecimentoDao
+    abstract fun cuidadoDao(): CuidadoDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -131,7 +141,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 context = context.applicationContext,
                                 klass = AppDatabase::class.java,
                                 name = "motorlog.db"
-                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14).build()
+                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15).build()
 
                 INSTANCE = instance
                 instance
