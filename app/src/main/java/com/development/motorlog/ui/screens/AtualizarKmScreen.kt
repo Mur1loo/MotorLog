@@ -105,7 +105,7 @@ fun AtualizarKmSheet(
                 Icon(
                     painterResource(R.drawable.ic_ml_close), contentDescription = "Fechar",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).clickable(role = Role.Button) { onFechar() }.padding(10.dp),
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(24.dp)).clickable(role = Role.Button) { onFechar() }.padding(12.dp),
                 )
             }
             Spacer(Modifier.height(12.dp))
@@ -147,7 +147,7 @@ fun AtualizarKmSheet(
             // atalhos
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ATALHOS_KM.forEach { passo ->
-                    Tecla("+$passo", Modifier.weight(1f), altura = 40.dp, fonte = 14.sp) {
+                    Tecla("+$passo", Modifier.weight(1f), altura = 48.dp, fonte = 15.sp) {
                         confirmarMenor = false
                         intocado = false
                         texto = (novoKm + passo).toString()
