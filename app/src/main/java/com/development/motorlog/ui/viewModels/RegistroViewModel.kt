@@ -41,6 +41,10 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     var trocasAvulsas by mutableStateOf<List<Registro>>(emptyList())
         private set
 
+    // pecaId → quantas trocas a moto tem registradas (ordem da lista de "Troquei uma peça")
+    var usoPorPeca by mutableStateOf<Map<Long, Int>>(emptyMap())
+        private set
+
     // PDF do histórico sendo montado (o botão mostra "Gerando…" e não aceita 2º toque)
     var gerandoPdf by mutableStateOf(false)
         private set
@@ -200,6 +204,10 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         viewModelScope.launch {
             servicos = servicoDao.query(moto.id)
         }
+    }
+
+    fun carregarUsoDasPecas(moto: Moto) {
+        viewModelScope.launch { usoPorPeca = registroDao.listarRegistros(moto.id).groupingBy { it.pecaId }.eachCount() }
     }
 
     fun carregarTrocasAvulsas(moto: Moto) {
