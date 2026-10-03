@@ -99,4 +99,14 @@ class ImportacaoTest {
         assertTrue(d.avisos.isEmpty())
         assertTrue(lerExportacao("MOTOS\nmodelo;placa;ano;km_atual\nFan;XYZ;2019;30000\n", ::parse).abastecimentos.isEmpty())
     }
+
+    @Test
+    fun `apelido e chegada fazem ida e volta`() {
+        val csv = montarExportacao(
+            motos = listOf(Moto(id = 1, modelo = "Fan", placa = "XYZ", anoFabricacao = 2019, kilometragem = 30000, apelido = "Pretinha", chegouEm = 2 * dia, kmChegada = 1200)),
+            pecas = emptyList(), registros = emptyList(), servicos = emptyList(), formatarData = ::fmt,
+        )
+        val m = lerExportacao(csv, ::parse).motos.single()
+        assertEquals("Pretinha", m.apelido); assertEquals(2 * dia, m.chegouEm); assertEquals(1200, m.kmChegada)
+    }
 }

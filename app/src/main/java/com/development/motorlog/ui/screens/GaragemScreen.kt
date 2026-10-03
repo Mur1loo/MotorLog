@@ -43,6 +43,7 @@ import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.diasEntre
+import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.ui.components.AvatarDaMoto
 import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.IconBox
@@ -203,8 +204,8 @@ fun MotoCard(moto: Moto, alertas: ResumoAlertas?, ritmoKmMes: Int?, capa: String
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             AvatarDaMoto(capa, accent, tamanho = 68.dp)
             Column(Modifier.weight(1f)) {
-                Text(moto.modelo, style = MaterialTheme.typography.titleLarge)
-                Text(juntarComPonto(moto.anoFabricacao.toString(), moto.placa), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(nomeDaMoto(moto), style = MaterialTheme.typography.titleLarge)
+                Text(juntarComPonto(if (moto.apelido.isNotBlank()) moto.modelo else "", moto.anoFabricacao.toString(), moto.placa), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(9.dp))
                 Odometer(moto.kilometragem, tamanho = TamanhoOdometro.PEQUENO, accent = accent)
             }

@@ -27,7 +27,7 @@ class ExportacaoTest {
     @Test
     fun `moto sem kmAtualizadoEm exporta campo vazio`() {
         val csv = montarExportacao(listOf(Moto(id = 1, modelo = "X", placa = "P", anoFabricacao = 2020, kilometragem = 1)), emptyList(), emptyList(), emptyList()) { "nunca" }
-        assertEquals(true, csv.lines().any { it == "X;P;2020;1;;0;-1" })
+        assertEquals(true, csv.lines().any { it == "X;P;2020;1;;0;-1;;;-1" })
     }
 
     @Test
@@ -43,6 +43,6 @@ class ExportacaoTest {
         ) { "D$it" }
         assertTrue(csv.lines().contains("X P;Vela;100;30;não;D4"))
         assertTrue(csv.lines().contains("X P;Vela;50;0;não;"))
-        assertTrue(csv.lines().contains("X;P;2020;1;;0;5"))
+        assertTrue(csv.lines().contains("X;P;2020;1;;0;5;;;-1"))
     }
 }

@@ -56,6 +56,7 @@ import com.development.motorlog.R
 import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.escolherCapa
+import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.fotos.ArmazemDeFotos
 import com.development.motorlog.ui.components.BikeBadge
 import com.development.motorlog.ui.components.BotaoPrimario
@@ -129,7 +130,7 @@ fun FotosScreen(
                 MlCard(pad = 20.dp) {
                     BikeBadge(accent, tamanho = 64.dp)
                     Spacer(Modifier.height(14.dp))
-                    Text("A história da sua ${moto.modelo}", style = MaterialTheme.typography.titleLarge)
+                    Text(if (moto.apelido.isNotBlank()) "A história da ${nomeDaMoto(moto)}" else "A história da sua ${moto.modelo}", style = MaterialTheme.typography.titleLarge)
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "O dia em que ela chegou, a primeira viagem, o brilho depois da lavagem, o antes e depois de um capricho. " +
@@ -154,7 +155,7 @@ fun FotosScreen(
                     Column(Modifier.align(Alignment.BottomStart).padding(14.dp)) {
                         Pill("Capa", accent)
                         Spacer(Modifier.height(6.dp))
-                        Text(capa.legenda.ifBlank { moto.modelo }, style = MaterialTheme.typography.titleLarge, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(capa.legenda.ifBlank { nomeDaMoto(moto) }, style = MaterialTheme.typography.titleLarge, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text("${formatarData(capa.data)} · ${formatarKm(capa.km)}", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f))
                     }
                 }

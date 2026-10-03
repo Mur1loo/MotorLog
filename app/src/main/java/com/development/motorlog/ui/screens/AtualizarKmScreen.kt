@@ -41,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.theme.MlBgElev
 import com.development.motorlog.ui.theme.MlBorder
@@ -100,7 +101,7 @@ fun AtualizarKmSheet(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Atualizar km", style = MaterialTheme.typography.titleLarge)
-                    Text("${moto.modelo} · era ${formatarKm(moto.kilometragem)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${nomeDaMoto(moto)} · era ${formatarKm(moto.kilometragem)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Icon(
                     painterResource(R.drawable.ic_ml_close), contentDescription = "Fechar",
