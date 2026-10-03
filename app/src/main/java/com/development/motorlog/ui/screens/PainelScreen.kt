@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,7 +55,6 @@ import com.development.motorlog.ui.components.BarraDeProgresso
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoHistoricoPdf
 import com.development.motorlog.ui.components.BotaoSecundario
-import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.components.FotoArquivo
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
@@ -102,7 +100,6 @@ fun PainelScreen(
     onVerHistorico: () -> Unit,
     onVerTrocas: () -> Unit,
     onEditarMoto: () -> Unit,
-    onExcluirMoto: () -> Unit,
     onEditarPeca: (Peca) -> Unit,
     onAbrirServico: (Servico) -> Unit,
     onAbrirFotos: () -> Unit,
@@ -117,7 +114,6 @@ fun PainelScreen(
     val vencidas = proximasTrocas.count { it.statusTroca == StatusTroca.VENCIDA }
     val perto = proximasTrocas.count { it.statusTroca == StatusTroca.PERTO }
     val proxima = proximasTrocas.firstOrNull()
-    var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
     var trocandoPecaId by rememberSaveable { mutableStateOf<Long?>(null) }
     var confirmarEstimativa by rememberSaveable { mutableStateOf(false) }
     // peças que nunca tiveram troca registrada (sem a revisão, que se registra em "Fui à oficina")
@@ -290,39 +286,9 @@ fun PainelScreen(
             }
         }
 
-        // ── Card: álbum da moto (sem fotos, o convite) ──
-        MlCard {
-            SectionLabel("Álbum da moto", direita = { AcaoDeSecao(if (fotos.isEmpty()) "Abrir" else "Ver todas", onAbrirFotos) })
-            if (fotos.isEmpty()) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    IconBox(R.drawable.ic_ml_moto, cor = accent, tamanho = 44.dp)
-                    Text(
-                        "Guarde fotos da sua moto: o dia em que ela chegou, as viagens, o antes e depois. A melhor vira a capa.",
-                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                BotaoSecundario("Adicionar a primeira foto", onAbrirFotos, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_plus)
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val mostradas = fotos.take(4)
-                    mostradas.forEachIndexed { i, foto ->
-                        Box(Modifier.weight(1f).aspectRatio(1f).clip(MlFormas.campo).clickable { onAbrirFotos() }) {
-                            FotoArquivo(foto.arquivo, Modifier.fillMaxSize(), ladoMaxPx = 256)
-                            val resto = fotos.size - mostradas.size
-                            if (i == mostradas.lastIndex && resto > 0) {
-                                Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
-                                    Text("+$resto", style = chakra(18.sp), color = Color.White)
-                                }
-                            }
-                        }
-                    }
-                    // menos de 4 fotos: completa a linha com espaço vazio (as miniaturas não esticam)
-                    repeat(4 - mostradas.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
-        }
+        // o PDF é o que a pessoa mostra pro comprador e pro mecânico: logo depois das trocas,
+        // não no fim da tela (antes vinha depois de cinco blocos)
+        BotaoHistoricoPdf(moto, onMensagem, Modifier.fillMaxWidth())
 
         // ── Card: últimas visitas à oficina ──
         MlCard {
@@ -352,13 +318,9 @@ fun PainelScreen(
             }
         }
 
-        BotaoHistoricoPdf(moto, onMensagem, Modifier.fillMaxWidth())
-
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = onEditarMoto, modifier = Modifier.weight(1f)) { Text("Editar dados") }
-            TextButton(onClick = { confirmarExclusao = true }, modifier = Modifier.weight(1f)) {
-                Text("Excluir moto", color = MaterialTheme.colorScheme.error)
-            }
+            // excluir fica dentro de "Editar dados": ação rara e sem volta, longe do dia a dia
+            TextButton(onClick = onEditarMoto, modifier = Modifier.weight(1f)) { Text("Editar dados ou excluir a moto") }
         }
     }
 
@@ -391,16 +353,6 @@ fun PainelScreen(
         )
     }
 
-    if (confirmarExclusao) {
-        ConfirmarExclusaoDialog(
-            texto = "Excluir esta moto e todo o histórico dela? Esta ação não pode ser desfeita.",
-            onConfirmar = {
-                confirmarExclusao = false
-                onExcluirMoto()
-            },
-            onCancelar = { confirmarExclusao = false },
-        )
-    }
 }
 
 // Linha de alerta do protótipo (AlertRow): caixinha com ícone da peça na cor do status,

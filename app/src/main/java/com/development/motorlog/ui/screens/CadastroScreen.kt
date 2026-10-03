@@ -5,8 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,12 +15,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -39,7 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.validarMoto
 import com.development.motorlog.ui.components.AvatarDaMoto
+import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.MlTextField
 import com.development.motorlog.ui.components.RodapeDeForm
@@ -48,7 +51,6 @@ import com.development.motorlog.ui.theme.MlAccentsMoto
 import com.development.motorlog.ui.theme.NOMES_DAS_CORES
 import com.development.motorlog.ui.theme.indiceDaCor
 import com.development.motorlog.ui.viewModels.MotoViewModel
-import com.development.motorlog.domain.validarMoto
 
 // moto == null → cadastro; moto != null → edição de identificação (o km se edita em "Atualizar km")
 @Composable
@@ -56,7 +58,9 @@ fun CadastroScreen(
     modifier: Modifier = Modifier,
     moto: Moto? = null,
     viewModel: MotoViewModel = viewModel(),
-    onSalvar: (motoId: Long) -> Unit
+    onSalvar: (motoId: Long) -> Unit,
+    // edição: "Excluir moto" mora aqui, longe do Painel do dia a dia (ação rara e sem volta)
+    onExcluir: (() -> Unit)? = null,
 ) {
     var modelo by rememberSaveable { mutableStateOf(moto?.modelo ?: "") }
     var placa by rememberSaveable { mutableStateOf(moto?.placa ?: "") }
@@ -68,6 +72,7 @@ fun CadastroScreen(
     // moto nova: o salvar espera o banco (pra abrir o Painel dela); trava o botão contra 2º toque.
     // remember (não Saveable): se a tela for recriada no meio, o botão não fica travado pra sempre
     var salvando by remember { mutableStateOf(false) }
+    var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
     // cor da moto no app: a atual (escolhida ou automática); moto nova ganha a próxima da fila
     var cor by rememberSaveable { mutableIntStateOf(moto?.let(::indiceDaCor) ?: (viewModel.motos.size % 4)) }
     val accent = MlAccentsMoto[cor]
@@ -143,6 +148,12 @@ fun CadastroScreen(
                     )
                 }
             }
+            if (onExcluir != null) {
+                Spacer(Modifier.height(16.dp))
+                TextButton(onClick = { confirmarExclusao = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Excluir moto", color = MaterialTheme.colorScheme.error)
+                }
+            }
             Spacer(Modifier.height(12.dp))
         }
         RodapeDeForm(
@@ -165,6 +176,17 @@ fun CadastroScreen(
                     viewModel.inserirMoto(Moto(modelo = modelo.trim(), anoFabricacao = newAno, placa = placa.trim(), kilometragem = newKm!!, intervaloRevisaoKm = newRevisao, cor = cor), onSalvar)
                 }
             },
+        )
+    }
+
+    if (confirmarExclusao && onExcluir != null) {
+        ConfirmarExclusaoDialog(
+            texto = "Excluir esta moto e todo o histórico dela? Esta ação não pode ser desfeita.",
+            onConfirmar = {
+                confirmarExclusao = false
+                onExcluir()
+            },
+            onCancelar = { confirmarExclusao = false },
         )
     }
 }
