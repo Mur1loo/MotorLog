@@ -52,6 +52,9 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     var alertas by mutableStateOf<Map<Long, ResumoAlertas>>(emptyMap())
         private set
 
+    // motoId -> pontos (dia, km) registrados: base dos marcos ("Passou dos 50.000 km!")
+    var historicos by mutableStateOf<Map<Long, List<HistoricoKm>>>(emptyMap())
+        private set
     // motoId -> km/mês estimado pelo HistoricoKm (null = ainda sem dados suficientes)
     var ritmos by mutableStateOf<Map<Long, Int?>>(emptyMap())
         private set
@@ -85,6 +88,7 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             }
             val hoje = hojeUtcMillis()
             val historicos = lista.associate { moto -> moto.id to historicoDao.listarPorMoto(moto.id) }
+            this@MotoViewModel.historicos = historicos
             ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicos.getValue(moto.id), hoje) }
             kmRodados = lista.associate { moto -> moto.id to kmRodadosNoApp(historicos.getValue(moto.id), moto.kilometragem) }
             capas = lista.mapNotNull { moto -> escolherCapa(fotoDao.listarPorMoto(moto.id), moto.fotoCapaId)?.let { moto.id to it.arquivo } }.toMap()

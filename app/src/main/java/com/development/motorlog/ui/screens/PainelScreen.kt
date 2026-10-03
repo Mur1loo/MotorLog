@@ -1,5 +1,6 @@
 package com.development.motorlog.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,18 +37,22 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
+import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Servico
 import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.TipoMarco
 import com.development.motorlog.domain.custoPorKm
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.descreverTempoJuntos
@@ -56,8 +63,12 @@ import com.development.motorlog.domain.estimarDiasAteTroca
 import com.development.motorlog.domain.gastoNoMes
 import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.domain.kmJuntos
+import com.development.motorlog.domain.marcoPraComemorar
+import com.development.motorlog.domain.marcosDaMoto
 import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.domain.situacaoDosCuidados
+import com.development.motorlog.relatorio.compartilharCartao
+import com.development.motorlog.relatorio.gerarCartaoDoMarco
 import com.development.motorlog.ui.components.AcaoDeSecao
 import com.development.motorlog.ui.components.BarraDeProgresso
 import com.development.motorlog.ui.components.BotaoHistoricoPdf
@@ -93,6 +104,7 @@ import com.development.motorlog.ui.viewModels.AbastecimentoViewModel
 import com.development.motorlog.ui.viewModels.CuidadoViewModel
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import kotlinx.coroutines.launch
 
 // Painel da moto — variante "Foco no km" do protótipo (DashFoco): herói com odômetro e brilho,
 // ação protagonista, pills de contexto, tiles, próximas trocas e últimas visitas à oficina.
@@ -102,6 +114,7 @@ fun PainelScreen(
     moto: Moto,
     ritmoKmMes: Int?,
     kmRodados: Int,
+    historicoKm: List<HistoricoKm>,
     lembretesLigados: Boolean,
     onLigarLembretes: () -> Unit,
     registroViewModel: RegistroViewModel = viewModel(),
@@ -146,6 +159,15 @@ fun PainelScreen(
     LaunchedEffect(moto.id) { abastecimentoViewModel.carregar(moto.id) }
     LaunchedEffect(moto.id) { cuidadoViewModel.carregar(moto.id) }
     val consumo = abastecimentoViewModel.resumo
+
+    // marcos ("Passou dos 50.000 km!", "1 ano com a Pretinha"): o mais recente ainda não visto
+    val contexto = LocalContext.current
+    val escopo = rememberCoroutineScope()
+    val prefs = remember { contexto.getSharedPreferences("motorlog", Context.MODE_PRIVATE) }
+    val chaveVistos = "marcos_vistos_${moto.id}"
+    var marcosVistos by remember(moto.id) { mutableStateOf(prefs.getStringSet(chaveVistos, emptySet()).orEmpty().toSet()) }
+    val marcos = remember(moto, historicoKm) { marcosDaMoto(nomeDaMoto(moto), moto.chegouEm, historicoKm, hojeUtcMillis()) }
+    val marcoAgora = marcoPraComemorar(marcos, hojeUtcMillis(), marcosVistos)
     val fotos = fotoViewModel.fotos
     val capa = escolherCapa(fotos, moto.fotoCapaId)
     val hoje = hojeUtcMillis()
@@ -238,6 +260,32 @@ fun PainelScreen(
                         perto > 0 -> Pill("$perto perto de vencer", StatusTroca.PERTO.cor(), icone = R.drawable.ic_ml_wrench)
                         proximasTrocas.isNotEmpty() -> Pill("Tudo em dia", StatusTroca.OK.cor(), icone = R.drawable.ic_ml_check)
                     }
+                }
+            }
+        }
+
+        // ── marco pra comemorar: celebra a história da moto (e dá orgulho de compartilhar) ──
+        if (marcoAgora != null) {
+            MlCard(cor = accent.copy(alpha = 0.12f), borda = accent) {
+                Text(if (marcoAgora.tipo == TipoMarco.KM) "MARCO" else "ANIVERSÁRIO", style = MaterialTheme.typography.labelSmall, color = accent)
+                Spacer(Modifier.height(4.dp))
+                Text(marcoAgora.titulo, style = MaterialTheme.typography.titleLarge)
+                Text(formatarData(marcoAgora.data), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    BotaoSecundario(
+                        "Compartilhar", {
+                            escopo.launch {
+                                val arquivo = gerarCartaoDoMarco(contexto, moto, marcoAgora, capa?.arquivo)
+                                compartilharCartao(contexto, arquivo, "${marcoAgora.titulo} 🏍️")
+                            }
+                        },
+                        Modifier.weight(1f), icone = R.drawable.ic_ml_share,
+                    )
+                    TextButton(onClick = {
+                        marcosVistos = marcosVistos + marcoAgora.chave
+                        prefs.edit { putStringSet(chaveVistos, marcosVistos) }
+                    }) { Text("Valeu!") }
                 }
             }
         }

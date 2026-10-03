@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Pastas que o FileProvider pode expor (sempre temporárias, no cache):
      camera/ = onde o app da câmera grava a foto antes de ela entrar no álbum;
-     relatorios/ = o PDF do histórico, na hora de compartilhar. As fotos do álbum NÃO saem daqui. -->
+     relatorios/ = o PDF do histórico, na hora de compartilhar; cartoes/ = a imagem de um marco
+     ("Passou dos 50.000 km!"). As fotos do álbum NÃO saem daqui. -->
 <paths>
     <cache-path name="camera" path="camera/" />
     <cache-path name="relatorios" path="relatorios/" />
+    <cache-path name="cartoes" path="cartoes/" />
 </paths>

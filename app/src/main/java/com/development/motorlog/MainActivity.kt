@@ -354,6 +354,7 @@ class MainActivity : ComponentActivity() {
                                     moto = motoSel,
                                     ritmoKmMes = motoViewModel.ritmos[motoSel.id],
                                     kmRodados = motoViewModel.kmRodados[motoSel.id] ?: 0,
+                                    historicoKm = motoViewModel.historicos[motoSel.id].orEmpty(),
                                     lembretesLigados = lembretesLigados.value,
                                     onLigarLembretes = ligarLembretes,
                                     onAtualizarKm = { mostrarKm = true },
