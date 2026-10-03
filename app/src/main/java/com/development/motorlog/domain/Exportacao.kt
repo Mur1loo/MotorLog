@@ -1,5 +1,6 @@
 package com.development.motorlog.domain
 
+import com.development.motorlog.data.Abastecimento
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
@@ -13,6 +14,7 @@ fun montarExportacao(
     pecas: List<Peca>,
     registros: List<Registro>,
     servicos: List<Servico>,
+    abastecimentos: List<Abastecimento> = emptyList(),
     formatarData: (Long) -> String,
 ): String {
     val nomeMoto = motos.associate { it.id to "${it.modelo} ${it.placa}".trim() }
@@ -38,6 +40,12 @@ fun montarExportacao(
         appendLine("moto;tipo;data;km;custo;oficina")
         servicos.sortedWith(compareBy({ it.motoId }, { it.data })).forEach { s ->
             appendLine("${nomeMoto[s.motoId] ?: s.motoId};${limpo(s.tipoServico)};${formatarData(s.data)};${s.kilometragem};${reaisParaTexto(s.custo)};${limpo(s.local)}")
+        }
+        appendLine()
+        appendLine("ABASTECIMENTOS")
+        appendLine("moto;km;litros;valor;tanque_cheio;data")
+        abastecimentos.sortedWith(compareBy({ it.motoId }, { it.km })).forEach { a ->
+            appendLine("${nomeMoto[a.motoId] ?: a.motoId};${a.km};${litrosParaTexto(a.mililitros)};${reaisParaTexto(a.valor)};${if (a.tanqueCheio) "sim" else "não"};${formatarData(a.data)}")
         }
         appendLine()
         appendLine("PEÇAS (catálogo)")

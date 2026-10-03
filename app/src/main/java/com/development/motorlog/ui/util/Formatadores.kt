@@ -39,3 +39,7 @@ fun formatarReais(centavos: Int): String {
 private val reaisComCentavos: NumberFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 // 0.4217 -> "R$ 0,42" (custo por km precisa dos centavos)
 fun formatarReaisCentavos(valor: Double): String = reaisComCentavos.format(valor).replace('\u00A0', ' ')
+
+// 40.0 -> "40,0" (uma casa: a bomba e o painel não dão mais precisão que isso)
+fun formatarUmaCasa(valor: Double): String = String.format(Locale.forLanguageTag("pt-BR"), "%.1f", valor)
+fun formatarKmPorLitro(kmPorLitro: Double): String = "${formatarUmaCasa(kmPorLitro)} km/l"

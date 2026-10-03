@@ -103,7 +103,9 @@ fun GaragemScreen(
                 Text(
                     if (pendente.vazio) "Escolha o arquivo gerado em \"Exportar\" (texto com as seções MOTOS, TROCAS, SERVIÇOS)."
                     else "Encontrei ${pendente.motos.size} moto(s), ${pendente.trocas.size} troca(s), ${pendente.servicos.size} visita(s) à oficina " +
-                        "e ${pendente.pecas.size} peça(s). O que já existir no app não será duplicado." +
+                        "e ${pendente.pecas.size} peça(s)" +
+                        (if (pendente.abastecimentos.isNotEmpty()) ", ${pendente.abastecimentos.size} abastecimento(s)" else "") +
+                        ". O que já existir no app não será duplicado." +
                         if (pendente.avisos.isNotEmpty()) "\n\n${pendente.avisos.size} linha(s) não entendida(s) serão ignoradas." else "",
                     style = MaterialTheme.typography.bodyMedium,
                 )
@@ -113,6 +115,7 @@ fun GaragemScreen(
                     viewModel.confirmarImportacao { r ->
                         registroViewModel.recarregarCatalogo()
                         onMensagem("Restaurado: ${r.motos} moto(s), ${r.trocas} troca(s), ${r.servicos} visita(s), ${r.pecas} peça(s)" +
+                            (if (r.abastecimentos > 0) ", ${r.abastecimentos} abastecimento(s)" else "") +
                             if (r.ignorados > 0) " · ${r.ignorados} já existiam" else "")
                     }
                 }) { Text("Restaurar") }
