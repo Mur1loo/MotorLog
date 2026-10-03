@@ -102,7 +102,7 @@ fun HistoricoScreen(
         item {
             LinhaDeTiles(Modifier.padding(bottom = 12.dp)) {
                 StatTile("Registros", (servicos.size + trocas.size).toString(), Modifier.weight(1f), icone = R.drawable.ic_ml_doc)
-                StatTile("Total investido", formatarReais(totalGasto), Modifier.weight(1.6f), icone = R.drawable.ic_ml_dollar)
+                StatTile("Gasto", formatarReais(totalGasto), Modifier.weight(1.6f), icone = R.drawable.ic_ml_dollar)
             }
         }
         if (servicos.isNotEmpty() || trocas.isNotEmpty()) {

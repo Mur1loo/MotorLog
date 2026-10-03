@@ -141,10 +141,11 @@ fun GaragemScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                } else {
+                } else if (motos.size > 1) {
+                    // resumo da garagem só com 2+ motos: com uma só, "Motos: 1" repete o card abaixo
                     LinhaDeTiles {
                         StatTile("Motos", motos.size.toString(), Modifier.weight(1f))
-                        StatTile("Km na frota", formatarNumero(totalKm), Modifier.weight(1.7f), unidade = "km")
+                        StatTile("Km somado", formatarNumero(totalKm), Modifier.weight(1.7f), unidade = "km")
                         StatTile(
                             "Vencidas", totalVencidas.toString(), Modifier.weight(1.1f),
                             cor = if (totalVencidas > 0) StatusTroca.VENCIDA.cor() else StatusTroca.OK.cor(),

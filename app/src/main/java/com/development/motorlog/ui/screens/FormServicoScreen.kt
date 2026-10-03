@@ -112,7 +112,7 @@ fun FormServicoScreen(
                     }
                 }
             }
-            item { MlTextField(tipoServico, { tipoServico = it }, "Tipo do serviço", icone = R.drawable.ic_ml_wrench, ajuda = ajuda(erros.tipo)) }
+            item { MlTextField(tipoServico, { tipoServico = it }, "Descrição", icone = R.drawable.ic_ml_wrench, ajuda = ajuda(erros.tipo)) }
             item { SectionLabel("Quanto e onde") }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

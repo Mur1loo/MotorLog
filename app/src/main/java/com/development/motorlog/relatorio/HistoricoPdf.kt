@@ -200,10 +200,10 @@ private class DesenhistaDoHistorico(contexto: Context, private val r: RelatorioM
 
     private fun resumo(): Bloco {
         val caixas = listOf(
-            "TOTAL INVESTIDO" to (formatarReais(r.gastoTotal) to "oficina + por conta"),
+            "GASTO TOTAL" to (formatarReais(r.gastoTotal) to "oficina + por conta"),
             "NA OFICINA" to (formatarReais(r.gastoOficina) to "${r.visitas} visita${if (r.visitas == 1) "" else "s"}"),
             "POR CONTA PRÓPRIA" to (formatarReais(r.gastoPorConta) to "${r.trocasPorConta} troca${if (r.trocasPorConta == 1) "" else "s"} de peça"),
-            "CUSTO POR KM" to ((r.custoPorKm?.let(::formatarReaisCentavos) ?: "—") to if (r.custoPorKm != null) "desde o 1º registro" else "rode mais pra calcular"),
+            "CUSTO POR KM" to ((r.custoPorKm?.let(::formatarReaisCentavos) ?: "—") to if (r.custoPorKm != null) "desde o 1º registro" else "atualize o km pra calcular"),
         )
         val gap = 8f
         val largura = (CONTEUDO - gap * (caixas.size - 1)) / caixas.size
