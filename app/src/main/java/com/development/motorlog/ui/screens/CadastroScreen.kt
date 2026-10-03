@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,7 +56,7 @@ fun CadastroScreen(
     modifier: Modifier = Modifier,
     moto: Moto? = null,
     viewModel: MotoViewModel = viewModel(),
-    onSalvar: () -> Unit
+    onSalvar: (motoId: Long) -> Unit
 ) {
     var modelo by rememberSaveable { mutableStateOf(moto?.modelo ?: "") }
     var placa by rememberSaveable { mutableStateOf(moto?.placa ?: "") }
@@ -64,6 +65,9 @@ fun CadastroScreen(
     var revisao by rememberSaveable { mutableStateOf(moto?.intervaloRevisaoKm?.takeIf { it > 0 }?.toString() ?: "") }
     // os erros só aparecem depois da 1ª tentativa de salvar (não grita com quem ainda está digitando)
     var tentouSalvar by rememberSaveable { mutableStateOf(false) }
+    // moto nova: o salvar espera o banco (pra abrir o Painel dela); trava o botão contra 2º toque.
+    // remember (não Saveable): se a tela for recriada no meio, o botão não fica travado pra sempre
+    var salvando by remember { mutableStateOf(false) }
     // cor da moto no app: a atual (escolhida ou automática); moto nova ganha a próxima da fila
     var cor by rememberSaveable { mutableIntStateOf(moto?.let(::indiceDaCor) ?: (viewModel.motos.size % 4)) }
     val accent = MlAccentsMoto[cor]
@@ -145,19 +149,21 @@ fun CadastroScreen(
             textoBotao = if (moto != null) "Salvar alterações" else "Salvar moto",
             erro = if (tentouSalvar && !erros.ok) "Corrija os campos em vermelho." else null,
             icone = R.drawable.ic_ml_check,
+            enabled = !salvando,
             onClick = {
                 tentouSalvar = true
-                if (!erros.ok) return@RodapeDeForm
+                if (!erros.ok || salvando) return@RodapeDeForm
                 // validarMoto já garantiu que os números leem
                 val newAno = ano.trim().toInt()
                 val newKm = km.trim().toIntOrNull()
                 val newRevisao = revisao.trim().toIntOrNull() ?: 0
                 if (moto != null) {
                     viewModel.atualizarMoto(moto.copy(modelo = modelo.trim(), placa = placa.trim(), anoFabricacao = newAno, intervaloRevisaoKm = newRevisao, cor = cor))
+                    onSalvar(moto.id)
                 } else {
-                    viewModel.inserirMoto(Moto(modelo = modelo.trim(), anoFabricacao = newAno, placa = placa.trim(), kilometragem = newKm!!, intervaloRevisaoKm = newRevisao, cor = cor))
+                    salvando = true
+                    viewModel.inserirMoto(Moto(modelo = modelo.trim(), anoFabricacao = newAno, placa = placa.trim(), kilometragem = newKm!!, intervaloRevisaoKm = newRevisao, cor = cor), onSalvar)
                 }
-                onSalvar()
             },
         )
     }

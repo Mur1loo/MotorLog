@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,9 +34,7 @@ import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.estimarDiasAteTroca
-import com.development.motorlog.R
 import com.development.motorlog.ui.components.BarraDeProgresso
-import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
 import com.development.motorlog.ui.components.MlCard
@@ -50,6 +47,8 @@ import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.components.ConfirmarEstimativaDialog
+import com.development.motorlog.ui.components.CardNaoLembra
 
 // "Quando troca cada peça" — variante 'grupos' do protótipo (RecsGrupos): resumo em 3 cards,
 // depois grupos por urgência que mapeiam 1:1 no StatusTroca, + "Nunca registrei" recolhido (D6).
@@ -111,18 +110,7 @@ fun TrocasScreen(
             }
             if (!recolhido && grupo.status == StatusTroca.NUNCA_TROCADA) {
                 item(key = "estimar") {
-                    val semRegistro = itens.filter { !it.ehRevisao }
-                    MlCard(pad = 14.dp, cor = MaterialTheme.colorScheme.surfaceContainerHigh, borda = androidx.compose.ui.graphics.Color.Transparent) {
-                        Text("Não lembra quando trocou?", style = MaterialTheme.typography.titleSmall)
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Marque estas ${semRegistro.size} peças como trocadas hoje, aos ${formatarKm(moto.kilometragem)}. " +
-                                "Eu passo a contar o intervalo a partir daí, e você corrige as que lembrar tocando nelas.",
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(Modifier.height(10.dp))
-                        BotaoSecundario("Marcar todas como trocadas agora", { confirmarEstimativa = true }, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_check, enabled = semRegistro.isNotEmpty())
-                    }
+                    CardNaoLembra(itens.count { !it.ehRevisao }, moto.kilometragem, { confirmarEstimativa = true })
                 }
             }
             if (!recolhido) {
@@ -139,26 +127,15 @@ fun TrocasScreen(
 
     if (confirmarEstimativa) {
         val semRegistro = porStatus[StatusTroca.NUNCA_TROCADA].orEmpty().filter { !it.ehRevisao }
-        AlertDialog(
-            onDismissRequest = { confirmarEstimativa = false },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            title = { Text("Marcar ${semRegistro.size} peças como trocadas?", style = MaterialTheme.typography.titleLarge) },
-            text = {
-                Text(
-                    "Todas ficam registradas como trocadas aos ${formatarKm(moto.kilometragem)}. As que você trocou há mais tempo vão " +
-                        "aparecer 'em dia' até você corrigir — é uma estimativa pra começar, não a verdade.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+        ConfirmarEstimativaDialog(
+            semRegistro.size, moto.kilometragem,
+            onConfirmar = {
+                confirmarEstimativa = false
+                val pecasAlvo = semRegistro.mapNotNull { rec -> pecas.find { it.id == rec.pecaId } }
+                registroViewModel.registrarTrocasEmLote(moto, pecasAlvo, moto.kilometragem)
+                mostrarSemRegistro = false
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmarEstimativa = false
-                    val pecasAlvo = semRegistro.mapNotNull { rec -> pecas.find { it.id == rec.pecaId } }
-                    registroViewModel.registrarTrocasEmLote(moto, pecasAlvo, moto.kilometragem)
-                    mostrarSemRegistro = false
-                }) { Text("Marcar todas") }
-            },
-            dismissButton = { TextButton(onClick = { confirmarEstimativa = false }) { Text("Cancelar") } },
+            onCancelar = { confirmarEstimativa = false },
         )
     }
 
