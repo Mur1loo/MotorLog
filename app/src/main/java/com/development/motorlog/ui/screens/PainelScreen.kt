@@ -92,6 +92,8 @@ fun PainelScreen(
     moto: Moto,
     ritmoKmMes: Int?,
     kmRodados: Int,
+    lembretesLigados: Boolean,
+    onLigarLembretes: () -> Unit,
     registroViewModel: RegistroViewModel = viewModel(),
     fotoViewModel: FotoViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
@@ -204,6 +206,24 @@ fun PainelScreen(
                         proximasTrocas.isNotEmpty() -> Pill("Tudo em dia", StatusTroca.OK.cor(), icone = R.drawable.ic_ml_check)
                     }
                 }
+            }
+        }
+
+        // ── lembretes desligados: sem eles o app não avisa nada, e a pessoa nem sabe ──
+        if (!lembretesLigados) {
+            MlCard(borda = StatusTroca.PERTO.cor().copy(alpha = 0.5f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    IconBox(R.drawable.ic_ml_bell, cor = StatusTroca.PERTO.cor())
+                    Column(Modifier.weight(1f)) {
+                        Text("Lembretes desligados", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "Assim eu não consigo te avisar quando uma troca vencer.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                BotaoSecundario("Ligar lembretes", onLigarLembretes, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_bell)
             }
         }
 

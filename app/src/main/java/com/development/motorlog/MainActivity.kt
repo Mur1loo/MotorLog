@@ -1,9 +1,11 @@
 package com.development.motorlog
 
 import android.Manifest
+import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
@@ -13,12 +15,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.AppDatabase
@@ -59,9 +65,9 @@ import com.development.motorlog.ui.theme.MotorLogTheme
 import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.hojeUtcMillis
+import com.development.motorlog.ui.util.juntarComPonto
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
-import com.development.motorlog.ui.util.juntarComPonto
 
 // telas que vivem "dentro de uma moto" e mostram a barra inferior com o FAB +KM
 private val TELAS_DA_MOTO = setOf("Painel", "Historico", "Trocas", "Fotos")
@@ -70,8 +76,19 @@ const val EXTRA_ABRIR_KM = "abrirKm"
 private const val PREF_ULTIMA_MOTO = "ultima_moto"
 // dia (meia-noite UTC) em que o pedido de apoio apareceu pela última vez (regra em domain/Apoio.kt)
 private const val PREF_APOIO_MOSTRADO = "apoio_mostrado_em"
+// já pedimos a permissão de notificação uma vez? (Android 13+: depois de negar 2x, só nas configurações)
+private const val PREF_NOTIFICACAO_PEDIDA = "notificacao_pedida"
 
 class MainActivity : ComponentActivity() {
+    // lembretes podem ser desligados fora do app (permissão negada, notificações bloqueadas nas
+    // configurações): confere a cada volta pro app, e o Painel avisa enquanto estiverem desligados
+    private val lembretesLigados = mutableStateOf(true)
+
+    override fun onResume() {
+        super.onResume()
+        lembretesLigados.value = NotificationManagerCompat.from(this).areNotificationsEnabled()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // o app é dark fixo: ícones da status/navigation bar sempre claros, independente do modo do sistema
@@ -152,12 +169,41 @@ class MainActivity : ComponentActivity() {
                     mensagem?.let { snackbar.showSnackbar(it); mensagem = null }
                 }
 
-                // Android 13+: notificação exige permissão em runtime. Pede uma vez, ao abrir.
-                val pedirPermissao = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-                LaunchedEffect(Unit) {
-                    if (primeiraCriacao && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !LembreteWorker.podeNotificar(this@MainActivity)) {
+                // Lembretes (Android 13+ pede permissão): não pede mais ao abrir, sem contexto — quem
+                // nega ali perde o principal motivo de voltar ao app. Pergunta depois de cadastrar a 1ª
+                // moto, explicando pra quê; e o Painel oferece ligar enquanto estiverem desligados.
+                var perguntarLembretes by rememberSaveable { mutableStateOf(false) }
+                val pedirPermissao = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                    lembretesLigados.value = NotificationManagerCompat.from(this@MainActivity).areNotificationsEnabled()
+                }
+                val ligarLembretes: () -> Unit = {
+                    val podePedir = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        !LembreteWorker.podeNotificar(this@MainActivity) &&
+                        (!prefs.getBoolean(PREF_NOTIFICACAO_PEDIDA, false) ||
+                            shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS))
+                    if (podePedir) {
+                        prefs.edit { putBoolean(PREF_NOTIFICACAO_PEDIDA, true) }
                         pedirPermissao.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        // negada de vez, ou bloqueada nas configurações: só dá pra ligar lá
+                        startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
                     }
+                }
+                if (perguntarLembretes) {
+                    AlertDialog(
+                        onDismissRequest = { perguntarLembretes = false },
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        title = { Text("Quer que eu te avise das trocas?", style = MaterialTheme.typography.titleLarge) },
+                        text = {
+                            Text(
+                                "Eu aviso de manhã quando uma troca estiver vencendo e à noite se o km ficar parado. " +
+                                    "Dá pra atualizar o km direto na notificação, e desligar quando quiser.",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        },
+                        confirmButton = { TextButton(onClick = { perguntarLembretes = false; ligarLembretes() }) { Text("Quero os lembretes") } },
+                        dismissButton = { TextButton(onClick = { perguntarLembretes = false }) { Text("Agora não") } },
+                    )
                 }
                 // moto que não existe mais (ex.: notificação antiga de moto excluída): volta pra Garagem.
                 // Atalho sem moto conhecida: usa a única/primeira moto. Lembra a última moto aberta.
@@ -258,6 +304,8 @@ class MainActivity : ComponentActivity() {
                                     mensagem = "Moto cadastrada. Agora é só manter o km em dia."
                                     motoId = id
                                     trocarAba("Painel")
+                                    // hora certa pra pedir: acabou de ver pra que serve o app
+                                    if (!lembretesLigados.value && !prefs.getBoolean(PREF_NOTIFICACAO_PEDIDA, false)) perguntarLembretes = true
                                 })
                         }
                         "EditarMoto" -> {
@@ -289,6 +337,8 @@ class MainActivity : ComponentActivity() {
                                     moto = motoSel,
                                     ritmoKmMes = motoViewModel.ritmos[motoSel.id],
                                     kmRodados = motoViewModel.kmRodados[motoSel.id] ?: 0,
+                                    lembretesLigados = lembretesLigados.value,
+                                    onLigarLembretes = ligarLembretes,
                                     onAtualizarKm = { mostrarKm = true },
                                     onRegistrarTroca = { abrirTela("Registro") },
                                     onRegistrarServico = { abrirTela("RegistrarServico") },
