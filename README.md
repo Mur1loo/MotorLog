@@ -8,7 +8,7 @@ Projeto de aprendizado de desenvolvimento mobile (Kotlin/Android nativo), em evo
 
 ## Status
 
-MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v11) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
+MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v12) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
 
 ## Funcionalidades
 
@@ -49,7 +49,7 @@ Como todo o cálculo parte do km atual, "atualizar km" é a ação mais importan
 | --- | --- |
 | Linguagem | Kotlin 2.2.10 |
 | Interface | Jetpack Compose (Material 3) |
-| Persistência | Room 2.8.1 (processamento via KSP), schema v11 com migrations explícitas e testadas |
+| Persistência | Room 2.8.1 (processamento via KSP), schema v12 com migrations explícitas e testadas |
 | Tarefas em segundo plano | WorkManager (lembretes 2x por dia) |
 | Testes | JUnit 4 (domínio) · `room-testing`/`MigrationTestHelper` (instrumentado) |
 | Build | Gradle (Kotlin DSL) com version catalog, AGP 9.2.1 |
@@ -89,7 +89,7 @@ cd MotorLog
 2. Conecte um dispositivo com depuração USB habilitada, ou inicie um emulador.
 3. Execute a configuração `app`.
 
-O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v11) são explícitas e não destrutivas.
+O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v12) são explícitas e não destrutivas.
 
 ### Testes
 
@@ -99,7 +99,7 @@ O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de 
 ./gradlew assembleDebug testDebugUnitTest lint
 ```
 
-Convenções: datas são `Long` em millis à meia-noite UTC e sempre formatadas em UTC; `domain/` não importa `android.*`/`androidx.*`; schema novo = bump de versão + `Migration` + `schemas/N.json` + teste.
+Convenções: datas são `Long` em millis à meia-noite UTC e sempre formatadas em UTC; dinheiro é `Int` em centavos (`domain/Dinheiro.kt`: `lerReais` lê o que a pessoa digita, `formatarReais` mostra); `domain/` não importa `android.*`/`androidx.*`; schema novo = bump de versão + `Migration` + `schemas/N.json` + teste.
 
 ## Princípios de UX
 

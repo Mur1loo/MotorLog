@@ -14,12 +14,12 @@ class ExportacaoTest {
         val csv = montarExportacao(
             motos = listOf(Moto(id = 1, modelo = "Crosser", placa = "ABC1D23", anoFabricacao = 2020, kilometragem = 16000, kmAtualizadoEm = 5)),
             pecas = listOf(Peca(id = 7, nome = "Óleo; sintético", intervaloKm = 3000)),
-            registros = listOf(Registro(motoId = 1, pecaId = 7, kmTroca = 15000, servicoId = null, preco = 60)),
-            servicos = listOf(Servico(motoId = 1, custo = 250, kilometragem = 16000, tipoServico = "Revisão", data = 9, local = "Zé")),
+            registros = listOf(Registro(motoId = 1, pecaId = 7, kmTroca = 15000, servicoId = null, preco = 4590)),
+            servicos = listOf(Servico(motoId = 1, custo = 25000, kilometragem = 16000, tipoServico = "Revisão", data = 9, local = "Zé")),
             formatarData = { "D$it" },
         )
         assertTrue(csv.contains("Crosser;ABC1D23;2020;16000;D5;0"))
-        assertTrue(csv.contains("Crosser ABC1D23;Óleo, sintético;15000;60;não;"))
+        assertTrue(csv.contains("Crosser ABC1D23;Óleo, sintético;15000;45,90;não;"))
         assertTrue(csv.contains("Crosser ABC1D23;Revisão;D9;16000;250;Zé"))
         assertTrue(csv.contains("Óleo, sintético;3000"))
     }
@@ -36,7 +36,7 @@ class ExportacaoTest {
             motos = listOf(Moto(id = 1, modelo = "X", placa = "P", anoFabricacao = 2020, kilometragem = 1, cor = 5)),
             pecas = listOf(Peca(id = 7, nome = "Vela", intervaloKm = 10000)),
             registros = listOf(
-                Registro(motoId = 1, pecaId = 7, kmTroca = 100, servicoId = null, preco = 30, data = 4),
+                Registro(motoId = 1, pecaId = 7, kmTroca = 100, servicoId = null, preco = 3000, data = 4),
                 Registro(motoId = 1, pecaId = 7, kmTroca = 50, servicoId = null, preco = 0),
             ),
             servicos = emptyList(),

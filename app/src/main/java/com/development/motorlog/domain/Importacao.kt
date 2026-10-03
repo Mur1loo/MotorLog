@@ -2,6 +2,7 @@ package com.development.motorlog.domain
 
 // Leitura do CSV gerado por montarExportacao (o inverso dele). Puro: a data chega como texto e
 // quem sabe ler "dd/MM/yyyy" em UTC é a UI (parseData). Linhas que não entende viram avisos, não erro.
+// Preço e custo vêm em reais ("45,90", ou "45" nos backups de antes dos centavos) e viram centavos.
 data class MotoImportada(val modelo: String, val placa: String, val ano: Int, val km: Int, val kmAtualizadoEm: Long?, val intervaloRevisaoKm: Int = 0, val cor: Int = -1) {
     val chave get() = "$modelo $placa".trim()
 }
@@ -45,15 +46,16 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
 
         val c = linha.split(';').map { it.trim() }
         fun int(ix: Int) = c.getOrNull(ix)?.toIntOrNull()
+        fun reais(ix: Int) = c.getOrNull(ix)?.let(::lerReais)
         val ok = when (secao) {
             Secao.MOTOS -> if (c.size >= 4 && int(2) != null && int(3) != null) {
                 motos += MotoImportada(c[0], c[1], int(2)!!, int(3)!!, c.getOrNull(4)?.takeIf { it.isNotBlank() }?.let(parseData), int(5) ?: 0, int(6) ?: -1); true
             } else false
             Secao.TROCAS -> if (c.size >= 3 && int(2) != null) {
-                trocas += TrocaImportada(c[0], c[1], int(2)!!, int(3) ?: 0, c.getOrNull(4)?.lowercase() == "sim", c.getOrNull(5)?.takeIf { it.isNotBlank() }?.let(parseData)); true
+                trocas += TrocaImportada(c[0], c[1], int(2)!!, reais(3) ?: 0, c.getOrNull(4)?.lowercase() == "sim", c.getOrNull(5)?.takeIf { it.isNotBlank() }?.let(parseData)); true
             } else false
-            Secao.SERVICOS -> if (c.size >= 5 && int(3) != null && int(4) != null) {
-                servicos += ServicoImportado(c[0], c[1], parseData(c[2]), int(3)!!, int(4)!!, c.getOrNull(5) ?: ""); true
+            Secao.SERVICOS -> if (c.size >= 5 && int(3) != null && reais(4) != null) {
+                servicos += ServicoImportado(c[0], c[1], parseData(c[2]), int(3)!!, reais(4)!!, c.getOrNull(5) ?: ""); true
             } else false
             Secao.PECAS -> if (c.size >= 2 && int(1) != null && int(1)!! > 0) {
                 pecas += PecaImportada(c[0], int(1)!!); true

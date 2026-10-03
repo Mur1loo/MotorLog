@@ -14,11 +14,11 @@ class RelatorioTest {
 
     @Test
     fun `junta oficina e trocas por conta, mais recente primeiro, com as pecas de cada visita`() {
-        val servico = Servico(id = 5, motoId = 1, custo = 250, kilometragem = 15000, tipoServico = "Revisão", data = 90, local = "Oficina do Zé")
+        val servico = Servico(id = 5, motoId = 1, custo = 25000, kilometragem = 15000, tipoServico = "Revisão", data = 90, local = "Oficina do Zé")
         val registros = listOf(
-            Registro(motoId = 1, pecaId = 2, kmTroca = 15000, servicoId = 5, preco = 45),
-            Registro(motoId = 1, pecaId = 1, kmTroca = 15000, servicoId = 5, preco = 60),
-            Registro(motoId = 1, pecaId = 1, kmTroca = 15800, servicoId = null, preco = 55, data = 100),
+            Registro(motoId = 1, pecaId = 2, kmTroca = 15000, servicoId = 5, preco = 4500),
+            Registro(motoId = 1, pecaId = 1, kmTroca = 15000, servicoId = 5, preco = 6000),
+            Registro(motoId = 1, pecaId = 1, kmTroca = 15800, servicoId = null, preco = 5500, data = 100),
             Registro(motoId = 1, pecaId = 2, kmTroca = 9000, servicoId = null, preco = 0),
         )
         val r = montarRelatorio(moto, pecas, registros, listOf(servico), emptyList(), kmRodados = 1000)
@@ -31,12 +31,12 @@ class RelatorioTest {
         assertNull(emCasa.local)
         val visita = r.itens[1]
         assertEquals("Oficina do Zé", visita.local)
-        assertEquals(listOf(PecaDoItem("Óleo do motor", 60), PecaDoItem("Vela de ignição", 45)), visita.pecas)
+        assertEquals(listOf(PecaDoItem("Óleo do motor", 6000), PecaDoItem("Vela de ignição", 4500)), visita.pecas)
         assertNull("sem dia conhecido", r.itens[2].data)
 
-        assertEquals(250, r.gastoOficina); assertEquals(1, r.visitas)
-        assertEquals(55, r.gastoPorConta); assertEquals(2, r.trocasPorConta)
-        assertEquals(305, r.gastoTotal)
+        assertEquals(25000, r.gastoOficina); assertEquals(1, r.visitas)
+        assertEquals(5500, r.gastoPorConta); assertEquals(2, r.trocasPorConta)
+        assertEquals(30500, r.gastoTotal)
         assertEquals(0.305, r.custoPorKm!!, 0.0001)
     }
 

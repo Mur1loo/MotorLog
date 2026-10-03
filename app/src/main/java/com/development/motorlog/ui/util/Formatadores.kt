@@ -30,7 +30,11 @@ private val numeroBr: NumberFormat = NumberFormat.getIntegerInstance(Locale.forL
 // 16000 -> "16.000" (o ponto de milhar é o que o motoboy lê no painel e no talão da oficina)
 fun formatarNumero(n: Int): String = numeroBr.format(n)
 fun formatarKm(km: Int): String = "${formatarNumero(km)} km"
-fun formatarReais(valor: Int): String = "R$ ${formatarNumero(valor)}"
+// centavos -> "R$ 1.234" (sem centavos) ou "R$ 1.234,50": conta redonda continua curta no painel
+fun formatarReais(centavos: Int): String {
+    val resto = centavos % 100
+    return "R$ ${formatarNumero(centavos / 100)}" + if (resto != 0) ",${resto.toString().padStart(2, '0')}" else ""
+}
 
 private val reaisComCentavos: NumberFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("pt-BR"))
 // 0.4217 -> "R$ 0,42" (custo por km precisa dos centavos)

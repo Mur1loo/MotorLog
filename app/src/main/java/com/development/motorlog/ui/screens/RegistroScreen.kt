@@ -41,6 +41,8 @@ import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.components.CampoReais
+import com.development.motorlog.ui.components.reaisOpcional
 
 // "Troquei uma peça" (por conta própria: em casa, com um amigo): busca + lista de peças em cards
 // (ícone, nome, intervalo); km, valor da peça e dia fixos embaixo e o Salvar no rodapé — sempre
@@ -63,7 +65,7 @@ fun RegistroScreen(
     var busca by rememberSaveable { mutableStateOf("") }
     val pecaSelecionada = pecas.find { it.id == pecaSelecionadaId }
     val pecasFiltradas = pecas.filter { it.nome.contemSemAcento(busca) }
-    val precoInt = if (preco.isBlank()) 0 else preco.toIntOrNull()
+    val precoInt = reaisOpcional(preco)   // centavos
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
@@ -85,7 +87,7 @@ fun RegistroScreen(
             SectionLabel("Km, valor e dia")
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MlTextField(km, { km = it }, "Km da troca", Modifier.weight(1f), icone = R.drawable.ic_ml_gauge, numerico = true, erro = km.toIntOrNull() == null)
-                MlTextField(preco, { preco = it }, "Peça R$ (opcional)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, numerico = true, erro = precoInt == null)
+                CampoReais(preco, { preco = it }, "Valor (opcional)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar)
             }
             Spacer(Modifier.height(8.dp))
             CampoData(data, { data = it }, rotulo = "Quando trocou")

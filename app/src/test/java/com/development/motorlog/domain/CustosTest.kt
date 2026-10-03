@@ -30,8 +30,9 @@ class CustosTest {
 
     @Test
     fun `custo por km`() {
-        assertEquals(0.42, custoPorKm(gastoTotal = 630, kmRodados = 1500)!!, 0.0001)
-        assertNull(custoPorKm(630, 0))
+        // gasto em centavos: R$ 630,00 em 1.500 km
+        assertEquals(0.42, custoPorKm(gastoTotal = 63000, kmRodados = 1500)!!, 0.0001)
+        assertNull(custoPorKm(63000, 0))
         assertNull(custoPorKm(0, 1500))
     }
 

@@ -146,10 +146,28 @@ class MigrationTest {
     }
 
     @Test
-    fun migra5para11_caminhoCompletoDoCelular() {
+    fun migra11para12_dinheiroViraCentavos() {
+        helper.createDatabase(nomeBanco, 11).apply {
+            execSQL("INSERT INTO Moto (id, modelo, placa, anoFabricacao, kilometragem, kmAtualizadoEm, intervaloRevisaoKm, cor, fotoCapaId) VALUES (1, 'Crosser', 'ABC1D23', 2020, 16000, 0, 0, -1, 0)")
+            execSQL("INSERT INTO Peca (id, nome, intervaloKm) VALUES (1, 'Óleo do motor', 3000)")
+            execSQL("INSERT INTO Servico (id, motoId, custo, kilometragem, tipoServico, data, local) VALUES (3, 1, 250, 16000, 'Revisão', 0, 'Zé')")
+            execSQL("INSERT INTO Registro (id, motoId, pecaId, kmTroca, servicoId, preco, data) VALUES (7, 1, 1, 15000, NULL, 60, 0)")
+            execSQL("INSERT INTO Registro (id, motoId, pecaId, kmTroca, servicoId, preco, data) VALUES (8, 1, 1, 16000, 3, 0, 0)")
+            close()
+        }
+        val db = helper.runMigrationsAndValidate(nomeBanco, 12, true, MIGRATION_11_12)
+        db.query("SELECT custo FROM Servico WHERE id = 3").use { c -> c.moveToFirst(); assertEquals(25000, c.getInt(0)) }
+        db.query("SELECT preco FROM Registro ORDER BY id").use { c ->
+            c.moveToFirst(); assertEquals(6000, c.getInt(0))
+            c.moveToNext(); assertEquals(0, c.getInt(0))
+        }
+    }
+
+    @Test
+    fun migra5para12_caminhoCompletoDoCelular() {
         helper.createDatabase(nomeBanco, 5).apply { semearV5(this); close() }
         val db = helper.runMigrationsAndValidate(
-            nomeBanco, 11, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11,
+            nomeBanco, 12, true, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
         )
         db.query("SELECT kmTroca, preco, data FROM Registro WHERE id = 7").use { c ->
             c.moveToFirst(); assertEquals(15000, c.getInt(0)); assertEquals(0, c.getInt(1)); assertEquals(0L, c.getLong(2))
