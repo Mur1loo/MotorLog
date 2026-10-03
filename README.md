@@ -18,7 +18,7 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Painel da moto** — quilometragem em destaque, gasto total, serviços, "Próximas trocas" com status por cor (em dia, próximo do vencimento, vencido) e atividade recente.
 - **Trocas por km** — todas as peças agrupadas por urgência (vencidas / perto de vencer / mais adiante / sem registro), cada uma com barra de progresso do intervalo.
 - **Serviços** — registro de visita à oficina (tipo, custo, oficina, data, km) com peças trocadas e preço; histórico e detalhe (peças + mão de obra = total). As peças trocadas num serviço alimentam as recomendações.
-- **Lembretes 2x por dia (7h e 19h)** — notificação quando há troca vencida/perto de vencer (WorkManager); o km parado há 3+ dias só é cobrado no lembrete das 19h, e o mesmo aviso não se repete no mesmo dia. Tocar abre o painel da moto.
+- **Lembretes 2x por dia (7h e 19h)** — notificação quando há troca vencida/perto de vencer (WorkManager); o km parado há 3+ dias só é cobrado no lembrete das 19h, e o mesmo aviso não se repete no mesmo dia. Tocar abre o painel da moto. A permissão de notificação é pedida depois do cadastro da primeira moto, com explicação, e o Painel avisa quando os lembretes estão desligados.
 - **Ritmo de uso** — km/mês estimado pelo histórico de atualizações, convertendo "faltam 400 km" em "~6 dias".
 - **Alertas na Garagem** — cada moto mostra quantas trocas estão vencidas/perto, sem precisar abrir o painel.
 - **Histórico em PDF** — relatório A4 da moto (foto de capa, resumo de gastos, situação das peças e todo o histórico de oficina e trocas por conta própria) pra mandar no WhatsApp: pro comprador, pro mecânico ou pra guardar.
