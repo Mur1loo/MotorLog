@@ -24,6 +24,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.development.motorlog.ui.theme.MlAccent
@@ -47,7 +49,8 @@ fun Odometer(km: Int, modifier: Modifier = Modifier, tamanho: TamanhoOdometro = 
     // era cortado dentro da célula; aqui o tamanho é travado (o odômetro já é o maior número da tela).
     val densidade = LocalDensity.current
     fun fixo(tamanhoDp: Double) = with(densidade) { tamanhoDp.dp.toSp() }
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+    // leitor de tela: "16.100 quilômetros" de uma vez, e não dígito por dígito
+    Row(modifier = modifier.clearAndSetSemantics { contentDescription = "$digitos quilômetros" }, verticalAlignment = Alignment.CenterVertically) {
         digitos.forEachIndexed { i, ch ->
             if (i > 0) Spacer(Modifier.width(tamanho.vao))
             if (ch == '.') {

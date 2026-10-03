@@ -144,7 +144,7 @@ fun PainelScreen(
     ) {
         // ── capa: a foto da moto numa faixa larga (abre o álbum) ──
         if (capa != null) {
-            Box(Modifier.fillMaxWidth().height(136.dp).clip(MlFormas.card).clickable { onAbrirFotos() }) {
+            Box(Modifier.fillMaxWidth().height(136.dp).clip(MlFormas.card).clickable(onClickLabel = "abrir o álbum") { onAbrirFotos() }) {
                 FotoArquivo(capa.arquivo, Modifier.fillMaxSize(), ladoMaxPx = 1080, descricao = "Foto da moto")
                 Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.4f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.7f))))
                 Pill(
@@ -304,7 +304,7 @@ fun PainelScreen(
                 ultimos.forEachIndexed { i, servico ->
                     if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onAbrirServico(servico) }.padding(vertical = 11.dp),
+                        modifier = Modifier.fillMaxWidth().clickable(onClickLabel = "ver a visita") { onAbrirServico(servico) }.padding(vertical = 11.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
@@ -364,7 +364,7 @@ fun LinhaDeAlerta(rec: Recomendacao, ritmoKmMes: Int?, onClick: () -> Unit) {
     val restante = rec.kmRestante ?: 0
     val dias = estimarDiasAteTroca(rec.kmRestante, ritmoKmMes)
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { onClick() }.padding(vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClickLabel = "registrar troca") { onClick() }.padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -104,7 +105,7 @@ fun AtualizarKmSheet(
                 Icon(
                     painterResource(R.drawable.ic_ml_close), contentDescription = "Fechar",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).clickable { onFechar() }.padding(10.dp),
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(20.dp)).clickable(role = Role.Button) { onFechar() }.padding(10.dp),
                 )
             }
             Spacer(Modifier.height(12.dp))
@@ -162,7 +163,7 @@ fun AtualizarKmSheet(
                         if (k == "del") {
                             Box(
                                 modifier = Modifier.weight(1f).heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh).clickable { tecla(k) },
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHigh).clickable(role = Role.Button) { tecla(k) },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(painterResource(R.drawable.ic_ml_back), contentDescription = "Apagar", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
@@ -194,7 +195,7 @@ private fun Tecla(rotulo: String, modifier: Modifier, altura: androidx.compose.u
         modifier = modifier.heightIn(min = altura).clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MlBorder, RoundedCornerShape(12.dp))
-            .clickable { onClick() },
+            .clickable(role = Role.Button) { onClick() },
         contentAlignment = Alignment.Center,
     ) {
         Text(rotulo, style = chakra(fonte, androidx.compose.ui.text.font.FontWeight.SemiBold))

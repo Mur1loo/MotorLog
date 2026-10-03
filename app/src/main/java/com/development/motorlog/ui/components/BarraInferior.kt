@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,7 +59,7 @@ fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: (
         Row(
             // em paisagem/tablet a barra não se espalha: largura máxima de celular, centralizada
             modifier = Modifier.fillMaxWidth().wrapContentWidth().widthIn(max = 560.dp).fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp).navigationBarsPadding(),
+                .padding(horizontal = 8.dp, vertical = 6.dp).navigationBarsPadding().selectableGroup(),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -68,12 +73,13 @@ fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: (
                         .size(60.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(accent)
-                        .clickable { aoAtualizarKm() },
+                        .clickable(role = Role.Button) { aoAtualizarKm() },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Icon(painterResource(R.drawable.ic_ml_gauge), contentDescription = "Atualizar km", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(23.dp))
-                    Text("+KM", style = chakra(9.sp), color = MaterialTheme.colorScheme.onPrimary)
+                    Icon(painterResource(R.drawable.ic_ml_gauge), contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(23.dp))
+                    // leitor de tela: "Atualizar km, botão" (e não "Atualizar km, mais KM")
+                    Text("+KM", style = chakra(9.sp), color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.semantics { contentDescription = "Atualizar km" })
                 }
             }
             ItemAba(AbaMoto.TROCAS, ativa == AbaMoto.TROCAS) { aoNavegar(AbaMoto.TROCAS) }
@@ -86,10 +92,11 @@ fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: (
 private fun ItemAba(aba: AbaMoto, ativa: Boolean, onClick: () -> Unit) {
     val cor = if (ativa) MaterialTheme.colorScheme.primary else MlTextFaint
     Column(
-        modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { onClick() }.padding(horizontal = 12.dp, vertical = 6.dp),
+        // aba: o leitor de tela anuncia "Painel, aba, selecionada" (antes lia o nome duas vezes)
+        modifier = Modifier.clip(RoundedCornerShape(12.dp)).selectable(selected = ativa, role = Role.Tab, onClick = onClick).padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(painterResource(aba.icone), contentDescription = aba.rotulo, tint = cor, modifier = Modifier.size(23.dp))
+        Icon(painterResource(aba.icone), contentDescription = null, tint = cor, modifier = Modifier.size(23.dp))
         Spacer(Modifier.height(3.dp))
         Text(aba.rotulo, fontSize = 10.5.sp, fontWeight = if (ativa) FontWeight.Bold else FontWeight.Medium, color = cor, maxLines = 1)
     }
