@@ -88,7 +88,7 @@ fun RevisaoDetailScreen(
             MlCard(pad = 4.dp) {
                 if (registros.isEmpty()) {
                     Text(
-                        "Nenhuma peça registrada nesta visita (só mão de obra ou serviço).",
+                        "Nenhuma peça registrada nesta visita (só mão de obra).",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(12.dp),
                     )
@@ -132,7 +132,7 @@ fun RevisaoDetailScreen(
 
     if (confirmarExclusao) {
         ConfirmarExclusaoDialog(
-            texto = "Excluir o serviço \"${servico.tipoServico}\"? As peças trocadas registradas nele perdem o vínculo.",
+            texto = "Excluir a visita \"${servico.tipoServico}\"? As trocas de peça feitas nela continuam no histórico.",
             onConfirmar = {
                 confirmarExclusao = false
                 registroViewModel.deletarServico(servico)

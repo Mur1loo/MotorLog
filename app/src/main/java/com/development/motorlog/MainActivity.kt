@@ -140,13 +140,13 @@ class MainActivity : ComponentActivity() {
                 val titulo = when (telaAtual) {
                     "Cadastro" -> "Nova moto"
                     "EditarMoto" -> "Editar moto"
-                    "EditarServico" -> "Editar serviço"
+                    "EditarServico" -> "Editar visita"
                     "Painel" -> motoSelecionada?.modelo ?: "Painel"
                     "Registro" -> "Troquei uma peça"
                     "RegistrarServico" -> "Fui à oficina"
                     "Historico" -> "Histórico"
-                    "Trocas" -> "Quando troca cada peça"
-                    "RevisaoDetail" -> servicoSelecionado?.tipoServico ?: "Serviço"
+                    "Trocas" -> "Trocas"
+                    "RevisaoDetail" -> servicoSelecionado?.tipoServico ?: "Visita à oficina"
                     "GerenciarPecas" -> "Peças e intervalos"
                     "EditarPeca" -> if (pecaId != null) "Editar peça" else "Nova peça"
                     "Fotos" -> "Álbum da moto"
@@ -332,7 +332,7 @@ class MainActivity : ComponentActivity() {
                                     moto = motoSel,
                                     servico = servicoSel,
                                     modifier = Modifier.padding(innerPadding),
-                                    onSalvar = { mensagem = "Serviço atualizado."; irParaTras() }
+                                    onSalvar = { mensagem = "Visita atualizada."; irParaTras() }
                                 )
                             }
                         }
@@ -381,7 +381,7 @@ class MainActivity : ComponentActivity() {
                                 FormServicoScreen(
                                     moto = motoSel,
                                     modifier = Modifier.padding(innerPadding),
-                                    onSalvar = { mensagem = "Serviço salvo no histórico."; irParaTras() }
+                                    onSalvar = { mensagem = "Visita salva no histórico."; irParaTras() }
                                 )
                             }
                         }

@@ -193,7 +193,7 @@ fun PainelScreen(
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(16.dp))
-                BotaoPrimario("Atualizar agora", onAtualizarKm, icone = R.drawable.ic_ml_gauge, altura = 58.dp)
+                BotaoPrimario("Atualizar km", onAtualizarKm, icone = R.drawable.ic_ml_gauge, altura = 58.dp)
                 Spacer(Modifier.height(10.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (ritmoKmMes != null) PillNeutra("${formatarNumero(ritmoKmMes)} km/mês", icone = R.drawable.ic_ml_road)
@@ -250,7 +250,11 @@ fun PainelScreen(
             StatTile("Gasto · ${servicos.size} visita${if (servicos.size == 1) "" else "s"}", formatarReais(total), Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, onClick = onVerHistorico) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    if (porKm != null) "${formatarReaisCentavos(porKm)} por km" else "— por km (rode mais)",
+                    when {
+                        porKm != null -> "${formatarReaisCentavos(porKm)} por km"
+                        total <= 0 -> "custo por km: sem gasto ainda"
+                        else -> "custo por km: atualize o km"
+                    },
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 Text(
