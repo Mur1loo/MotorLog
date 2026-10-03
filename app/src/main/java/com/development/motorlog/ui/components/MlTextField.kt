@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
-import com.development.motorlog.ui.theme.MlBorderHi
+import com.development.motorlog.ui.theme.MlBordaCampo
 import com.development.motorlog.ui.theme.MlFormas
 
 // Campo do protótipo (Field): raio 13, borda sutil, accent no foco, ícone opcional à esquerda.
@@ -41,7 +41,7 @@ fun MlTextField(
         keyboardActions = keyboardActions,
         shape = MlFormas.campo,
         colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = MlBorderHi,
+            unfocusedBorderColor = MlBordaCampo,
             focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedContainerColor = MaterialTheme.colorScheme.surface,
