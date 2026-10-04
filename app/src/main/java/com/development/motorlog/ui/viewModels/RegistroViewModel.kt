@@ -74,11 +74,14 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
     // Toda escrita que muda recomendação chama isto na MESMA coroutine, depois do commit:
     // a tela seguinte pode ler o banco antes do insert terminar, mas este recálculo vem depois.
     private suspend fun recalcular(moto: Moto) {
+        val registros = registroDao.listarRegistros(moto.id)
         val pecas = calcularRecomendacoes(
             kmAtual = moto.kilometragem,
             pecas = pecaDao.listarPecas(),
-            registros = registroDao.listarRegistros(moto.id),
+            registros = registros,
         )
+        // o índice de cuidado do Painel usa as trocas da moto: ficam em dia junto com as recomendações
+        registrosDaMoto = registros
         recomendacoes = comRevisao(pecas, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, servicoDao.query(moto.id)))
     }
 

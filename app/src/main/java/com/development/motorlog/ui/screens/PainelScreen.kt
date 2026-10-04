@@ -55,6 +55,7 @@ import com.development.motorlog.domain.MediasDeKm
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.TipoMarco
+import com.development.motorlog.domain.calcularIndiceDeCuidado
 import com.development.motorlog.domain.custoPorKm
 import com.development.motorlog.domain.descreverDias
 import com.development.motorlog.domain.descreverTempoJuntos
@@ -77,6 +78,7 @@ import com.development.motorlog.ui.components.BotaoHistoricoPdf
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.CardDeCuidados
+import com.development.motorlog.ui.components.CardIndiceDeCuidado
 import com.development.motorlog.ui.components.CardNaoLembra
 import com.development.motorlog.ui.components.ConfirmarEstimativaDialog
 import com.development.motorlog.ui.components.FotoArquivo
@@ -164,6 +166,19 @@ fun PainelScreen(
     LaunchedEffect(moto.id) { abastecimentoViewModel.carregar(moto.id) }
     LaunchedEffect(moto.id) { cuidadoViewModel.carregar(moto.id) }
     val consumo = abastecimentoViewModel.resumo
+    val indice = remember(recomendacoes, pecas, registroViewModel.registrosDaMoto, servicos, cuidadoViewModel.cuidados, moto) {
+        calcularIndiceDeCuidado(
+            recomendacoes = recomendacoes,
+            pecas = pecas,
+            registros = registroViewModel.registrosDaMoto,
+            servicos = servicos,
+            cuidados = cuidadoViewModel.cuidados,
+            kmAtual = moto.kilometragem,
+            kmAtualizadoEm = moto.kmAtualizadoEm,
+            hoje = hojeUtcMillis(),
+        )
+    }
+    var indiceAberto by rememberSaveable { mutableStateOf(false) }
 
     // marcos ("Passou dos 50.000 km!", "1 ano com a Pretinha"): o mais recente ainda não visto
     val contexto = LocalContext.current
@@ -380,6 +395,11 @@ fun PainelScreen(
                     LinhaDeAlerta(rec, ritmoKmMes) { if (rec.ehRevisao) onRegistrarServico() else trocandoPecaId = rec.pecaId }
                 }
             }
+        }
+
+        // ── Card: índice de cuidado (0–100: trocas, manutenção, revisão, cuidados e km em dia) ──
+        if (indice != null) {
+            CardIndiceDeCuidado(indice, indiceAberto) { indiceAberto = !indiceAberto }
         }
 
         // ── Card: cuidados (os rituais de quem trata bem a moto, em 1 toque) ──
