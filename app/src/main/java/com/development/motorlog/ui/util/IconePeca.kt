@@ -40,4 +40,5 @@ fun iconeDoEvento(evento: EventoDaHistoria): Int = when (evento.tipo) {
     TipoEvento.CUIDADO -> evento.referencia?.let(TipoCuidado::doCodigo)?.let(::iconeDoCuidado) ?: R.drawable.ic_ml_check
     TipoEvento.MARCO_KM -> R.drawable.ic_ml_road
     TipoEvento.ANIVERSARIO -> R.drawable.ic_ml_calendar
+    TipoEvento.DESPEDIDA -> R.drawable.ic_ml_tag
 }

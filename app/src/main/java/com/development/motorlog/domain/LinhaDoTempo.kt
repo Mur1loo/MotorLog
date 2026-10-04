@@ -12,7 +12,7 @@ import com.development.motorlog.data.Servico
 // fica de fora (seria um a cada dois dias: vira ruído na história). Registro sem dia conhecido
 // (data 0, anterior à v11) também fica de fora: não tem onde entrar na linha.
 
-enum class TipoEvento { CHEGADA, FOTO, TROCA, VISITA, CUIDADO, MARCO_KM, ANIVERSARIO }
+enum class TipoEvento { CHEGADA, FOTO, TROCA, VISITA, CUIDADO, MARCO_KM, ANIVERSARIO, DESPEDIDA }
 
 data class EventoDaHistoria(
     val data: Long,
@@ -66,10 +66,14 @@ fun montarLinhaDoTempo(
         val tipo = if (m.tipo == TipoMarco.KM) TipoEvento.MARCO_KM else TipoEvento.ANIVERSARIO
         eventos += EventoDaHistoria(m.data, if (m.tipo == TipoMarco.KM) m.valor else null, tipo, m.titulo)
     }
-    // mais recente primeiro; no mesmo dia, o maior km por cima (e a chegada sempre por último)
+    if (estaVendida(moto)) {
+        eventos += EventoDaHistoria(moto.vendidaEm, moto.kilometragem, TipoEvento.DESPEDIDA, "A $nome passou adiante")
+    }
+    // mais recente primeiro; no mesmo dia, o maior km por cima (a despedida sempre no topo e a
+    // chegada sempre por último)
     return eventos.sortedWith(
         compareByDescending<EventoDaHistoria> { it.data }
-            .thenBy { if (it.tipo == TipoEvento.CHEGADA) 1 else 0 }
+            .thenBy { when (it.tipo) { TipoEvento.DESPEDIDA -> -1; TipoEvento.CHEGADA -> 1; else -> 0 } }
             .thenByDescending { it.km ?: -1 },
     )
 }

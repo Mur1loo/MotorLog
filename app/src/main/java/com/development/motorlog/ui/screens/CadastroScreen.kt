@@ -68,6 +68,8 @@ fun CadastroScreen(
     onSalvar: (motoId: Long) -> Unit,
     // edição: "Excluir moto" mora aqui, longe do Painel do dia a dia (ação rara e sem volta)
     onExcluir: (() -> Unit)? = null,
+    // edição de moto na garagem: "Vendi a moto" leva à despedida (vira lembrança, sem apagar nada)
+    onDespedir: (() -> Unit)? = null,
 ) {
     var modelo by rememberSaveable { mutableStateOf(moto?.modelo ?: "") }
     var placa by rememberSaveable { mutableStateOf(moto?.placa ?: "") }
@@ -180,6 +182,15 @@ fun CadastroScreen(
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
+            }
+            if (onDespedir != null) {
+                Spacer(Modifier.height(16.dp))
+                BotaoSecundario("Vendi a moto · passar adiante", onDespedir, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_tag)
+                Text(
+                    "Ela vira lembrança: sai da garagem do dia a dia, mas a história fica guardada.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
             if (onExcluir != null) {
                 Spacer(Modifier.height(16.dp))

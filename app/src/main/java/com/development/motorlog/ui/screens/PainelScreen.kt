@@ -63,7 +63,9 @@ import com.development.motorlog.domain.descreverTempoJuntos
 import com.development.motorlog.domain.diasEntre
 import com.development.motorlog.domain.ehRevisao
 import com.development.motorlog.domain.escolherCapa
+import com.development.motorlog.domain.estaVendida
 import com.development.motorlog.domain.estimarDiasAteTroca
+import com.development.motorlog.domain.fimDaHistoria
 import com.development.motorlog.domain.gastoNoMes
 import com.development.motorlog.domain.gastoTotal
 import com.development.motorlog.domain.kmJuntos
@@ -143,7 +145,10 @@ fun PainelScreen(
     onAbrirDiario: () -> Unit,
     onAbrirHistoria: () -> Unit,
     onMensagem: (String) -> Unit,
+    // moto vendida (lembrança): "Ela voltou?" traz de volta pra garagem
+    onDesfazerDespedida: () -> Unit = {},
 ) {
+    val vendida = estaVendida(moto)
     val recomendacoes = registroViewModel.recomendacoes
     val servicos = registroViewModel.servicos
     val pecas = registroViewModel.pecas
@@ -190,7 +195,8 @@ fun PainelScreen(
     val chaveVistos = "marcos_vistos_${moto.id}"
     var marcosVistos by remember(moto.id) { mutableStateOf(prefs.getStringSet(chaveVistos, emptySet()).orEmpty().toSet()) }
     val marcos = remember(moto, historicoKm) { marcosDaMoto(nomeDaMoto(moto), moto.chegouEm, historicoKm, hojeUtcMillis()) }
-    val marcoAgora = marcoPraComemorar(marcos, hojeUtcMillis(), marcosVistos)
+    // lembrança não ganha marco novo pra comemorar
+    val marcoAgora = if (vendida) null else marcoPraComemorar(marcos, hojeUtcMillis(), marcosVistos)
     val fotos = fotoViewModel.fotos
     val capa = escolherCapa(fotos, moto.fotoCapaId)
     val hoje = hojeUtcMillis()
@@ -206,6 +212,23 @@ fun PainelScreen(
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        // ── moto vendida: virou lembrança (sem lembretes nem km pra atualizar) ──
+        if (vendida) {
+            MlCard(cor = accent.copy(alpha = 0.10f), borda = accent.copy(alpha = 0.5f)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    IconBox(R.drawable.ic_ml_tag, cor = accent)
+                    Column(Modifier.weight(1f)) {
+                        Text("Passou adiante em ${formatarData(moto.vendidaEm)}", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "A ${nomeDaMoto(moto)} é uma lembrança: a história continua guardada aqui.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                TextButton(onClick = onDesfazerDespedida) { Text("Ela voltou? Trazer de volta pra garagem") }
+            }
+        }
+
         // ── capa: a foto da moto numa faixa larga (abre o álbum) ──
         if (capa != null) {
             Box(Modifier.fillMaxWidth().height(136.dp).clip(MlFormas.card).clickable(onClickLabel = "abrir o álbum") { onAbrirFotos() }) {
@@ -241,40 +264,47 @@ fun PainelScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // a moto como alguém: o tempo e os km de vida juntos (nome e chegada vêm do cadastro)
-                val tempoJuntos = descreverTempoJuntos(moto.chegouEm, hojeUtcMillis())
+                val tempoJuntos = descreverTempoJuntos(moto.chegouEm, fimDaHistoria(moto, hojeUtcMillis()))
                 if (tempoJuntos != null) {
                     val km = kmJuntos(moto.kmChegada, moto.kilometragem)?.takeIf { it > 0 }
                     Text(
-                        (if (tempoJuntos == "hoje") "Chegou hoje" else "Juntos há $tempoJuntos") + (km?.let { " · ${formatarKm(it)}" } ?: ""),
+                        when {
+                            vendida -> if (tempoJuntos == "hoje") "Juntos por um dia" else "Juntos por $tempoJuntos"
+                            tempoJuntos == "hoje" -> "Chegou hoje"
+                            else -> "Juntos há $tempoJuntos"
+                        } + (km?.let { " · ${formatarKm(it)}" } ?: ""),
                         style = MaterialTheme.typography.labelLarge, color = accent,
                     )
-                } else {
+                } else if (!vendida) {
                     TextButton(onClick = onEditarMoto) {
                         Text("Quando ela chegou? Conte aqui", style = MaterialTheme.typography.labelMedium, color = accent)
                     }
                 }
                 Spacer(Modifier.height(10.dp))
-                Text("QUILOMETRAGEM ATUAL", style = MaterialTheme.typography.labelSmall, color = MlTextFaint, letterSpacing = 1.6.sp)
+                Text(if (vendida) "KM NA DESPEDIDA" else "QUILOMETRAGEM ATUAL", style = MaterialTheme.typography.labelSmall, color = MlTextFaint, letterSpacing = 1.6.sp)
                 Spacer(Modifier.height(16.dp))
                 Odometer(moto.kilometragem, accent = accent)
                 Spacer(Modifier.height(12.dp))
                 val diasSemKm = if (moto.kmAtualizadoEm > 0) diasEntre(moto.kmAtualizadoEm, hojeUtcMillis()) else null
                 Text(
-                    when (diasSemKm) {
-                        null -> "Sem registro de quando o km foi atualizado"
-                        0 -> "Atualizado hoje"
-                        1 -> "Atualizado ontem"
+                    when {
+                        vendida -> "Passou adiante em ${formatarData(moto.vendidaEm)}"
+                        diasSemKm == null -> "Sem registro de quando o km foi atualizado"
+                        diasSemKm == 0 -> "Atualizado hoje"
+                        diasSemKm == 1 -> "Atualizado ontem"
                         else -> "Atualizado há $diasSemKm dias"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) StatusTroca.PERTO.cor()
+                    color = if (!vendida && diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) StatusTroca.PERTO.cor()
                             else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(16.dp))
-                BotaoPrimario("Atualizar km", onAtualizarKm, icone = R.drawable.ic_ml_gauge, altura = 58.dp)
-                Spacer(Modifier.height(8.dp))
-                // abastecer também atualiza o km: o outro jeito de manter o painel em dia
-                BotaoSecundario("Abasteci", onAbasteci, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_fuel)
+                if (!vendida) {
+                    Spacer(Modifier.height(16.dp))
+                    BotaoPrimario("Atualizar km", onAtualizarKm, icone = R.drawable.ic_ml_gauge, altura = 58.dp)
+                    Spacer(Modifier.height(8.dp))
+                    // abastecer também atualiza o km: o outro jeito de manter o painel em dia
+                    BotaoSecundario("Abasteci", onAbasteci, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_fuel)
+                }
                 Spacer(Modifier.height(10.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     // as duas médias com nome: o ritmo de agora e o de sempre
@@ -316,7 +346,7 @@ fun PainelScreen(
         }
 
         // ── lembretes desligados: sem eles o app não avisa nada, e a pessoa nem sabe ──
-        if (!lembretesLigados) {
+        if (!lembretesLigados && !vendida) {
             MlCard(borda = StatusTroca.PERTO.cor().copy(alpha = 0.5f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     IconBox(R.drawable.ic_ml_bell, cor = StatusTroca.PERTO.cor())

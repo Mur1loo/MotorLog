@@ -29,6 +29,8 @@ import com.development.motorlog.domain.EventoDaHistoria
 import com.development.motorlog.domain.TipoEvento
 import com.development.motorlog.domain.descreverTempoJuntos
 import com.development.motorlog.domain.escolherCapa
+import com.development.motorlog.domain.estaVendida
+import com.development.motorlog.domain.fimDaHistoria
 import com.development.motorlog.domain.marcosDaMoto
 import com.development.motorlog.domain.montarLinhaDoTempo
 import com.development.motorlog.domain.nomeDaMoto
@@ -67,7 +69,8 @@ fun LinhaDoTempoScreen(
     }
     val nome = nomeDaMoto(moto)
     val accent = accentDaMoto(moto)
-    val hoje = hojeUtcMillis()
+    // moto vendida: a história (e os aniversários) para no dia da despedida
+    val hoje = fimDaHistoria(moto, hojeUtcMillis())
     val eventos = remember(moto, historicoKm, registroViewModel.registrosDaMoto, registroViewModel.servicos, registroViewModel.pecas, fotoViewModel.fotos, cuidadoViewModel.cuidados) {
         montarLinhaDoTempo(
             moto = moto,
@@ -91,7 +94,13 @@ fun LinhaDoTempoScreen(
                         val juntos = descreverTempoJuntos(moto.chegouEm, hoje)
                         Text(
                             listOfNotNull(
-                                juntos?.let { if (it == "hoje") "chegou hoje" else "juntos há $it" },
+                                juntos?.let {
+                                    when {
+                                        estaVendida(moto) -> if (it == "hoje") "passou adiante no dia em que chegou" else "juntos por $it"
+                                        it == "hoje" -> "chegou hoje"
+                                        else -> "juntos há $it"
+                                    }
+                                },
                                 "${eventos.size} momento${if (eventos.size == 1) "" else "s"}",
                             ).joinToString(" · "),
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -122,7 +131,7 @@ fun LinhaDoTempoScreen(
 
 @Composable
 private fun LinhaDoEvento(e: EventoDaHistoria, accent: Color, ultimo: Boolean) {
-    val destaque = e.tipo == TipoEvento.CHEGADA || e.tipo == TipoEvento.MARCO_KM || e.tipo == TipoEvento.ANIVERSARIO
+    val destaque = e.tipo in setOf(TipoEvento.CHEGADA, TipoEvento.MARCO_KM, TipoEvento.ANIVERSARIO, TipoEvento.DESPEDIDA)
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         // trilho da linha do tempo: o ícone e um fio até o próximo momento
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

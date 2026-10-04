@@ -37,6 +37,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.domain.deveMostrarPedidoDeApoio
+import com.development.motorlog.domain.estaVendida
 import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.lembrete.LembreteWorker
 import com.development.motorlog.ui.components.AbaMoto
@@ -53,6 +54,7 @@ import com.development.motorlog.ui.navegacao.voltar
 import com.development.motorlog.ui.screens.AtualizarKmSheet
 import com.development.motorlog.ui.screens.CadastroScreen
 import com.development.motorlog.ui.screens.CombustivelScreen
+import com.development.motorlog.ui.screens.DespedidaScreen
 import com.development.motorlog.ui.screens.DiarioCuidadosScreen
 import com.development.motorlog.ui.screens.FormAbastecimentoScreen
 import com.development.motorlog.ui.screens.FormPecaScreen
@@ -161,13 +163,14 @@ class MainActivity : ComponentActivity() {
                     "Combustivel" -> "Combustível"
                     "DiarioCuidados" -> "Diário de cuidados"
                     "LinhaDoTempo" -> "Linha do tempo"
+                    "Despedida" -> "Despedida"
                     "Abastecimento" -> if (abastecimentoId != null) "Editar abastecimento" else "Abasteci"
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
                     "Painel" -> motoSelecionada?.let { juntarComPonto(if (it.apelido.isNotBlank()) it.modelo else "", it.anoFabricacao.toString(), it.placa) }
                     "Trocas" -> motoSelecionada?.let { "${nomeDaMoto(it)} · ${formatarKm(it.kilometragem)}" }
-                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento", "DiarioCuidados", "LinhaDoTempo" -> motoSelecionada?.let(::nomeDaMoto)
+                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento", "DiarioCuidados", "LinhaDoTempo", "Despedida" -> motoSelecionada?.let(::nomeDaMoto)
                     "Cadastro" -> "Cadastre sua motocicleta"
                     else -> null
                 }
@@ -225,11 +228,14 @@ class MainActivity : ComponentActivity() {
                         motoId = null
                         irParaGaragem()
                     }
-                    if (motoId == null && mostrarKm && motos.isNotEmpty()) {
-                        motoId = motos.first().id
+                    // o atalho +KM só vale pra moto da garagem: a última aberta pode ter virado lembrança
+                    val ativas = motos.filterNot(::estaVendida)
+                    if (mostrarKm && motoSelecionada != null && estaVendida(motoSelecionada)) motoId = null
+                    if (motoId == null && mostrarKm && ativas.isNotEmpty()) {
+                        motoId = ativas.first().id
                         trocarAba("Painel")
                     }
-                    if (motoId == null && mostrarKm && motoViewModel.carregou && motos.isEmpty()) mostrarKm = false
+                    if (motoId == null && mostrarKm && motoViewModel.carregou && ativas.isEmpty()) mostrarKm = false
                     motoId?.let { id -> prefs.edit { putLong(PREF_ULTIMA_MOTO, id) } }
                 }
                 // só pra quem já usa o app de verdade (dias com km registrado), no máximo 1x por mês
@@ -293,7 +299,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 },
                                 aoAtualizarKm = { mostrarKm = true },
-                                mostrarAtualizarKm = telaAtual != "Painel",
+                                mostrarAtualizarKm = telaAtual != "Painel" && !estaVendida(motoSelecionada),
                             )
                         }
                     },
@@ -333,6 +339,7 @@ class MainActivity : ComponentActivity() {
                                         motoId = null
                                         irParaGaragem()
                                     },
+                                    onDespedir = if (estaVendida(motoSel)) null else { { abrirTela("Despedida") } },
                                 )
                             }
                         }
@@ -380,6 +387,10 @@ class MainActivity : ComponentActivity() {
                                     onAbrirDiario = { abrirTela("DiarioCuidados") },
                                     onAbrirHistoria = { abrirTela("LinhaDoTempo") },
                                     onMensagem = { mensagem = it },
+                                    onDesfazerDespedida = {
+                                        motoViewModel.atualizarMoto(motoSel.copy(vendidaEm = 0))
+                                        mensagem = "A ${nomeDaMoto(motoSel)} voltou pra garagem."
+                                    },
                                 )
                             }
                         }
@@ -480,6 +491,21 @@ class MainActivity : ComponentActivity() {
                                     moto = motoSel,
                                     historicoKm = motoViewModel.historicos[motoSel.id].orEmpty(),
                                     modifier = Modifier.padding(innerPadding),
+                                )
+                            }
+                        }
+                        "Despedida" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null) {
+                                DespedidaScreen(
+                                    moto = motoSel,
+                                    modifier = Modifier.padding(innerPadding),
+                                    onConfirmar = { vendidaEm ->
+                                        motoViewModel.atualizarMoto(motoSel.copy(vendidaEm = vendidaEm))
+                                        mensagem = "A ${nomeDaMoto(motoSel)} agora é lembrança. A história dela continua guardada."
+                                        irParaGaragem()
+                                    },
+                                    onMensagem = { mensagem = it },
                                 )
                             }
                         }

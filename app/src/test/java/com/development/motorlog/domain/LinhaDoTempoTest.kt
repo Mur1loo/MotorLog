@@ -63,4 +63,17 @@ class LinhaDoTempoTest {
         assertEquals(listOf(TipoEvento.FOTO, TipoEvento.CHEGADA), eventos.map { it.tipo })
         assertEquals("Foto da Pretinha", eventos.first().titulo)
     }
+
+    @Test
+    fun `moto vendida termina com a despedida no topo`() {
+        val eventos = montarLinhaDoTempo(
+            moto = moto.copy(vendidaEm = 40 * dia),
+            pecas = pecas, registros = emptyList(), servicos = emptyList(),
+            fotos = listOf(FotoMoto(id = 1, motoId = 1, arquivo = "a.jpg", data = 40 * dia, km = 21000, legenda = "Última foto")),
+            cuidados = emptyList(), marcos = emptyList(),
+        )
+        assertEquals(listOf(TipoEvento.DESPEDIDA, TipoEvento.FOTO, TipoEvento.CHEGADA), eventos.map { it.tipo })
+        assertEquals("A Pretinha passou adiante", eventos.first().titulo)
+        assertEquals(21000, eventos.first().km)
+    }
 }

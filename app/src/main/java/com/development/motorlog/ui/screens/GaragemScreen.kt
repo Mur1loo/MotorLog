@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
@@ -43,7 +44,9 @@ import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.ResumoAlertas
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.diasEntre
+import com.development.motorlog.domain.kmJuntos
 import com.development.motorlog.domain.nomeDaMoto
+import com.development.motorlog.domain.separarGaragem
 import com.development.motorlog.ui.components.AvatarDaMoto
 import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.IconBox
@@ -52,6 +55,7 @@ import com.development.motorlog.ui.components.MlCard
 import com.development.motorlog.ui.components.Odometer
 import com.development.motorlog.ui.components.Pill
 import com.development.motorlog.ui.components.PillNeutra
+import com.development.motorlog.ui.components.SectionLabel
 import com.development.motorlog.ui.components.SobreDialog
 import com.development.motorlog.ui.components.StatTile
 import com.development.motorlog.ui.components.TamanhoOdometro
@@ -59,6 +63,8 @@ import com.development.motorlog.ui.theme.MlBorderHi
 import com.development.motorlog.ui.theme.MlTextFaint
 import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.theme.cor
+import com.development.motorlog.ui.util.formatarKm
+import com.development.motorlog.ui.util.formatarMesAno
 import com.development.motorlog.ui.util.formatarNumero
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.juntarComPonto
@@ -74,7 +80,9 @@ fun GaragemScreen(
     onEditarMoto: (Moto) -> Unit,
     onMensagem: (String) -> Unit,
 ) {
-    val motos = viewModel.motos
+    // as motos do dia a dia; as vendidas viram lembranças, no fim da lista (domain/Despedida.kt)
+    val garagem = separarGaragem(viewModel.motos)
+    val motos = garagem.ativas
     val alertas = viewModel.alertas
     val ritmos = viewModel.ritmos
     val totalKm = motos.sumOf { it.kilometragem }
@@ -135,7 +143,7 @@ fun GaragemScreen(
             item {
                 if (!viewModel.carregou) {
                     // ainda lendo o banco: nada a mostrar (evita piscar o estado vazio)
-                } else if (motos.isEmpty()) {
+                } else if (viewModel.motos.isEmpty()) {
                     // ── primeira abertura: explica a tese em 2 linhas em vez de mostrar zeros ──
                     MlCard(pad = 20.dp) {
                         Text("Seu caderninho de manutenção", style = MaterialTheme.typography.titleLarge)
@@ -163,6 +171,12 @@ fun GaragemScreen(
                 MotoCard(moto, alertas[moto.id], ritmos[moto.id], viewModel.capas[moto.id]) { onEditarMoto(moto) }
             }
             if (viewModel.carregou) item { AdicionarMotoCard(onAdicionar) }
+            if (garagem.lembrancas.isNotEmpty()) {
+                item { SectionLabel("Lembranças", Modifier.padding(top = 8.dp)) }
+                items(garagem.lembrancas, key = { it.id }) { moto ->
+                    LembrancaCard(moto, viewModel.capas[moto.id]) { onEditarMoto(moto) }
+                }
+            }
             item { Spacer(Modifier.height(4.dp)) }
         }
 
@@ -181,7 +195,7 @@ fun GaragemScreen(
                         contexto.startActivity(Intent.createChooser(enviar, "Exportar dados"))
                     }
                 },
-                modifier = Modifier.weight(1f), icone = R.drawable.ic_ml_share, enabled = motos.isNotEmpty(),
+                modifier = Modifier.weight(1f), icone = R.drawable.ic_ml_share, enabled = viewModel.motos.isNotEmpty(),
             )
             BotaoSecundario(
                 "Restaurar backup",
@@ -229,6 +243,28 @@ fun MotoCard(moto: Moto, alertas: ResumoAlertas?, ritmoKmMes: Int?, capa: String
             if (diasSemKm != null && diasSemKm >= DIAS_PARA_LEMBRAR_KM) {
                 Pill("km há $diasSemKm dias", StatusTroca.PERTO.cor(), icone = R.drawable.ic_ml_clock)
             }
+        }
+    }
+}
+
+// Moto que passou adiante: card discreto, com o tempo e os km que viveram juntos. Abre o Painel dela
+// (a história continua lá, e dá pra desfazer a despedida).
+@Composable
+private fun LembrancaCard(moto: Moto, capa: String?, onClick: () -> Unit) {
+    val periodo = if (moto.chegouEm > 0) "De ${formatarMesAno(moto.chegouEm)} a ${formatarMesAno(moto.vendidaEm)}"
+    else "Passou adiante em ${formatarMesAno(moto.vendidaEm)}"
+    val km = kmJuntos(moto.kmChegada, moto.kilometragem)?.takeIf { it > 0 }
+    MlCard(onClick = onClick, pad = 12.dp, cor = Color.Transparent) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            AvatarDaMoto(capa, accentDaMoto(moto), tamanho = 48.dp)
+            Column(Modifier.weight(1f)) {
+                Text(nomeDaMoto(moto), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    periodo + (km?.let { " · ${formatarKm(it)} juntos" } ?: ""),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(18.dp))
         }
     }
 }

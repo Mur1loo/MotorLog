@@ -27,6 +27,7 @@ import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.calcularMediasDeKm
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.comRevisao
+import com.development.motorlog.domain.estaVendida
 import com.development.motorlog.domain.montarLembrete
 import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.domain.recomendacaoDeRevisao
@@ -56,7 +57,8 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val prefs = ctx.getSharedPreferences("motorlog", Context.MODE_PRIVATE)
         criarCanal(ctx)
 
-        db.motoDao().listarTodas().forEach { moto ->
+        // moto vendida virou lembrança: não tem mais troca nem km pra cobrar
+        db.motoDao().listarTodas().filterNot(::estaVendida).forEach { moto ->
             val recsPecas = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
             val recs = comRevisao(recsPecas, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, db.servicoDao().query(moto.id)))
             val ritmo = calcularMediasDeKm(db.historicoKmDao().listarPorMoto(moto.id), moto.chegouEm, moto.kmChegada, hoje).paraPrevisao
