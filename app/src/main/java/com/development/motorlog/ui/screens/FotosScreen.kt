@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -37,6 +40,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,9 +60,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.AntesEDepois
+import com.development.motorlog.domain.descreverIntervalo
 import com.development.motorlog.domain.escolherCapa
+import com.development.motorlog.domain.montarAntesEDepois
 import com.development.motorlog.domain.nomeDaMoto
+import com.development.motorlog.domain.tituloDoAntesEDepois
 import com.development.motorlog.fotos.ArmazemDeFotos
+import com.development.motorlog.relatorio.compartilharCartao
+import com.development.motorlog.relatorio.gerarAntesEDepois
 import com.development.motorlog.ui.components.BikeBadge
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoSecundario
@@ -72,6 +83,7 @@ import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.viewModels.FotoViewModel
+import kotlinx.coroutines.launch
 
 // sugestões de legenda: o álbum conta a história da moto, não é só "foto 1, foto 2"
 private val LEGENDAS_SUGERIDAS = listOf("O dia em que ela chegou", "Depois da lavagem", "Viagem", "Antes e depois", "Peça nova", "Rolê com a galera")
@@ -92,6 +104,23 @@ fun FotosScreen(
     val capa = escolherCapa(fotos, moto.fotoCapaId)
     var abertaId by rememberSaveable { mutableStateOf<Long?>(null) }
     val aberta = fotos.find { it.id == abertaId }
+    // antes e depois: modo de escolher 2 fotos (a mais antiga vira o "antes") e a prévia pra compartilhar
+    var escolhendoPar by rememberSaveable { mutableStateOf(false) }
+    var primeiraId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var segundaId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var vendoPar by rememberSaveable { mutableStateOf(false) }
+    val primeira = fotos.find { it.id == primeiraId }
+    val segunda = fotos.find { it.id == segundaId }
+    val par = if (primeira != null && segunda != null) montarAntesEDepois(primeira, segunda) else null
+    val escopo = rememberCoroutineScope()
+    fun alternarEscolha(id: Long) {
+        when (id) {
+            primeiraId -> { primeiraId = segundaId; segundaId = null }
+            segundaId -> segundaId = null
+            else -> if (primeiraId == null) primeiraId = id else segundaId = id
+        }
+    }
+    fun sairDaEscolha() { escolhendoPar = false; primeiraId = null; segundaId = null; vendoPar = false }
 
     LaunchedEffect(moto.id) { fotoViewModel.carregar(moto.id) }
 
@@ -172,6 +201,30 @@ fun FotosScreen(
                         Text("  Preparando a foto…", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
+                if (fotos.size >= 2 && !escolhendoPar) {
+                    Spacer(Modifier.height(8.dp))
+                    BotaoSecundario("Antes e depois", { escolhendoPar = true }, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_share)
+                }
+            }
+        }
+        if (escolhendoPar) {
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                MlCard(pad = 14.dp, cor = accent.copy(alpha = 0.12f), borda = accent) {
+                    Text("Antes e depois", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        when {
+                            primeiraId == null -> "Toque nas duas fotos: a de antes e a de depois. A mais antiga fica em cima."
+                            segundaId == null -> "Agora a outra foto."
+                            else -> "Pronto! Veja como ficou."
+                        },
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        BotaoSecundario("Ver como ficou", { vendoPar = true }, Modifier.weight(1f), icone = R.drawable.ic_ml_check, enabled = par != null)
+                        TextButton(onClick = ::sairDaEscolha) { Text("Cancelar") }
+                    }
+                }
             }
         }
         if (fotos.isNotEmpty()) {
@@ -180,8 +233,21 @@ fun FotosScreen(
             }
         }
         items(fotos, key = { it.id }) { foto ->
-            Column(Modifier.clickable(onClickLabel = "ver a foto") { abertaId = foto.id }) {
-                FotoArquivo(foto.arquivo, Modifier.fillMaxWidth().aspectRatio(1f).clip(MlFormas.campo), descricao = foto.legenda.ifBlank { null })
+            val escolhida = escolhendoPar && (foto.id == primeiraId || foto.id == segundaId)
+            Column(
+                Modifier.clickable(onClickLabel = if (escolhendoPar) "escolher pro antes e depois" else "ver a foto") {
+                    if (escolhendoPar) alternarEscolha(foto.id) else abertaId = foto.id
+                },
+            ) {
+                Box {
+                    FotoArquivo(
+                        foto.arquivo,
+                        Modifier.fillMaxWidth().aspectRatio(1f).clip(MlFormas.campo)
+                            .then(if (escolhida) Modifier.border(3.dp, accent, MlFormas.campo) else Modifier),
+                        descricao = foto.legenda.ifBlank { null },
+                    )
+                    if (escolhida) Pill("Escolhida", accent, Modifier.align(Alignment.TopStart).padding(8.dp), fundo = Color.Black.copy(alpha = 0.6f))
+                }
                 Spacer(Modifier.height(5.dp))
                 Text(foto.legenda.ifBlank { formatarData(foto.data) }, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
@@ -199,6 +265,28 @@ fun FotosScreen(
             primeira = fotos.isEmpty(),
             onGuardar = { legenda -> fotoViewModel.confirmarPendente(moto, legenda) { onMensagem("Foto guardada no álbum.") } },
             onDescartar = { fotoViewModel.descartarPendente() },
+        )
+    }
+
+    if (vendoPar && par != null) {
+        var gerando by remember { mutableStateOf(false) }
+        AntesEDepoisDialog(
+            par = par,
+            gerando = gerando,
+            onCompartilhar = { titulo ->
+                gerando = true
+                escopo.launch {
+                    val arquivo = runCatching { gerarAntesEDepois(contexto, moto, par, titulo) }.getOrNull()
+                    gerando = false
+                    if (arquivo != null) {
+                        compartilharCartao(contexto, arquivo, "$titulo · ${nomeDaMoto(moto)} 🏍️")
+                        sairDaEscolha()
+                    } else {
+                        onMensagem("Não consegui montar a imagem. Tente de novo.")
+                    }
+                }
+            },
+            onFechar = { vendoPar = false },
         )
     }
 
@@ -237,6 +325,47 @@ private fun NovaFotoDialog(arquivo: String, primeira: Boolean, onGuardar: (Strin
         },
         confirmButton = { TextButton(onClick = { onGuardar(legenda) }) { Text("Guardar no álbum") } },
         dismissButton = { TextButton(onClick = onDescartar) { Text("Descartar") } },
+    )
+}
+
+// sugestões de título do antes e depois (a legenda da foto de depois já vem preenchida)
+private val TITULOS_ANTES_DEPOIS = listOf("Depois da lavagem", "Peça nova", "Personalização", "Restauração")
+
+// Prévia do antes e depois: as duas fotos empilhadas, o tempo entre elas e o título da imagem
+@Composable
+private fun AntesEDepoisDialog(par: AntesEDepois, gerando: Boolean, onCompartilhar: (String) -> Unit, onFechar: () -> Unit) {
+    var titulo by rememberSaveable(par.antes.id, par.depois.id) { mutableStateOf(tituloDoAntesEDepois(par)) }
+    AlertDialog(
+        onDismissRequest = onFechar,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text("Antes e depois", style = MaterialTheme.typography.titleLarge) },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                listOf("Antes" to par.antes, "Depois" to par.depois).forEach { (rotulo, foto) ->
+                    Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(MlFormas.campo)) {
+                        FotoArquivo(foto.arquivo, Modifier.fillMaxSize(), ladoMaxPx = 800, descricao = rotulo)
+                        Pill(rotulo, Color.White, Modifier.align(Alignment.TopStart).padding(8.dp), fundo = Color.Black.copy(alpha = 0.55f))
+                        Text(
+                            "${formatarData(foto.data)} · ${formatarKm(foto.km)}", style = MaterialTheme.typography.labelSmall, color = Color.White,
+                            modifier = Modifier.align(Alignment.BottomStart).background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 8.dp, vertical = 4.dp),
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                }
+                Text(descreverIntervalo(par).replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(10.dp))
+                MlTextField(titulo, { titulo = it.take(40) }, "Título da imagem")
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy((-6).dp)) {
+                    TITULOS_ANTES_DEPOIS.forEach { s ->
+                        FilterChip(selected = titulo == s, onClick = { titulo = s }, label = { Text(s) }, shape = MlFormas.pill)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onCompartilhar(titulo.trim()) }, enabled = !gerando) { Text(if (gerando) "Montando…" else "Compartilhar") }
+        },
+        dismissButton = { TextButton(onClick = onFechar) { Text("Voltar") } },
     )
 }
 
