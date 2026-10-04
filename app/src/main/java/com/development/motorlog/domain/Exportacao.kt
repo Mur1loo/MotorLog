@@ -2,6 +2,7 @@ package com.development.motorlog.domain
 
 import com.development.motorlog.data.Abastecimento
 import com.development.motorlog.data.Cuidado
+import com.development.motorlog.data.Desejo
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
@@ -17,6 +18,7 @@ fun montarExportacao(
     servicos: List<Servico>,
     abastecimentos: List<Abastecimento> = emptyList(),
     cuidados: List<Cuidado> = emptyList(),
+    desejos: List<Desejo> = emptyList(),
     formatarData: (Long) -> String,
 ): String {
     val nomeMoto = motos.associate { it.id to "${it.modelo} ${it.placa}".trim() }
@@ -54,6 +56,12 @@ fun montarExportacao(
         appendLine("moto;tipo;data;km;nota")
         cuidados.sortedWith(compareBy({ it.motoId }, { it.data })).forEach { c ->
             appendLine("${nomeMoto[c.motoId] ?: c.motoId};${c.tipo};${formatarData(c.data)};${c.km};${limpo(c.nota)}")
+        }
+        appendLine()
+        appendLine("DESEJOS")
+        appendLine("moto;item;preco;nota;criado_em;instalado_em;km_instalado")
+        desejos.sortedWith(compareBy({ it.motoId }, { it.criadoEm })).forEach { d ->
+            appendLine("${nomeMoto[d.motoId] ?: d.motoId};${limpo(d.nome)};${reaisParaTexto(d.preco)};${limpo(d.nota)};${formatarData(d.criadoEm)};${if (d.instaladoEm > 0) formatarData(d.instaladoEm) else ""};${d.kmInstalado}")
         }
         appendLine()
         appendLine("PEÇAS (catálogo)")
