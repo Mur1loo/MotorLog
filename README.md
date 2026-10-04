@@ -121,7 +121,6 @@ O público-alvo é quem usa a moto para trabalhar, não quem gosta de tecnologia
 - Widget na tela inicial para atualizar o km sem abrir o app.
 - Backup completo em arquivo único (dados + fotos do álbum).
 - Foto do painel junto da atualização de km.
-- Backup completo em arquivo único também para a lista de desejos e as fotos dos rolês.
 - Leitura reativa com `Flow`.
 
 ## Contribuindo
