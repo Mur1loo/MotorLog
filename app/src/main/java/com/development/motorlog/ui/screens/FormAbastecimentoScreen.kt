@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,9 +36,12 @@ import com.development.motorlog.R
 import com.development.motorlog.data.Abastecimento
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.lerLitros
+import com.development.motorlog.domain.lerReais
 import com.development.motorlog.domain.litrosParaTexto
+import com.development.motorlog.domain.litrosPeloValor
 import com.development.motorlog.domain.reaisParaTexto
 import com.development.motorlog.domain.validarAbastecimento
+import com.development.motorlog.domain.validarAbastecimentoPorValor
 import com.development.motorlog.ui.components.CampoData
 import com.development.motorlog.ui.components.CampoReais
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
@@ -48,7 +53,10 @@ import com.development.motorlog.ui.components.reaisOpcional
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.viewModels.AbastecimentoViewModel
 
-// "Abasteci": km do painel (nasce com o atual), litros, valor (opcional), tanque cheio e dia.
+// "Abasteci": km do painel (nasce com o atual), o que foi colocado e o dia. Dois jeitos de dizer
+// quanto entrou: "Sei o valor" (paguei R$ 30, litro a R$ 6,29 — o jeito mais comum; o preço do
+// último abastecimento já vem preenchido) ou "Sei os litros". Tanque cheio é opcional: só deixa a
+// conta exata pra quem às vezes completa (domain/Consumo.kt).
 // O km do abastecimento também atualiza o km da moto quando é maior (AbastecimentoViewModel).
 // abastecimento != null → edição, com "Excluir".
 @Composable
@@ -63,26 +71,52 @@ fun FormAbastecimentoScreen(
     var km by rememberSaveable { mutableStateOf((abastecimento?.km ?: moto.kilometragem).toString()) }
     var litros by rememberSaveable { mutableStateOf(abastecimento?.let { litrosParaTexto(it.mililitros) } ?: "") }
     var valor by rememberSaveable { mutableStateOf(abastecimento?.valor?.takeIf { it > 0 }?.let(::reaisParaTexto) ?: "") }
-    var tanqueCheio by rememberSaveable { mutableStateOf(abastecimento?.tanqueCheio ?: true) }
+    // novo: começa em "Sei o valor"; edição mostra os litros guardados
+    var porValor by rememberSaveable { mutableStateOf(abastecimento == null) }
+    var preco by rememberSaveable { mutableStateOf(viewModel.resumo?.precoPorLitro?.let(::reaisParaTexto) ?: "") }
+    // o resumo pode chegar depois da tela abrir: preenche o preço do último abastecimento se ainda vazio
+    LaunchedEffect(viewModel.resumo?.precoPorLitro) {
+        val ultimo = viewModel.resumo?.precoPorLitro
+        if (preco.isBlank() && ultimo != null) preco = reaisParaTexto(ultimo)
+    }
+    var tanqueCheio by rememberSaveable { mutableStateOf(abastecimento?.tanqueCheio ?: false) }
     var data by rememberSaveable { mutableLongStateOf(abastecimento?.data ?: hojeUtcMillis()) }
     // os erros só aparecem depois da 1ª tentativa de salvar
     var tentouSalvar by rememberSaveable { mutableStateOf(false) }
     // remember (não Saveable): se a tela for recriada no meio, o botão não fica travado
     var salvando by remember { mutableStateOf(false) }
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
-    val erros = validarAbastecimento(km, litros, valor)
+    val erros = if (porValor) validarAbastecimentoPorValor(km, valor, preco) else validarAbastecimento(km, litros, valor)
+    val litrosCalculados = if (porValor) lerReais(valor)?.let { v -> lerReais(preco)?.let { p -> litrosPeloValor(v, p) } } else null
     fun ajuda(msg: String?) = msg.takeIf { tentouSalvar }
 
     Column(modifier = modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             SectionLabel("Na bomba")
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                MlTextField(
-                    litros, { litros = it }, "Litros", Modifier.weight(1f), icone = R.drawable.ic_ml_fuel,
-                    ajuda = ajuda(erros.litros),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = porValor, onClick = { porValor = true }, label = { Text("Sei o valor pago") })
+                FilterChip(selected = !porValor, onClick = { porValor = false }, label = { Text("Sei os litros") })
+            }
+            Spacer(Modifier.height(6.dp))
+            if (porValor) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    CampoReais(valor, { valor = it }, "Valor pago", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, ajuda = ajuda(erros.valor))
+                    CampoReais(preco, { preco = it }, "Preço do litro", Modifier.weight(1f), icone = R.drawable.ic_ml_fuel, ajuda = ajuda(erros.preco))
+                }
+                Text(
+                    litrosCalculados?.let { "= ${litrosParaTexto(it)} litros" } ?: "O preço do litro está na bomba. Eu calculo os litros.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 2.dp, vertical = 4.dp),
                 )
-                CampoReais(valor, { valor = it }, "Valor (opcional)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    MlTextField(
+                        litros, { litros = it }, "Litros", Modifier.weight(1f), icone = R.drawable.ic_ml_fuel,
+                        ajuda = ajuda(erros.litros),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    )
+                    CampoReais(valor, { valor = it }, "Valor (opcional)", Modifier.weight(1f), icone = R.drawable.ic_ml_dollar)
+                }
             }
             Spacer(Modifier.height(10.dp))
             SectionLabel("No painel da moto")
@@ -91,10 +125,10 @@ fun FormAbastecimentoScreen(
             MlCard(pad = 14.dp, cor = MaterialTheme.colorScheme.surfaceContainerHigh, borda = Color.Transparent) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("Encheu o tanque?", style = MaterialTheme.typography.titleSmall)
+                        Text("Completei o tanque (opcional)", style = MaterialTheme.typography.titleSmall)
                         Text(
-                            if (tanqueCheio) "O consumo (km/l) é calculado de um tanque cheio até o próximo."
-                            else "Parcial: os litros entram na conta quando você encher o tanque de novo.",
+                            if (tanqueCheio) "Entre dois tanques cheios a conta do km/l fica exata."
+                            else "Não precisa encher: o km/l sai da soma dos abastecimentos e fica mais preciso a cada um.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -120,15 +154,15 @@ fun FormAbastecimentoScreen(
             onClick = {
                 tentouSalvar = true
                 if (!erros.ok || salvando) return@RodapeDeForm
-                // validarAbastecimento já garantiu que km, litros e valor leem
-                val mililitros = lerLitros(litros) ?: return@RodapeDeForm
+                // a validação já garantiu que km, litros/valor e preço leem
+                val mililitros = (if (porValor) litrosCalculados else lerLitros(litros)) ?: return@RodapeDeForm
                 salvando = true
                 val novo = Abastecimento(
                     id = abastecimento?.id ?: 0,
                     motoId = moto.id,
                     km = km.trim().toInt(),
                     mililitros = mililitros,
-                    valor = reaisOpcional(valor) ?: 0,
+                    valor = (if (porValor) lerReais(valor) else reaisOpcional(valor)) ?: 0,
                     tanqueCheio = tanqueCheio,
                     data = data,
                 )
