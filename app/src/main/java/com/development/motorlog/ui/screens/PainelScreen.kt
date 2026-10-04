@@ -73,6 +73,7 @@ import com.development.motorlog.domain.marcoPraComemorar
 import com.development.motorlog.domain.marcosDaMoto
 import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.domain.resumirDesejos
+import com.development.motorlog.domain.resumirRoles
 import com.development.motorlog.domain.situacaoDosCuidados
 import com.development.motorlog.relatorio.compartilharCartao
 import com.development.motorlog.relatorio.gerarCartaoDoMarco
@@ -114,6 +115,7 @@ import com.development.motorlog.ui.viewModels.CuidadoViewModel
 import com.development.motorlog.ui.viewModels.DesejoViewModel
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.viewModels.RoleViewModel
 import kotlinx.coroutines.launch
 
 // Painel da moto — variante "Foco no km" do protótipo (DashFoco): herói com odômetro e brilho,
@@ -134,6 +136,7 @@ fun PainelScreen(
     abastecimentoViewModel: AbastecimentoViewModel = viewModel(),
     cuidadoViewModel: CuidadoViewModel = viewModel(),
     desejoViewModel: DesejoViewModel = viewModel(),
+    roleViewModel: RoleViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
     onRegistrarTroca: () -> Unit,
     onRegistrarServico: () -> Unit,
@@ -148,6 +151,7 @@ fun PainelScreen(
     onAbrirDiario: () -> Unit,
     onAbrirHistoria: () -> Unit,
     onAbrirDesejos: () -> Unit,
+    onAbrirRoles: () -> Unit,
     onMensagem: (String) -> Unit,
     // moto vendida (lembrança): "Ela voltou?" traz de volta pra garagem
     onDesfazerDespedida: () -> Unit = {},
@@ -177,6 +181,7 @@ fun PainelScreen(
     LaunchedEffect(moto.id) { abastecimentoViewModel.carregar(moto.id) }
     LaunchedEffect(moto.id) { cuidadoViewModel.carregar(moto.id) }
     LaunchedEffect(moto.id) { desejoViewModel.carregar(moto.id) }
+    LaunchedEffect(moto.id) { roleViewModel.carregar(moto.id) }
     val consumo = abastecimentoViewModel.resumo
     val indice = remember(recomendacoes, pecas, registroViewModel.registrosDaMoto, servicos, cuidadoViewModel.cuidados, moto) {
         calcularIndiceDeCuidado(
@@ -472,6 +477,28 @@ fun PainelScreen(
                     )
                 }
                 Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(18.dp))
+            }
+        }
+
+        // ── Card: rolês e viagens (as memórias mais fortes; na lembrança, só se houver algum) ──
+        val roles = resumirRoles(roleViewModel.roles)
+        if (!vendida || roles.quantidade > 0) {
+            MlCard(onClick = onAbrirRoles, pad = 14.dp) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    IconBox(R.drawable.ic_ml_road, cor = accent)
+                    Column(Modifier.weight(1f)) {
+                        Text("Rolês e viagens", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            when {
+                                roles.quantidade == 0 -> "Anote a próxima viagem com a ${nomeDaMoto(moto)}"
+                                roles.kmTotal > 0 -> "${roles.quantidade} rolê${if (roles.quantidade == 1) "" else "s"} · ${formatarKm(roles.kmTotal)} rodados"
+                                else -> "${roles.quantidade} rolê${if (roles.quantidade == 1) "" else "s"}"
+                            },
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(18.dp))
+                }
             }
         }
 

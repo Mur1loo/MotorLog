@@ -4,6 +4,7 @@ import com.development.motorlog.data.Abastecimento
 import com.development.motorlog.data.Cuidado
 import com.development.motorlog.data.Desejo
 import com.development.motorlog.data.Moto
+import com.development.motorlog.data.Passeio
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
 import com.development.motorlog.data.Servico
@@ -131,6 +132,17 @@ class ImportacaoTest {
             ),
             lerExportacao(csv, ::parse).desejos,
         )
+    }
+
+    @Test
+    fun `roles fazem ida e volta`() {
+        val csv = montarExportacao(
+            motos = listOf(Moto(id = 1, modelo = "Fan", placa = "XYZ", anoFabricacao = 2019, kilometragem = 30000)),
+            pecas = emptyList(), registros = emptyList(), servicos = emptyList(),
+            roles = listOf(Passeio(motoId = 1, destino = "Serra; mirante", data = 5 * dia, kmSaida = 29_000, kmChegada = 29_410, companhia = "Ju", nota = "frio", fotoId = 3)),
+            formatarData = ::fmt,
+        )
+        assertEquals(listOf(RoleImportado("Fan XYZ", "Serra, mirante", 5 * dia, 29_000, 29_410, "Ju", "frio")), lerExportacao(csv, ::parse).roles)
     }
 
     @Test

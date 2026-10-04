@@ -4,6 +4,7 @@ import com.development.motorlog.data.Cuidado
 import com.development.motorlog.data.Desejo
 import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
+import com.development.motorlog.data.Passeio
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
 import com.development.motorlog.data.Servico
@@ -80,6 +81,22 @@ class LinhaDoTempoTest {
         assertEquals("Instalei: Baú", eventos[0].titulo)
         assertEquals("R$ 350", eventos[0].detalhe)
         assertEquals(18_000, eventos[0].km)
+    }
+
+    @Test
+    fun `role entra com a foto escolhida, os km e a companhia`() {
+        val eventos = montarLinhaDoTempo(
+            moto = moto.copy(chegouEm = 0),
+            pecas = pecas, registros = emptyList(), servicos = emptyList(),
+            fotos = listOf(FotoMoto(id = 9, motoId = 1, arquivo = "praia.jpg", data = 30 * dia, km = 18_500)),
+            cuidados = emptyList(), marcos = emptyList(),
+            roles = listOf(Passeio(id = 1, motoId = 1, destino = "Praia", data = 30 * dia, kmSaida = 18_000, kmChegada = 18_640, companhia = "a galera", fotoId = 9)),
+        )
+        val role = eventos.single { it.tipo == TipoEvento.ROLE }
+        assertEquals("Rolê: Praia", role.titulo)
+        assertEquals("640 km · com a galera", role.detalhe)
+        assertEquals("praia.jpg", role.foto)
+        assertEquals(18_000, role.km)
     }
 
     @Test
