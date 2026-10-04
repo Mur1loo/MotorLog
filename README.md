@@ -8,7 +8,7 @@ Projeto de aprendizado de desenvolvimento mobile (Kotlin/Android nativo), em evo
 
 ## Status
 
-MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v17) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
+MVP funcional, rodando em dispositivo real. A funcionalidade central — registrar uma troca e obter a recomendação calculada — está completa, assim como serviços de manutenção (registro, histórico, detalhe com decomposição de custo), a tela "Trocas por km" agrupada por urgência e o tema escuro do protótipo. O banco (Room, schema v18) evolui por migrations explícitas e testadas; a regra de negócio tem suíte unitária.
 
 ## Funcionalidades
 
@@ -34,6 +34,7 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Backup** — CSV com motos, trocas, serviços e catálogo, via compartilhar, restaurável em outro celular (as fotos não entram no CSV). O backup automático do Google também fica sem as fotos, pra não passar do teto de 25 MB, acima do qual nada seria salvo; a transferência direta entre celulares leva tudo.
 - **Apoio solidário (Pix)** — sempre disponível no "Sobre". O pedido automático ao abrir o app só aparece para quem já usa o app há 2+ semanas, atualizou o km em 6+ dias e segue ativo, no máximo 1x por mês (`domain/Apoio.kt`).
 - **Catálogo de peças** — cerca de 50 itens com intervalos de manutenção realistas, editáveis pelo usuário, com busca sem acento.
+- **Rolês e viagens** — diário sem GPS (gasta bateria e pede localização): pra onde, quando, o km do painel na saída e na volta, quem foi junto, como foi e uma foto do álbum. A tela mostra quantos rolês, os km somados e o maior; cada rolê entra na linha do tempo com a foto ("Rolê: Praia · 640 km · com a galera"). O km da volta maior que o da moto atualiza o km dela, como no abastecimento. Entra no backup (sem a foto).
 - **Lista de desejos** — "quero colocar na minha moto": baú, protetor de motor, viseira… com preço e nota (loja, modelo, cor). O Painel mostra quantos itens e quanto falta pra realizar. "Instalei" pede o dia, o km e quanto pagou: o item vai pra "Já está na moto" e entra na linha do tempo ("Instalei: Baú"). Personalização fica fora do gasto de manutenção e do custo por km. Entra no backup.
 - **Despedida (moto vendida)** — em Editar dados, "Vendi a moto · passar adiante": antes de entregar a chave, o histórico em PDF e uma cópia das fotos do álbum pro novo dono; depois ela sai da garagem do dia a dia (sem lembretes nem km pra atualizar) e vira **lembrança**, numa seção própria da Garagem ("De março de 2024 a outubro de 2026 · 10.000 km juntos"). Nada é apagado: a linha do tempo termina com "A Pretinha passou adiante", e o Painel dela oferece "Ela voltou? Trazer de volta pra garagem".
 - **Exclusão com confirmação** de moto, peça e serviço, com cascata via foreign keys.
@@ -58,7 +59,7 @@ Como todo o cálculo parte do km atual, "atualizar km" é a ação mais importan
 | --- | --- |
 | Linguagem | Kotlin 2.2.10 |
 | Interface | Jetpack Compose (Material 3) |
-| Persistência | Room 2.8.1 (processamento via KSP), schema v17 com migrations explícitas e testadas |
+| Persistência | Room 2.8.1 (processamento via KSP), schema v18 com migrations explícitas e testadas |
 | Tarefas em segundo plano | WorkManager (lembretes 2x por dia) |
 | Testes | JUnit 4 (domínio) · `room-testing`/`MigrationTestHelper` (instrumentado) |
 | Build | Gradle (Kotlin DSL) com version catalog, AGP 9.2.1 |
@@ -98,7 +99,7 @@ cd MotorLog
 2. Conecte um dispositivo com depuração USB habilitada, ou inicie um emulador.
 3. Execute a configuração `app`.
 
-O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v17) são explícitas e não destrutivas.
+O banco (`motorlog.db`) é criado no primeiro uso e populado com o catálogo de peças. Atualizar o app por cima preserva os dados: as migrations (v5→v18) são explícitas e não destrutivas.
 
 ### Testes
 

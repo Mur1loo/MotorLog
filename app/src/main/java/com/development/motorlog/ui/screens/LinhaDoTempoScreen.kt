@@ -50,6 +50,7 @@ import com.development.motorlog.ui.viewModels.CuidadoViewModel
 import com.development.motorlog.ui.viewModels.DesejoViewModel
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+import com.development.motorlog.ui.viewModels.RoleViewModel
 
 // "A história da Pretinha": tudo o que o app guarda da moto numa linha só, por mês, do mais
 // recente pro dia em que ela chegou (domain/LinhaDoTempo.kt). É a biografia da moto.
@@ -62,6 +63,7 @@ fun LinhaDoTempoScreen(
     fotoViewModel: FotoViewModel = viewModel(),
     cuidadoViewModel: CuidadoViewModel = viewModel(),
     desejoViewModel: DesejoViewModel = viewModel(),
+    roleViewModel: RoleViewModel = viewModel(),
 ) {
     LaunchedEffect(moto.id) {
         registroViewModel.carregarServicos(moto)
@@ -69,12 +71,13 @@ fun LinhaDoTempoScreen(
         fotoViewModel.carregar(moto.id)
         cuidadoViewModel.carregar(moto.id)
         desejoViewModel.carregar(moto.id)
+        roleViewModel.carregar(moto.id)
     }
     val nome = nomeDaMoto(moto)
     val accent = accentDaMoto(moto)
     // moto vendida: a história (e os aniversários) para no dia da despedida
     val hoje = fimDaHistoria(moto, hojeUtcMillis())
-    val eventos = remember(moto, historicoKm, registroViewModel.registrosDaMoto, registroViewModel.servicos, registroViewModel.pecas, fotoViewModel.fotos, cuidadoViewModel.cuidados, desejoViewModel.desejos) {
+    val eventos = remember(moto, historicoKm, registroViewModel.registrosDaMoto, registroViewModel.servicos, registroViewModel.pecas, fotoViewModel.fotos, cuidadoViewModel.cuidados, desejoViewModel.desejos, roleViewModel.roles) {
         montarLinhaDoTempo(
             moto = moto,
             pecas = registroViewModel.pecas,
@@ -84,6 +87,7 @@ fun LinhaDoTempoScreen(
             cuidados = cuidadoViewModel.cuidados,
             marcos = marcosDaMoto(nome, moto.chegouEm, historicoKm, hoje),
             desejos = desejoViewModel.desejos,
+            roles = roleViewModel.roles,
         )
     }
     val capa = escolherCapa(fotoViewModel.fotos, moto.fotoCapaId)
@@ -115,7 +119,7 @@ fun LinhaDoTempoScreen(
             Spacer(Modifier.height(12.dp))
             if (eventos.isEmpty()) {
                 Text(
-                    "A história da $nome se escreve sozinha: fotos do álbum, trocas, visitas à oficina, cuidados, o que você instalou e os marcos " +
+                    "A história da $nome se escreve sozinha: fotos do álbum, trocas, visitas à oficina, cuidados, rolês, o que você instalou e os marcos " +
                         "aparecem aqui, em ordem. Conte também quando ela chegou, em Editar dados.",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

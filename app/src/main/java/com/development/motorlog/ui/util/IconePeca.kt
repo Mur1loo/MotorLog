@@ -42,4 +42,5 @@ fun iconeDoEvento(evento: EventoDaHistoria): Int = when (evento.tipo) {
     TipoEvento.ANIVERSARIO -> R.drawable.ic_ml_calendar
     TipoEvento.DESPEDIDA -> R.drawable.ic_ml_tag
     TipoEvento.PERSONALIZACAO -> R.drawable.ic_ml_spark
+    TipoEvento.ROLE -> R.drawable.ic_ml_road
 }

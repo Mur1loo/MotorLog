@@ -4,6 +4,7 @@ import com.development.motorlog.data.Cuidado
 import com.development.motorlog.data.Desejo
 import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
+import com.development.motorlog.data.Passeio
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
 import com.development.motorlog.data.Servico
@@ -13,7 +14,7 @@ import com.development.motorlog.data.Servico
 // fica de fora (seria um a cada dois dias: vira ruído na história). Registro sem dia conhecido
 // (data 0, anterior à v11) também fica de fora: não tem onde entrar na linha.
 
-enum class TipoEvento { CHEGADA, FOTO, TROCA, VISITA, CUIDADO, MARCO_KM, ANIVERSARIO, DESPEDIDA, PERSONALIZACAO }
+enum class TipoEvento { CHEGADA, FOTO, TROCA, VISITA, CUIDADO, MARCO_KM, ANIVERSARIO, DESPEDIDA, PERSONALIZACAO, ROLE }
 
 data class EventoDaHistoria(
     val data: Long,
@@ -36,6 +37,7 @@ fun montarLinhaDoTempo(
     cuidados: List<Cuidado>,
     marcos: List<Marco>,
     desejos: List<Desejo> = emptyList(),
+    roles: List<Passeio> = emptyList(),
 ): List<EventoDaHistoria> {
     val nome = nomeDaMoto(moto)
     val nomePeca = pecas.associate { it.id to it.nome }
@@ -73,6 +75,11 @@ fun montarLinhaDoTempo(
         val detalhe = listOfNotNull(d.preco.takeIf { it > 0 }?.let { "R$ ${reaisParaTexto(it)}" }, d.nota.ifBlank { null }).joinToString(" · ").ifBlank { null }
         eventos += EventoDaHistoria(d.instaladoEm, d.kmInstalado.takeIf { it >= 0 }, TipoEvento.PERSONALIZACAO, "Instalei: ${d.nome}", detalhe)
     }
+    // rolês e viagens, com a foto escolhida do álbum
+    val fotoPorId = fotos.associateBy { it.id }
+    roles.filter { it.data > 0 }.forEach { r ->
+        eventos += EventoDaHistoria(r.data, r.kmSaida, TipoEvento.ROLE, "Rolê: ${r.destino}", detalheDoRole(r, ::kmComMilhar), foto = fotoPorId[r.fotoId]?.arquivo)
+    }
     if (estaVendida(moto)) {
         eventos += EventoDaHistoria(moto.vendidaEm, moto.kilometragem, TipoEvento.DESPEDIDA, "A $nome passou adiante")
     }
@@ -84,3 +91,6 @@ fun montarLinhaDoTempo(
             .thenByDescending { it.km ?: -1 },
     )
 }
+
+private val milharDaHistoria = java.text.NumberFormat.getIntegerInstance(java.util.Locale.forLanguageTag("pt-BR"))
+private fun kmComMilhar(km: Int) = "${milharDaHistoria.format(km)} km"

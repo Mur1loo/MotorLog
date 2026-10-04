@@ -123,6 +123,14 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // tabela nova (rolês e viagens); SQL igual ao createSql do 18.json
+        db.execSQL("CREATE TABLE IF NOT EXISTS `Passeio` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `motoId` INTEGER NOT NULL, `destino` TEXT NOT NULL, `data` INTEGER NOT NULL, `kmSaida` INTEGER NOT NULL, `kmChegada` INTEGER NOT NULL, `companhia` TEXT NOT NULL, `nota` TEXT NOT NULL, `fotoId` INTEGER NOT NULL, FOREIGN KEY(`motoId`) REFERENCES `Moto`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_Passeio_motoId` ON `Passeio` (`motoId`)")
+    }
+}
+
 @Database(
     entities = [Moto::class,
         Registro::class,
@@ -132,8 +140,9 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
         FotoMoto::class,
         Abastecimento::class,
         Cuidado::class,
-        Desejo::class],
-    version = 17,
+        Desejo::class,
+        Passeio::class],
+    version = 18,
     exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun motoDao(): MotoDao
@@ -146,6 +155,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun abastecimentoDao(): AbastecimentoDao
     abstract fun cuidadoDao(): CuidadoDao
     abstract fun desejoDao(): DesejoDao
+    abstract fun passeioDao(): PasseioDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -158,7 +168,7 @@ abstract class AppDatabase : RoomDatabase() {
                                 context = context.applicationContext,
                                 klass = AppDatabase::class.java,
                                 name = "motorlog.db"
-                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17).build()
+                ).addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18).build()
 
                 INSTANCE = instance
                 instance
