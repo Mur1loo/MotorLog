@@ -58,8 +58,8 @@ fun validarPeca(nome: String, intervalo: String) = ErrosPeca(
     intervalo = if (intervalo.trim().toIntOrNull()?.takeIf { it > 0 } == null) "Informe os km entre uma troca e outra, ex.: 3000" else null,
 )
 
-data class ErrosAbastecimento(val km: String?, val litros: String?, val valor: String?) {
-    val ok get() = km == null && litros == null && valor == null
+data class ErrosAbastecimento(val km: String?, val litros: String?, val valor: String?, val preco: String? = null) {
+    val ok get() = km == null && litros == null && valor == null && preco == null
 }
 
 // valor é opcional (sem ele não dá custo por km, mas o consumo sai igual)
@@ -72,3 +72,25 @@ fun validarAbastecimento(km: String, litros: String, valor: String) = ErrosAbast
     },
     valor = if (valor.isNotBlank() && lerReais(valor) == null) "Use só números, ex.: 45,90" else null,
 )
+
+// "Sei o valor": paguei R$ 30 com o litro a R$ 6,29 — os litros saem da conta (litrosPeloValor)
+fun validarAbastecimentoPorValor(km: String, valor: String, preco: String): ErrosAbastecimento {
+    val v = lerReais(valor)
+    val p = lerReais(preco)
+    val ml = if (v != null && p != null) litrosPeloValor(v, p) else null
+    return ErrosAbastecimento(
+        km = erroDeKm(km),
+        litros = null,
+        valor = when {
+            valor.isBlank() -> "Informe o valor pago"
+            v == null || v <= 0 -> "Use só números, ex.: 30,00"
+            ml != null && ml > 100_000 -> "Dá mais de 100 litros: confira o valor e o preço"
+            else -> null
+        },
+        preco = when {
+            preco.isBlank() -> "Informe o preço do litro (está na bomba)"
+            p == null || p <= 0 -> "Use só números, ex.: 6,29"
+            else -> null
+        },
+    )
+}

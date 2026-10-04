@@ -2,69 +2,88 @@ package com.development.motorlog.domain
 
 import com.development.motorlog.data.Abastecimento
 
-// Consumo pelo método "tanque cheio a tanque cheio": a bomba diz quantos litros ENTRARAM, então só
-// se sabe quanto a moto gastou entre dois tanques cheios — os litros do 2º (mais os parciais no
-// meio) são exatamente o que foi queimado naqueles km. Ex.: cheio aos 16.000, cheio aos 16.300
-// com 7,5 L → 300 ÷ 7,5 = 40 km/l. Parcial antes do 1º tanque cheio não entra (não há ponto de
-// partida). Trecho fora de 5–100 km/l é erro de registro (quase sempre um abastecimento
-// esquecido no meio) e fica fora da média.
+// Consumo (km/l) a partir dos abastecimentos — funcionando com o que a maioria faz: colocar um
+// pouco (parcial), sem encher o tanque e sem saber o tamanho dele.
+//
+// A conta: entre o 1º e o último abastecimento, a moto gastou os litros colocados nos
+// abastecimentos DEPOIS do 1º (eles repõem o que foi queimado) mais a diferença de nível do
+// tanque entre o 1º e o último. Essa diferença não dá pra saber, mas ela é no máximo um tanque e
+// se dilui: quanto mais abastecimentos na conta, menor o erro. Por isso
+//     km/l ≈ (km do último − km do 1º) ÷ litros dos abastecimentos depois do 1º
+// e o app avisa o quanto confiar ("aproximada" → "boa" conforme os litros somam).
+// Quem às vezes completa o tanque ganha um bônus: entre dois tanques cheios o nível é o mesmo
+// (cheio), a diferença some e a conta fica EXATA — aí o app usa esse trecho.
+// Valor fora de 5–100 km/l é erro de registro (abastecimento esquecido, km errado) e não aparece.
 
 const val KM_POR_LITRO_MINIMO = 5.0
 const val KM_POR_LITRO_MAXIMO = 100.0
+// pra mostrar a primeira média: 3 abastecimentos (2 intervalos) e 150 km rodados entre eles
+const val ABASTECIMENTOS_MINIMOS = 3
+const val KM_MINIMO_PRA_MEDIA = 150
+// litros na conta a partir dos quais a média aproximada já é "boa" (erro de nível diluído)
+const val MILILITROS_PRA_CONFIANCA_BOA = 60_000
+// média recente: os últimos abastecimentos (mostra se o consumo mudou)
+const val ABASTECIMENTOS_NA_MEDIA_RECENTE = 6
 
-// valor = soma em centavos dos abastecimentos do trecho; null se algum deles não tem valor
-data class TrechoDeConsumo(val kmInicio: Int, val kmFim: Int, val mililitros: Int, val valor: Int?) {
-    val km get() = kmFim - kmInicio
-    val kmPorLitro get() = km / (mililitros / 1000.0)
-}
+enum class Confianca { APROXIMADA, BOA, EXATA }
 
-fun calcularTrechos(abastecimentos: List<Abastecimento>): List<TrechoDeConsumo> {
-    val trechos = mutableListOf<TrechoDeConsumo>()
-    var inicio: Int? = null
-    var mililitros = 0
-    var valor: Int? = 0
-    abastecimentos.sortedWith(compareBy({ it.km }, { it.data }, { it.id })).forEach { a ->
-        val kmInicio = inicio
-        if (kmInicio == null) {
-            if (a.tanqueCheio) inicio = a.km
-            return@forEach
-        }
-        mililitros += a.mililitros
-        valor = valor?.let { v -> if (a.valor > 0) v + a.valor else null }
-        if (a.tanqueCheio) {
-            val trecho = TrechoDeConsumo(kmInicio, a.km, mililitros, valor)
-            if (trecho.km > 0 && mililitros > 0 && trecho.kmPorLitro in KM_POR_LITRO_MINIMO..KM_POR_LITRO_MAXIMO) trechos += trecho
-            inicio = a.km
-            mililitros = 0
-            valor = 0
-        }
+data class EstimativaConsumo(val kmPorLitro: Double, val km: Int, val mililitros: Int, val confianca: Confianca)
+
+private val ordem = compareBy<Abastecimento>({ it.km }, { it.data }, { it.id })
+
+fun estimarConsumo(abastecimentos: List<Abastecimento>): EstimativaConsumo? {
+    val ord = abastecimentos.sortedWith(ordem)
+    // bônus: do 1º ao último tanque cheio a conta é exata (se o trecho for longo o bastante)
+    val cheios = ord.indices.filter { ord[it].tanqueCheio }
+    val exato = cheios.size >= 2 && ord[cheios.last()].km - ord[cheios.first()].km >= KM_MINIMO_PRA_MEDIA
+    val (ini, fim) = if (exato) cheios.first() to cheios.last() else 0 to ord.lastIndex
+    if (!exato && ord.size < ABASTECIMENTOS_MINIMOS) return null
+    if (fim <= ini) return null
+    val km = ord[fim].km - ord[ini].km
+    val mililitros = ord.subList(ini + 1, fim + 1).sumOf { it.mililitros }
+    if (km < KM_MINIMO_PRA_MEDIA || mililitros <= 0) return null
+    val kmPorLitro = km / (mililitros / 1000.0)
+    if (kmPorLitro !in KM_POR_LITRO_MINIMO..KM_POR_LITRO_MAXIMO) return null
+    val confianca = when {
+        exato -> Confianca.EXATA
+        mililitros >= MILILITROS_PRA_CONFIANCA_BOA -> Confianca.BOA
+        else -> Confianca.APROXIMADA
     }
-    return trechos
+    return EstimativaConsumo(kmPorLitro, km, mililitros, confianca)
 }
 
 data class ResumoConsumo(
-    val ultimoKmPorLitro: Double?,     // do último trecho fechado
-    val mediaKmPorLitro: Double?,      // km total ÷ litros totais (não é média das médias)
-    val trechos: Int,
-    val precoPorLitro: Int?,           // centavos por litro, do abastecimento mais recente com valor
-    val custoPorKm: Double?,           // R$ de combustível por km, nos trechos com valor em todos
+    val media: EstimativaConsumo?,
+    // últimos ABASTECIMENTOS_NA_MEDIA_RECENTE (só quando há mais que isso: senão é a própria média)
+    val recente: EstimativaConsumo?,
+    // quantos abastecimentos faltam pra primeira média (0 = já tem, ou falta km rodado)
+    val faltamAbastecimentos: Int,
+    // centavos por litro, do abastecimento mais recente com valor (vem preenchido no "Abasteci")
+    val precoPorLitro: Int?,
+    // R$ de combustível por km = preço médio do litro ÷ km/l (vale mesmo se alguns não têm valor)
+    val custoPorKm: Double?,
 )
 
 fun resumirConsumo(abastecimentos: List<Abastecimento>): ResumoConsumo {
-    val trechos = calcularTrechos(abastecimentos)
-    val km = trechos.sumOf { it.km }
-    val mililitros = trechos.sumOf { it.mililitros }
-    val comValor = trechos.filter { it.valor != null }
-    val kmComValor = comValor.sumOf { it.km }
-    val ultimoComValor = abastecimentos.filter { it.valor > 0 && it.mililitros > 0 }.maxWithOrNull(compareBy({ it.km }, { it.data }, { it.id }))
+    val media = estimarConsumo(abastecimentos)
+    val recente = if (abastecimentos.size > ABASTECIMENTOS_NA_MEDIA_RECENTE)
+        estimarConsumo(abastecimentos.sortedWith(ordem).takeLast(ABASTECIMENTOS_NA_MEDIA_RECENTE)) else null
+    val comValor = abastecimentos.filter { it.valor > 0 && it.mililitros > 0 }
+    val ultimoComValor = comValor.maxWithOrNull(ordem)
+    val precoMedio = if (comValor.isEmpty()) null else comValor.sumOf { it.valor.toLong() } * 1000.0 / comValor.sumOf { it.mililitros.toLong() }
     return ResumoConsumo(
-        ultimoKmPorLitro = trechos.lastOrNull()?.kmPorLitro,
-        mediaKmPorLitro = if (mililitros > 0) km / (mililitros / 1000.0) else null,
-        trechos = trechos.size,
+        media = media,
+        recente = recente,
+        faltamAbastecimentos = (ABASTECIMENTOS_MINIMOS - abastecimentos.size).coerceAtLeast(0),
         precoPorLitro = ultimoComValor?.let { (it.valor.toLong() * 1000 / it.mililitros).toInt() },
-        custoPorKm = if (kmComValor > 0) comValor.sumOf { it.valor!! } / 100.0 / kmComValor else null,
+        custoPorKm = if (media != null && precoMedio != null) precoMedio / 100.0 / media.kmPorLitro else null,
     )
 }
+
+// "Paguei R$ 30 com o litro a R$ 6,29": quantos litros entraram (mililitros, arredondado)
+fun litrosPeloValor(valorCentavos: Int, precoPorLitroCentavos: Int): Int? =
+    if (valorCentavos <= 0 || precoPorLitroCentavos <= 0) null
+    else ((valorCentavos.toLong() * 1000 + precoPorLitroCentavos / 2) / precoPorLitroCentavos).toInt()
 
 // ── litros digitados ──
 

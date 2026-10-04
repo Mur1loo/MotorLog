@@ -49,6 +49,7 @@ import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Servico
+import com.development.motorlog.domain.Confianca
 import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
@@ -398,10 +399,12 @@ fun PainelScreen(
                     Text("Consumo", style = MaterialTheme.typography.titleSmall)
                     Text(
                         consumo?.let { c ->
-                            c.mediaKmPorLitro?.let { media ->
-                                "${formatarKmPorLitro(media)} em média" + (c.custoPorKm?.let { " · ${formatarReaisCentavos(it)} por km" } ?: "")
+                            c.media?.let { media ->
+                                "${formatarKmPorLitro(media.kmPorLitro)} em média" +
+                                    (if (media.confianca == Confianca.APROXIMADA) " (aprox.)" else "") +
+                                    (c.custoPorKm?.let { " · ${formatarReaisCentavos(it)} por km" } ?: "")
                             }
-                        } ?: "Registre dois tanques cheios pra ver o km/l",
+                        } ?: "Registre os abastecimentos (parciais valem) pra ver o km/l",
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }

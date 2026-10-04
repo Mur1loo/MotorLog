@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Abastecimento
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.Confianca
 import com.development.motorlog.domain.litrosParaTexto
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.IconBox
@@ -40,8 +41,9 @@ import com.development.motorlog.ui.util.formatarReaisCentavos
 import com.development.motorlog.ui.util.formatarUmaCasa
 import com.development.motorlog.ui.viewModels.AbastecimentoViewModel
 
-// Combustível da moto: consumo médio e do último tanque, preço do litro, custo por km e a lista
-// de abastecimentos (tocar edita). O cálculo é "tanque cheio a tanque cheio" (domain/Consumo.kt).
+// Combustível da moto: consumo médio (com o quanto confiar nele), média recente, preço do litro,
+// custo por km e a lista de abastecimentos (tocar edita). Funciona só com abastecimentos parciais;
+// tanque cheio, quando acontece, deixa a conta exata (domain/Consumo.kt).
 @Composable
 fun CombustivelScreen(
     moto: Moto,
@@ -60,15 +62,26 @@ fun CombustivelScreen(
     ) {
         item {
             LinhaDeTiles {
+                val media = resumo?.media
                 StatTile(
-                    "Média", resumo?.mediaKmPorLitro?.let(::formatarUmaCasa) ?: "—",
-                    Modifier.weight(1f), unidade = if (resumo?.mediaKmPorLitro != null) "km/l" else null, icone = R.drawable.ic_ml_fuel,
+                    "Média", media?.kmPorLitro?.let(::formatarUmaCasa) ?: "—",
+                    Modifier.weight(1f), unidade = if (media != null) "km/l" else null, icone = R.drawable.ic_ml_fuel,
                 ) {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        resumo?.ultimoKmPorLitro?.let { "último tanque: ${formatarKmPorLitro(it)}" } ?: "precisa de 2 tanques cheios",
+                        when {
+                            media == null && (resumo?.faltamAbastecimentos ?: 0) > 0 ->
+                                "faltam ${resumo?.faltamAbastecimentos} abastecimento${if (resumo?.faltamAbastecimentos == 1) "" else "s"} pra calcular"
+                            media == null -> "rode mais um pouco pra calcular"
+                            media.confianca == Confianca.EXATA -> "exata: de tanque cheio a tanque cheio"
+                            media.confianca == Confianca.BOA -> "boa precisão (${litrosParaTexto(media.mililitros)} L na conta)"
+                            else -> "aproximada: melhora a cada abastecimento"
+                        },
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    resumo?.recente?.let {
+                        Text("últimos: ${formatarKmPorLitro(it.kmPorLitro)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
                 StatTile(
                     "Combustível por km", resumo?.custoPorKm?.let(::formatarReaisCentavos) ?: "—",
@@ -89,8 +102,8 @@ fun CombustivelScreen(
                     SectionLabel("Abastecimentos · ${lista.size}")
                     if (lista.isEmpty()) {
                         Text(
-                            "Registre cada vez que abastecer, com o km do painel. Com dois tanques cheios eu já mostro o consumo — " +
-                                "e o km da moto se atualiza sozinho.",
+                            "Registre cada vez que abastecer, mesmo um pouco, com o km do painel. Do 3º abastecimento em diante " +
+                                "eu mostro o consumo médio — não precisa encher o tanque. E o km da moto se atualiza sozinho.",
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp),
                         )
