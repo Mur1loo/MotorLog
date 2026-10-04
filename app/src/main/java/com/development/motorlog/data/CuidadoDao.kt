@@ -4,11 +4,15 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface CuidadoDao {
     @Insert
     suspend fun inserir(cuidado: Cuidado): Long
+
+    @Update
+    suspend fun atualizar(cuidado: Cuidado)
 
     @Delete
     suspend fun deletar(cuidado: Cuidado)

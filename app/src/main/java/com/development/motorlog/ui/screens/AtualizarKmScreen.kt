@@ -66,6 +66,8 @@ fun AtualizarKmSheet(
     onFechar: () -> Unit,
     onSalvo: (kmSalvo: Int) -> Unit,
     viewModel: MotoViewModel = viewModel(),
+    // abre a lista de registros de km (corrigir um km errado de outro dia)
+    onCorrigirAntigos: (() -> Unit)? = null,
 ) {
     var texto by rememberSaveable { mutableStateOf(moto.kilometragem.toString()) }
     // como numa calculadora: o 1º dígito digitado substitui o valor atual (em vez de virar 160001)
@@ -185,6 +187,11 @@ fun AtualizarKmSheet(
             )
             if (delta < 0 && !confirmarMenor) {
                 TextButton(onClick = onFechar, modifier = Modifier.fillMaxWidth()) { Text("Cancelar") }
+            }
+            if (onCorrigirAntigos != null) {
+                TextButton(onClick = onCorrigirAntigos, modifier = Modifier.fillMaxWidth()) {
+                    Text("Errou o km de outro dia? Corrigir os registros", style = MaterialTheme.typography.labelMedium)
+                }
             }
         }
     }

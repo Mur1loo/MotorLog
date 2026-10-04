@@ -11,6 +11,7 @@ import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.ResumoImportacao
 import com.development.motorlog.data.atualizarKm
+import com.development.motorlog.data.corrigirRegistroDeKm
 import com.development.motorlog.data.importar
 import com.development.motorlog.domain.DadosImportados
 import com.development.motorlog.domain.MediasDeKm
@@ -155,6 +156,14 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     fun atualizarKm(moto: Moto, novoKm: Int) {
         viewModelScope.launch {
             db.atualizarKm(moto, novoKm, hojeUtcMillis())
+            carregarMotos()
+        }
+    }
+
+    // Registros de km: corrigir (novoKm) ou apagar (null) um km de outro dia; médias e marcos se refazem
+    fun corrigirRegistroDeKm(moto: Moto, ponto: HistoricoKm, novoKm: Int?) {
+        viewModelScope.launch {
+            db.corrigirRegistroDeKm(moto, ponto, novoKm)
             carregarMotos()
         }
     }
