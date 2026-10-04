@@ -34,6 +34,7 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Backup** — CSV com motos, trocas, serviços e catálogo, via compartilhar, restaurável em outro celular (as fotos não entram no CSV). O backup automático do Google também fica sem as fotos, pra não passar do teto de 25 MB, acima do qual nada seria salvo; a transferência direta entre celulares leva tudo.
 - **Apoio solidário (Pix)** — sempre disponível no "Sobre". O pedido automático ao abrir o app só aparece para quem já usa o app há 2+ semanas, atualizou o km em 6+ dias e segue ativo, no máximo 1x por mês (`domain/Apoio.kt`).
 - **Catálogo de peças** — cerca de 50 itens com intervalos de manutenção realistas, editáveis pelo usuário, com busca sem acento.
+- **Retrospectiva do ano** — "Seu 2026 com a Pretinha": km rodados juntos, rolês, cuidados, manutenção (trocas, visitas e quanto foi investido), combustível (litros, gasto e km/l), marcos, o que ela ganhou da lista de desejos e as fotos do ano, com um cartão 1080×1350 pra compartilhar. Aparece sozinha no Painel em dezembro e em janeiro; no resto do ano, fica na linha do tempo, com os anos anteriores nos chips do topo. De graça, como todo o app.
 - **Rolês e viagens** — diário sem GPS (gasta bateria e pede localização): pra onde, quando, o km do painel na saída e na volta, quem foi junto, como foi e uma foto do álbum. A tela mostra quantos rolês, os km somados e o maior; cada rolê entra na linha do tempo com a foto ("Rolê: Praia · 640 km · com a galera"). O km da volta maior que o da moto atualiza o km dela, como no abastecimento. Entra no backup (sem a foto).
 - **Lista de desejos** — "quero colocar na minha moto": baú, protetor de motor, viseira… com preço e nota (loja, modelo, cor). O Painel mostra quantos itens e quanto falta pra realizar. "Instalei" pede o dia, o km e quanto pagou: o item vai pra "Já está na moto" e entra na linha do tempo ("Instalei: Baú"). Personalização fica fora do gasto de manutenção e do custo por km. Entra no backup.
 - **Despedida (moto vendida)** — em Editar dados, "Vendi a moto · passar adiante": antes de entregar a chave, o histórico em PDF e uma cópia das fotos do álbum pro novo dono; depois ela sai da garagem do dia a dia (sem lembretes nem km pra atualizar) e vira **lembrança**, numa seção própria da Garagem ("De março de 2024 a outubro de 2026 · 10.000 km juntos"). Nada é apagado: a linha do tempo termina com "A Pretinha passou adiante", e o Painel dela oferece "Ela voltou? Trazer de volta pra garagem".
@@ -120,6 +121,7 @@ O público-alvo é quem usa a moto para trabalhar, não quem gosta de tecnologia
 - Widget na tela inicial para atualizar o km sem abrir o app.
 - Backup completo em arquivo único (dados + fotos do álbum).
 - Foto do painel junto da atualização de km.
+- Backup completo em arquivo único também para a lista de desejos e as fotos dos rolês.
 - Leitura reativa com `Flow`.
 
 ## Contribuindo

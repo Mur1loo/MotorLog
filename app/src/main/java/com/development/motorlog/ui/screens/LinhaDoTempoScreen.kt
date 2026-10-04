@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.development.motorlog.R
 import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.EventoDaHistoria
@@ -35,6 +37,7 @@ import com.development.motorlog.domain.marcosDaMoto
 import com.development.motorlog.domain.montarLinhaDoTempo
 import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.ui.components.AvatarDaMoto
+import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.FotoArquivo
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.MlCard
@@ -59,6 +62,7 @@ fun LinhaDoTempoScreen(
     moto: Moto,
     historicoKm: List<HistoricoKm>,
     modifier: Modifier = Modifier,
+    onAbrirRetrospectiva: () -> Unit = {},
     registroViewModel: RegistroViewModel = viewModel(),
     fotoViewModel: FotoViewModel = viewModel(),
     cuidadoViewModel: CuidadoViewModel = viewModel(),
@@ -115,6 +119,10 @@ fun LinhaDoTempoScreen(
                         )
                     }
                 }
+            }
+            if (eventos.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                BotaoSecundario("Retrospectiva do ano", onAbrirRetrospectiva, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_calendar)
             }
             Spacer(Modifier.height(12.dp))
             if (eventos.isEmpty()) {

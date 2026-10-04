@@ -56,6 +56,7 @@ import com.development.motorlog.domain.MediasDeKm
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.TipoMarco
+import com.development.motorlog.domain.anoDaRetrospectiva
 import com.development.motorlog.domain.calcularIndiceDeCuidado
 import com.development.motorlog.domain.custoPorKm
 import com.development.motorlog.domain.descreverDias
@@ -152,6 +153,8 @@ fun PainelScreen(
     onAbrirHistoria: () -> Unit,
     onAbrirDesejos: () -> Unit,
     onAbrirRoles: () -> Unit,
+    // retrospectiva do ano (ano escolhido; null = o ano atual)
+    onAbrirRetrospectiva: (Int?) -> Unit,
     onMensagem: (String) -> Unit,
     // moto vendida (lembrança): "Ela voltou?" traz de volta pra garagem
     onDesfazerDespedida: () -> Unit = {},
@@ -351,6 +354,21 @@ fun PainelScreen(
                         marcosVistos = marcosVistos + marcoAgora.chave
                         prefs.edit { putStringSet(chaveVistos, marcosVistos) }
                     }) { Text("Valeu!") }
+                }
+            }
+        }
+
+        // ── retrospectiva: em dezembro (o ano que acaba) e em janeiro (o que passou) ──
+        val anoRetro = anoDaRetrospectiva(hojeUtcMillis())
+        if (anoRetro != null && !vendida) {
+            MlCard(onClick = { onAbrirRetrospectiva(anoRetro) }, cor = accent.copy(alpha = 0.12f), borda = accent) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    IconBox(R.drawable.ic_ml_calendar, cor = accent)
+                    Column(Modifier.weight(1f)) {
+                        Text("Seu $anoRetro com a ${nomeDaMoto(moto)}", style = MaterialTheme.typography.titleSmall)
+                        Text("Km, rolês, cuidados e fotos do ano, pra rever e compartilhar.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(18.dp))
                 }
             }
         }

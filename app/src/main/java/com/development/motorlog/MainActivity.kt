@@ -68,6 +68,7 @@ import com.development.motorlog.ui.screens.ListaDeDesejosScreen
 import com.development.motorlog.ui.screens.PainelScreen
 import com.development.motorlog.ui.screens.RegistroScreen
 import com.development.motorlog.ui.screens.RegistrosDeKmScreen
+import com.development.motorlog.ui.screens.RetrospectivaScreen
 import com.development.motorlog.ui.screens.RevisaoDetailScreen
 import com.development.motorlog.ui.screens.RolesScreen
 import com.development.motorlog.ui.screens.TrocasScreen
@@ -133,6 +134,7 @@ class MainActivity : ComponentActivity() {
                 var pecaId by rememberSaveable { mutableStateOf<Long?>(null) }   // null = peça nova
                 var servicoId by rememberSaveable { mutableStateOf<Long?>(null) }
                 var abastecimentoId by rememberSaveable { mutableStateOf<Long?>(null) }   // null = novo
+                var anoRetrospectiva by rememberSaveable { mutableStateOf<Int?>(null) }   // null = o ano atual
                 // a ação nº 1 é uma folha inferior sobre a tela atual, não uma tela
                 var mostrarKm by rememberSaveable { mutableStateOf(abrirKm) }
                 var mostrarApoio by rememberSaveable { mutableStateOf(false) }
@@ -170,13 +172,14 @@ class MainActivity : ComponentActivity() {
                     "RegistrosKm" -> "Registros de km"
                     "Desejos" -> "Lista de desejos"
                     "Roles" -> "Rolês e viagens"
+                    "Retrospectiva" -> "Retrospectiva"
                     "Abastecimento" -> if (abastecimentoId != null) "Editar abastecimento" else "Abasteci"
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
                     "Painel" -> motoSelecionada?.let { juntarComPonto(if (it.apelido.isNotBlank()) it.modelo else "", it.anoFabricacao.toString(), it.placa) }
                     "Trocas" -> motoSelecionada?.let { "${nomeDaMoto(it)} · ${formatarKm(it.kilometragem)}" }
-                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento", "DiarioCuidados", "LinhaDoTempo", "Despedida", "RegistrosKm", "Desejos", "Roles" -> motoSelecionada?.let(::nomeDaMoto)
+                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento", "DiarioCuidados", "LinhaDoTempo", "Despedida", "RegistrosKm", "Desejos", "Roles", "Retrospectiva" -> motoSelecionada?.let(::nomeDaMoto)
                     "Cadastro" -> "Cadastre sua motocicleta"
                     else -> null
                 }
@@ -394,6 +397,7 @@ class MainActivity : ComponentActivity() {
                                     onAbrirHistoria = { abrirTela("LinhaDoTempo") },
                                     onAbrirDesejos = { abrirTela("Desejos") },
                                     onAbrirRoles = { abrirTela("Roles") },
+                                    onAbrirRetrospectiva = { ano -> anoRetrospectiva = ano; abrirTela("Retrospectiva") },
                                     onMensagem = { mensagem = it },
                                     onDesfazerDespedida = {
                                         motoViewModel.atualizarMoto(motoSel.copy(vendidaEm = 0))
@@ -498,6 +502,18 @@ class MainActivity : ComponentActivity() {
                                 LinhaDoTempoScreen(
                                     moto = motoSel,
                                     historicoKm = motoViewModel.historicos[motoSel.id].orEmpty(),
+                                    modifier = Modifier.padding(innerPadding),
+                                    onAbrirRetrospectiva = { anoRetrospectiva = null; abrirTela("Retrospectiva") },
+                                )
+                            }
+                        }
+                        "Retrospectiva" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null) {
+                                RetrospectivaScreen(
+                                    moto = motoSel,
+                                    anoInicial = anoRetrospectiva,
+                                    onMensagem = { mensagem = it },
                                     modifier = Modifier.padding(innerPadding),
                                 )
                             }
