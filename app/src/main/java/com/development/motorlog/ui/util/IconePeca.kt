@@ -1,7 +1,9 @@
 package com.development.motorlog.ui.util
 
 import com.development.motorlog.R
+import com.development.motorlog.domain.EventoDaHistoria
 import com.development.motorlog.domain.TipoCuidado
+import com.development.motorlog.domain.TipoEvento
 
 // Nome da peça → ícone do protótipo (partIcon do data.jsx), por palavra-chave. Sem campo no banco.
 fun iconeDaPeca(nome: String): Int {
@@ -27,4 +29,15 @@ fun iconeDoCuidado(tipo: TipoCuidado): Int = when (tipo) {
     TipoCuidado.CERA -> R.drawable.ic_ml_spark
     TipoCuidado.CORRENTE -> R.drawable.ic_ml_chain
     TipoCuidado.CALIBRAGEM -> R.drawable.ic_ml_tire
+}
+
+// ícone de cada momento da linha do tempo da moto
+fun iconeDoEvento(evento: EventoDaHistoria): Int = when (evento.tipo) {
+    TipoEvento.CHEGADA -> R.drawable.ic_ml_moto
+    TipoEvento.FOTO -> R.drawable.ic_ml_camera
+    TipoEvento.TROCA -> iconeDaPeca(evento.referencia ?: "")
+    TipoEvento.VISITA -> R.drawable.ic_ml_wrench
+    TipoEvento.CUIDADO -> evento.referencia?.let(TipoCuidado::doCodigo)?.let(::iconeDoCuidado) ?: R.drawable.ic_ml_check
+    TipoEvento.MARCO_KM -> R.drawable.ic_ml_road
+    TipoEvento.ANIVERSARIO -> R.drawable.ic_ml_calendar
 }

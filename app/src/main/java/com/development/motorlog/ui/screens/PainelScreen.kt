@@ -133,6 +133,7 @@ fun PainelScreen(
     onAbasteci: () -> Unit,
     onAbrirCombustivel: () -> Unit,
     onAbrirDiario: () -> Unit,
+    onAbrirHistoria: () -> Unit,
     onMensagem: (String) -> Unit,
 ) {
     val recomendacoes = registroViewModel.recomendacoes
@@ -410,6 +411,8 @@ fun PainelScreen(
 
         // o PDF é o que a pessoa mostra pro comprador e pro mecânico: logo depois das trocas,
         // não no fim da tela (antes vinha depois de cinco blocos)
+        // a biografia da moto: fotos, trocas, cuidados e marcos numa linha só
+        BotaoSecundario("A história da ${nomeDaMoto(moto)}", onAbrirHistoria, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_clock)
         BotaoHistoricoPdf(moto, onMensagem, Modifier.fillMaxWidth())
 
         // ── Card: últimas visitas à oficina ──

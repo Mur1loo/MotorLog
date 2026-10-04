@@ -4,6 +4,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -43,3 +44,10 @@ fun formatarReaisCentavos(valor: Double): String = reaisComCentavos.format(valor
 // 40.0 -> "40,0" (uma casa: a bomba e o painel não dão mais precisão que isso)
 fun formatarUmaCasa(valor: Double): String = String.format(Locale.forLanguageTag("pt-BR"), "%.1f", valor)
 fun formatarKmPorLitro(kmPorLitro: Double): String = "${formatarUmaCasa(kmPorLitro)} km/l"
+
+// meia-noite UTC → "setembro de 2026" (cabeçalho de mês da linha do tempo)
+fun formatarMesAno(data: Long): String {
+    val dia = LocalDate.ofEpochDay(data / 86_400_000L)
+    val mes = dia.month.getDisplayName(TextStyle.FULL_STANDALONE, Locale.forLanguageTag("pt-BR"))
+    return "$mes de ${dia.year}"
+}
