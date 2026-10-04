@@ -47,6 +47,7 @@ import com.development.motorlog.ui.util.formatarMesAno
 import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDoEvento
 import com.development.motorlog.ui.viewModels.CuidadoViewModel
+import com.development.motorlog.ui.viewModels.DesejoViewModel
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
@@ -60,18 +61,20 @@ fun LinhaDoTempoScreen(
     registroViewModel: RegistroViewModel = viewModel(),
     fotoViewModel: FotoViewModel = viewModel(),
     cuidadoViewModel: CuidadoViewModel = viewModel(),
+    desejoViewModel: DesejoViewModel = viewModel(),
 ) {
     LaunchedEffect(moto.id) {
         registroViewModel.carregarServicos(moto)
         registroViewModel.carregarRegistrosDaMoto(moto)
         fotoViewModel.carregar(moto.id)
         cuidadoViewModel.carregar(moto.id)
+        desejoViewModel.carregar(moto.id)
     }
     val nome = nomeDaMoto(moto)
     val accent = accentDaMoto(moto)
     // moto vendida: a história (e os aniversários) para no dia da despedida
     val hoje = fimDaHistoria(moto, hojeUtcMillis())
-    val eventos = remember(moto, historicoKm, registroViewModel.registrosDaMoto, registroViewModel.servicos, registroViewModel.pecas, fotoViewModel.fotos, cuidadoViewModel.cuidados) {
+    val eventos = remember(moto, historicoKm, registroViewModel.registrosDaMoto, registroViewModel.servicos, registroViewModel.pecas, fotoViewModel.fotos, cuidadoViewModel.cuidados, desejoViewModel.desejos) {
         montarLinhaDoTempo(
             moto = moto,
             pecas = registroViewModel.pecas,
@@ -80,6 +83,7 @@ fun LinhaDoTempoScreen(
             fotos = fotoViewModel.fotos,
             cuidados = cuidadoViewModel.cuidados,
             marcos = marcosDaMoto(nome, moto.chegouEm, historicoKm, hoje),
+            desejos = desejoViewModel.desejos,
         )
     }
     val capa = escolherCapa(fotoViewModel.fotos, moto.fotoCapaId)
@@ -111,7 +115,7 @@ fun LinhaDoTempoScreen(
             Spacer(Modifier.height(12.dp))
             if (eventos.isEmpty()) {
                 Text(
-                    "A história da $nome se escreve sozinha: fotos do álbum, trocas, visitas à oficina, cuidados e marcos " +
+                    "A história da $nome se escreve sozinha: fotos do álbum, trocas, visitas à oficina, cuidados, o que você instalou e os marcos " +
                         "aparecem aqui, em ordem. Conte também quando ela chegou, em Editar dados.",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

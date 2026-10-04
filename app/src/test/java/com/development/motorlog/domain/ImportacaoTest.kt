@@ -2,6 +2,7 @@ package com.development.motorlog.domain
 
 import com.development.motorlog.data.Abastecimento
 import com.development.motorlog.data.Cuidado
+import com.development.motorlog.data.Desejo
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Registro
@@ -110,6 +111,26 @@ class ImportacaoTest {
         val m = lerExportacao(csv, ::parse).motos.single()
         assertEquals("Pretinha", m.apelido); assertEquals(2 * dia, m.chegouEm); assertEquals(1200, m.kmChegada)
         assertEquals(null, m.vendidaEm)
+    }
+
+    @Test
+    fun `desejos fazem ida e volta`() {
+        val csv = montarExportacao(
+            motos = listOf(Moto(id = 1, modelo = "Fan", placa = "XYZ", anoFabricacao = 2019, kilometragem = 30000)),
+            pecas = emptyList(), registros = emptyList(), servicos = emptyList(),
+            desejos = listOf(
+                Desejo(motoId = 1, nome = "Baú; 41 L", preco = 35_090, nota = "preto", criadoEm = 3 * dia, instaladoEm = 8 * dia, kmInstalado = 29_000),
+                Desejo(motoId = 1, nome = "Viseira", criadoEm = 4 * dia),
+            ),
+            formatarData = ::fmt,
+        )
+        assertEquals(
+            listOf(
+                DesejoImportado("Fan XYZ", "Baú, 41 L", 35_090, "preto", 3 * dia, 8 * dia, 29_000),
+                DesejoImportado("Fan XYZ", "Viseira", 0, "", 4 * dia, null, -1),
+            ),
+            lerExportacao(csv, ::parse).desejos,
+        )
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.development.motorlog.domain
 
 import com.development.motorlog.data.Cuidado
+import com.development.motorlog.data.Desejo
 import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
@@ -12,7 +13,7 @@ import com.development.motorlog.data.Servico
 // fica de fora (seria um a cada dois dias: vira ruído na história). Registro sem dia conhecido
 // (data 0, anterior à v11) também fica de fora: não tem onde entrar na linha.
 
-enum class TipoEvento { CHEGADA, FOTO, TROCA, VISITA, CUIDADO, MARCO_KM, ANIVERSARIO, DESPEDIDA }
+enum class TipoEvento { CHEGADA, FOTO, TROCA, VISITA, CUIDADO, MARCO_KM, ANIVERSARIO, DESPEDIDA, PERSONALIZACAO }
 
 data class EventoDaHistoria(
     val data: Long,
@@ -34,6 +35,7 @@ fun montarLinhaDoTempo(
     fotos: List<FotoMoto>,
     cuidados: List<Cuidado>,
     marcos: List<Marco>,
+    desejos: List<Desejo> = emptyList(),
 ): List<EventoDaHistoria> {
     val nome = nomeDaMoto(moto)
     val nomePeca = pecas.associate { it.id to it.nome }
@@ -65,6 +67,11 @@ fun montarLinhaDoTempo(
     marcos.forEach { m ->
         val tipo = if (m.tipo == TipoMarco.KM) TipoEvento.MARCO_KM else TipoEvento.ANIVERSARIO
         eventos += EventoDaHistoria(m.data, if (m.tipo == TipoMarco.KM) m.valor else null, tipo, m.titulo)
+    }
+    // o que saiu da lista de desejos e foi pra moto
+    desejos.filter(::estaInstalado).forEach { d ->
+        val detalhe = listOfNotNull(d.preco.takeIf { it > 0 }?.let { "R$ ${reaisParaTexto(it)}" }, d.nota.ifBlank { null }).joinToString(" · ").ifBlank { null }
+        eventos += EventoDaHistoria(d.instaladoEm, d.kmInstalado.takeIf { it >= 0 }, TipoEvento.PERSONALIZACAO, "Instalei: ${d.nome}", detalhe)
     }
     if (estaVendida(moto)) {
         eventos += EventoDaHistoria(moto.vendidaEm, moto.kilometragem, TipoEvento.DESPEDIDA, "A $nome passou adiante")

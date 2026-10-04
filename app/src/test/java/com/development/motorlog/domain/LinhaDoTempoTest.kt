@@ -1,6 +1,7 @@
 package com.development.motorlog.domain
 
 import com.development.motorlog.data.Cuidado
+import com.development.motorlog.data.Desejo
 import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
 import com.development.motorlog.data.Peca
@@ -62,6 +63,23 @@ class LinhaDoTempoTest {
         )
         assertEquals(listOf(TipoEvento.FOTO, TipoEvento.CHEGADA), eventos.map { it.tipo })
         assertEquals("Foto da Pretinha", eventos.first().titulo)
+    }
+
+    @Test
+    fun `desejo instalado entra na historia, pendente nao`() {
+        val eventos = montarLinhaDoTempo(
+            moto = moto.copy(chegouEm = 0),
+            pecas = pecas, registros = emptyList(), servicos = emptyList(), fotos = emptyList(), cuidados = emptyList(), marcos = emptyList(),
+            desejos = listOf(
+                Desejo(id = 1, motoId = 1, nome = "Baú", preco = 35_000, criadoEm = 5 * dia, instaladoEm = 20 * dia, kmInstalado = 18_000),
+                Desejo(id = 2, motoId = 1, nome = "Viseira fumê", criadoEm = 6 * dia),
+            ),
+        )
+        assertEquals(1, eventos.size)
+        assertEquals(TipoEvento.PERSONALIZACAO, eventos[0].tipo)
+        assertEquals("Instalei: Baú", eventos[0].titulo)
+        assertEquals("R$ 350", eventos[0].detalhe)
+        assertEquals(18_000, eventos[0].km)
     }
 
     @Test

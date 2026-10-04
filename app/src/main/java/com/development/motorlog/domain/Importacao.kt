@@ -15,6 +15,9 @@ data class TrocaImportada(val motoChave: String, val peca: String, val km: Int, 
 data class ServicoImportado(val motoChave: String, val tipo: String, val data: Long?, val km: Int, val custo: Int, val oficina: String)
 data class PecaImportada(val nome: String, val intervaloKm: Int)
 data class CuidadoImportado(val motoChave: String, val tipo: String, val data: Long?, val km: Int, val nota: String = "")
+data class DesejoImportado(
+    val motoChave: String, val nome: String, val preco: Int, val nota: String, val criadoEm: Long?, val instaladoEm: Long?, val kmInstalado: Int,
+)
 data class AbastecimentoImportado(val motoChave: String, val km: Int, val mililitros: Int, val valor: Int, val tanqueCheio: Boolean, val data: Long?)
 
 data class DadosImportados(
@@ -27,11 +30,13 @@ data class DadosImportados(
     val abastecimentos: List<AbastecimentoImportado> = emptyList(),
     // backups de antes do diário de cuidados não têm a seção
     val cuidados: List<CuidadoImportado> = emptyList(),
+    // backups de antes da lista de desejos não têm a seção
+    val desejos: List<DesejoImportado> = emptyList(),
 ) {
-    val vazio get() = motos.isEmpty() && trocas.isEmpty() && servicos.isEmpty() && pecas.isEmpty() && abastecimentos.isEmpty() && cuidados.isEmpty()
+    val vazio get() = motos.isEmpty() && trocas.isEmpty() && servicos.isEmpty() && pecas.isEmpty() && abastecimentos.isEmpty() && cuidados.isEmpty() && desejos.isEmpty()
 }
 
-private enum class Secao { NENHUMA, MOTOS, TROCAS, SERVICOS, ABASTECIMENTOS, CUIDADOS, PECAS }
+private enum class Secao { NENHUMA, MOTOS, TROCAS, SERVICOS, ABASTECIMENTOS, CUIDADOS, DESEJOS, PECAS }
 
 fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados {
     val motos = mutableListOf<MotoImportada>()
@@ -40,6 +45,7 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
     val pecas = mutableListOf<PecaImportada>()
     val abastecimentos = mutableListOf<AbastecimentoImportado>()
     val cuidados = mutableListOf<CuidadoImportado>()
+    val desejos = mutableListOf<DesejoImportado>()
     val avisos = mutableListOf<String>()
     var secao = Secao.NENHUMA
     var pularCabecalho = false
@@ -53,6 +59,7 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
             "SERVIÇOS", "SERVICOS" -> Secao.SERVICOS
             "ABASTECIMENTOS" -> Secao.ABASTECIMENTOS
             "CUIDADOS" -> Secao.CUIDADOS
+            "DESEJOS" -> Secao.DESEJOS
             "PEÇAS (CATÁLOGO)", "PECAS (CATALOGO)", "PEÇAS", "PECAS" -> Secao.PECAS
             else -> null
         }
@@ -85,6 +92,14 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
             Secao.CUIDADOS -> if (c.size >= 4 && c[1].isNotBlank() && int(3) != null) {
                 cuidados += CuidadoImportado(c[0], c[1], parseData(c[2]), int(3)!!, c.getOrNull(4) ?: ""); true
             } else false
+            Secao.DESEJOS -> if (c.size >= 2 && c[1].isNotBlank()) {
+                desejos += DesejoImportado(
+                    c[0], c[1], reais(2) ?: 0, c.getOrNull(3) ?: "",
+                    criadoEm = c.getOrNull(4)?.takeIf { it.isNotBlank() }?.let(parseData),
+                    instaladoEm = c.getOrNull(5)?.takeIf { it.isNotBlank() }?.let(parseData),
+                    kmInstalado = int(6) ?: -1,
+                ); true
+            } else false
             Secao.PECAS -> if (c.size >= 2 && int(1) != null && int(1)!! > 0) {
                 pecas += PecaImportada(c[0], int(1)!!); true
             } else false
@@ -92,5 +107,5 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
         }
         if (!ok) avisos += "linha ${i + 1} ignorada: \"${linha.take(40)}\""
     }
-    return DadosImportados(motos, trocas, servicos, pecas, avisos, abastecimentos, cuidados)
+    return DadosImportados(motos, trocas, servicos, pecas, avisos, abastecimentos, cuidados, desejos)
 }

@@ -72,6 +72,7 @@ import com.development.motorlog.domain.kmJuntos
 import com.development.motorlog.domain.marcoPraComemorar
 import com.development.motorlog.domain.marcosDaMoto
 import com.development.motorlog.domain.nomeDaMoto
+import com.development.motorlog.domain.resumirDesejos
 import com.development.motorlog.domain.situacaoDosCuidados
 import com.development.motorlog.relatorio.compartilharCartao
 import com.development.motorlog.relatorio.gerarCartaoDoMarco
@@ -110,6 +111,7 @@ import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.AbastecimentoViewModel
 import com.development.motorlog.ui.viewModels.CuidadoViewModel
+import com.development.motorlog.ui.viewModels.DesejoViewModel
 import com.development.motorlog.ui.viewModels.FotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 import kotlinx.coroutines.launch
@@ -131,6 +133,7 @@ fun PainelScreen(
     fotoViewModel: FotoViewModel = viewModel(),
     abastecimentoViewModel: AbastecimentoViewModel = viewModel(),
     cuidadoViewModel: CuidadoViewModel = viewModel(),
+    desejoViewModel: DesejoViewModel = viewModel(),
     onAtualizarKm: () -> Unit,
     onRegistrarTroca: () -> Unit,
     onRegistrarServico: () -> Unit,
@@ -144,6 +147,7 @@ fun PainelScreen(
     onAbrirCombustivel: () -> Unit,
     onAbrirDiario: () -> Unit,
     onAbrirHistoria: () -> Unit,
+    onAbrirDesejos: () -> Unit,
     onMensagem: (String) -> Unit,
     // moto vendida (lembrança): "Ela voltou?" traz de volta pra garagem
     onDesfazerDespedida: () -> Unit = {},
@@ -172,6 +176,7 @@ fun PainelScreen(
     LaunchedEffect(moto.id) { fotoViewModel.carregar(moto.id) }
     LaunchedEffect(moto.id) { abastecimentoViewModel.carregar(moto.id) }
     LaunchedEffect(moto.id) { cuidadoViewModel.carregar(moto.id) }
+    LaunchedEffect(moto.id) { desejoViewModel.carregar(moto.id) }
     val consumo = abastecimentoViewModel.resumo
     val indice = remember(recomendacoes, pecas, registroViewModel.registrosDaMoto, servicos, cuidadoViewModel.cuidados, moto) {
         calcularIndiceDeCuidado(
@@ -467,6 +472,28 @@ fun PainelScreen(
                     )
                 }
                 Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(18.dp))
+            }
+        }
+
+        // ── Card: lista de desejos (planejar a personalização; some na moto vendida) ──
+        if (!vendida) {
+            val desejos = resumirDesejos(desejoViewModel.desejos)
+            MlCard(onClick = onAbrirDesejos, pad = 14.dp) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    IconBox(R.drawable.ic_ml_spark, cor = accent)
+                    Column(Modifier.weight(1f)) {
+                        Text("Lista de desejos", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            when {
+                                desejos.pendentes.isEmpty() -> "O que você quer colocar na ${nomeDaMoto(moto)}?"
+                                desejos.faltaInvestir > 0 -> "${desejos.pendentes.size} ite${if (desejos.pendentes.size == 1) "m" else "ns"} · ${formatarReais(desejos.faltaInvestir)} pra realizar"
+                                else -> "${desejos.pendentes.size} ite${if (desejos.pendentes.size == 1) "m" else "ns"} na lista"
+                            },
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Icon(painterResource(R.drawable.ic_ml_chev_r), contentDescription = null, tint = MlTextFaint, modifier = Modifier.size(18.dp))
+                }
             }
         }
 
