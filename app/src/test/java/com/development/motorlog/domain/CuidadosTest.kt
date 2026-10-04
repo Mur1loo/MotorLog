@@ -16,8 +16,23 @@ class CuidadosTest {
         situacaoDosCuidados(lista, km, hoje).single { it.tipo == tipo }
 
     @Test
-    fun `um item por tipo, na ordem do enum`() {
-        assertEquals(TipoCuidado.entries.toList(), situacaoDosCuidados(emptyList(), 20000, hoje).map { it.tipo })
+    fun `um item por tipo do painel, sem a cera antiga`() {
+        assertEquals(
+            listOf(TipoCuidado.LAVAGEM, TipoCuidado.LAVAGEM_DETALHADA, TipoCuidado.CORRENTE, TipoCuidado.CALIBRAGEM),
+            situacaoDosCuidados(emptyList(), 20000, hoje).map { it.tipo },
+        )
+    }
+
+    @Test
+    fun `registro antigo de cera continua legivel`() {
+        assertEquals("Encerei", TipoCuidado.doCodigo("cera")?.acao)
+    }
+
+    @Test
+    fun `lavagem detalhada nao cobra`() {
+        val s = situacao(listOf(c(TipoCuidado.LAVAGEM_DETALHADA, 10 * dia, 1000)), TipoCuidado.LAVAGEM_DETALHADA)
+        assertEquals("há 90 dias", s.quando)
+        assertFalse(s.jaEstaNaHora)
     }
 
     @Test

@@ -55,8 +55,8 @@ fun DiarioCuidadosScreen(
     ) {
         item {
             Text(
-                if (cuidados.isEmpty()) "Ainda nada por aqui. No Painel, toque em \"Lavei\", \"Encerei\", \"Lubrifiquei a corrente\" " +
-                    "ou \"Calibrei os pneus\" quando cuidar da ${nomeDaMoto(moto)}."
+                if (cuidados.isEmpty()) "Ainda nada por aqui. No Painel, toque em \"Lavagem simples\", \"Lavagem detalhada\" (com cera, " +
+                    "polimento, corrente e rodas), \"Lubrifiquei a corrente\" ou \"Calibrei os pneus\" quando cuidar da ${nomeDaMoto(moto)}."
                 else "${cuidados.size} cuidado${if (cuidados.size == 1) "" else "s"} com a ${nomeDaMoto(moto)}.",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 4.dp),
