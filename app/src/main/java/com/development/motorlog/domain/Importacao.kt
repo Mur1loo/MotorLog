@@ -3,10 +3,11 @@ package com.development.motorlog.domain
 // Leitura do CSV gerado por montarExportacao (o inverso dele). Puro: a data chega como texto e
 // quem sabe ler "dd/MM/yyyy" em UTC é a UI (parseData). Linhas que não entende viram avisos, não erro.
 // Preço e custo vêm em reais ("45,90", ou "45" nos backups de antes dos centavos) e viram centavos.
-// apelido/chegouEm/kmChegada: colunas da v14 (backups antigos não têm → sem apelido, chegada desconhecida)
+// apelido/chegouEm/kmChegada: colunas da v14 (backups antigos não têm → sem apelido, chegada desconhecida);
+// vendidaEm: coluna da v16 (backups antigos não têm → moto na garagem)
 data class MotoImportada(
     val modelo: String, val placa: String, val ano: Int, val km: Int, val kmAtualizadoEm: Long?, val intervaloRevisaoKm: Int = 0, val cor: Int = -1,
-    val apelido: String = "", val chegouEm: Long? = null, val kmChegada: Int = -1,
+    val apelido: String = "", val chegouEm: Long? = null, val kmChegada: Int = -1, val vendidaEm: Long? = null,
 ) {
     val chave get() = "$modelo $placa".trim()
 }
@@ -66,6 +67,7 @@ fun lerExportacao(texto: String, parseData: (String) -> Long?): DadosImportados 
                 motos += MotoImportada(
                     c[0], c[1], int(2)!!, int(3)!!, c.getOrNull(4)?.takeIf { it.isNotBlank() }?.let(parseData), int(5) ?: 0, int(6) ?: -1,
                     apelido = c.getOrNull(7) ?: "", chegouEm = c.getOrNull(8)?.takeIf { it.isNotBlank() }?.let(parseData), kmChegada = int(9) ?: -1,
+                    vendidaEm = c.getOrNull(10)?.takeIf { it.isNotBlank() }?.let(parseData),
                 ); true
             } else false
             Secao.TROCAS -> if (c.size >= 3 && int(2) != null) {

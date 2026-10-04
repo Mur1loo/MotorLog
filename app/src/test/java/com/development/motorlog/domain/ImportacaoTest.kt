@@ -109,6 +109,16 @@ class ImportacaoTest {
         )
         val m = lerExportacao(csv, ::parse).motos.single()
         assertEquals("Pretinha", m.apelido); assertEquals(2 * dia, m.chegouEm); assertEquals(1200, m.kmChegada)
+        assertEquals(null, m.vendidaEm)
+    }
+
+    @Test
+    fun `moto vendida faz ida e volta`() {
+        val csv = montarExportacao(
+            motos = listOf(Moto(id = 1, modelo = "Fan", placa = "XYZ", anoFabricacao = 2019, kilometragem = 30000, vendidaEm = 9 * dia)),
+            pecas = emptyList(), registros = emptyList(), servicos = emptyList(), formatarData = ::fmt,
+        )
+        assertEquals(9 * dia, lerExportacao(csv, ::parse).motos.single().vendidaEm)
     }
 
     @Test

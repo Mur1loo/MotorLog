@@ -27,4 +27,7 @@ data class Moto(
     val chegouEm: Long = 0,
     // km do painel quando ela chegou; -1 = não informado
     val kmChegada: Int = -1,
+    // meia-noite UTC do dia em que ela foi vendida (passou adiante); 0 = ainda na garagem.
+    // A moto vendida não é apagada: vira lembrança, com a história inteira guardada.
+    val vendidaEm: Long = 0,
 )

@@ -27,9 +27,9 @@ fun montarExportacao(
         appendLine("MotorLog")
         appendLine()
         appendLine("MOTOS")
-        appendLine("modelo;placa;ano;km_atual;km_atualizado_em;revisao_a_cada_km;cor;apelido;chegou_em;km_chegada")
+        appendLine("modelo;placa;ano;km_atual;km_atualizado_em;revisao_a_cada_km;cor;apelido;chegou_em;km_chegada;vendida_em")
         motos.forEach { m ->
-            appendLine("${limpo(m.modelo)};${limpo(m.placa)};${m.anoFabricacao};${m.kilometragem};${if (m.kmAtualizadoEm > 0) formatarData(m.kmAtualizadoEm) else ""};${m.intervaloRevisaoKm};${m.cor};${limpo(m.apelido)};${if (m.chegouEm > 0) formatarData(m.chegouEm) else ""};${m.kmChegada}")
+            appendLine("${limpo(m.modelo)};${limpo(m.placa)};${m.anoFabricacao};${m.kilometragem};${if (m.kmAtualizadoEm > 0) formatarData(m.kmAtualizadoEm) else ""};${m.intervaloRevisaoKm};${m.cor};${limpo(m.apelido)};${if (m.chegouEm > 0) formatarData(m.chegouEm) else ""};${m.kmChegada};${if (m.vendidaEm > 0) formatarData(m.vendidaEm) else ""}")
         }
         appendLine()
         appendLine("TROCAS")
