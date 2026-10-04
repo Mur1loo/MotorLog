@@ -31,6 +31,7 @@ data class RelatorioMoto(
     val gastoPorConta: Int,
     val trocasPorConta: Int,
     val custoPorKm: Double?,
+    val indice: IndiceDeCuidado? = null,   // índice de cuidado (domain/IndiceDeCuidado.kt), quando dá pra calcular
 ) {
     val gastoTotal get() = gastoOficina + gastoPorConta
 }

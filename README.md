@@ -19,6 +19,7 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Linha do tempo** — "A história da Pretinha": chegada, fotos, trocas, visitas à oficina, cuidados e marcos numa linha só, agrupada por mês, do mais recente para o dia em que ela chegou.
 - **Marcos e aniversários** — "Passou dos 50.000 km!" (5 mil, 10 mil e de 10 em 10 mil, cruzados com o app acompanhando) e "1 ano com a Pretinha" (aniversário da chegada) aparecem no Painel por até 30 dias, com um cartão em imagem para compartilhar no WhatsApp ou no Instagram.
 - **Diário de cuidados** — "Lavagem simples", "Lavagem detalhada" (com cera, polimento, corrente e rodas), "Lubrifiquei a corrente" e "Calibrei os pneus" em 1 toque no Painel, com "há quanto tempo" em cada um. Corrente (a cada 500 km) e calibragem (semanal) ficam em amarelo quando passam do ponto, sem notificação. A tela Diário lista tudo e permite apagar.
+- **Índice de cuidado** — nota de 0 a 100 no Painel e no PDF, com a faixa (Excelente, Bem cuidada, Pede atenção, Precisa de cuidado) e o que fazer pra subir. Junta cinco partes com pesos: trocas em dia (35), manutenção registrada (25: há quanto tempo foi a última troca ou visita à oficina e quantas das peças essenciais têm registro), revisão em dia (15), cuidados de rotina (15: corrente, calibragem e lavagem) e km atualizado (10). Trocas em dia só entra quando alguma peça tem registro, e a revisão só quando tem intervalo configurado (os pesos se redistribuem); tocar no card mostra a nota de cada parte (`domain/IndiceDeCuidado.kt`).
 - **Abastecimento e consumo** — "Abasteci" registra o que entrou do jeito que a pessoa sabe: "paguei R$ 30" com o preço do litro (o último já vem preenchido) ou os litros; o km da moto se atualiza junto. Não precisa encher o tanque: o km/l é a soma — km do 1º ao último abastecimento ÷ litros colocados depois do 1º —, mostrado como "aproximado" e cada vez mais preciso. Quem às vezes completa o tanque ganha a conta exata entre dois tanques cheios. A tela Combustível mostra a média, a média dos últimos abastecimentos, o preço do litro e o custo de combustível por km.
 - **Painel da moto** — quilometragem em destaque, gasto total, serviços, "Próximas trocas" com status por cor (em dia, próximo do vencimento, vencido) e atividade recente.
 - **Trocas por km** — todas as peças agrupadas por urgência (vencidas / perto de vencer / mais adiante / sem registro), cada uma com barra de progresso do intervalo.
@@ -26,7 +27,7 @@ MVP funcional, rodando em dispositivo real. A funcionalidade central — registr
 - **Lembretes 2x por dia (7h e 19h)** — notificação quando há troca vencida/perto de vencer (WorkManager); o km parado há 3+ dias só é cobrado no lembrete das 19h, e o mesmo aviso não se repete no mesmo dia. Tocar abre o painel da moto. A permissão de notificação é pedida depois do cadastro da primeira moto, com explicação, e o Painel avisa quando os lembretes estão desligados.
 - **Ritmo de uso** — duas médias com nome: km/mês **no último mês** (o ritmo de agora, km registrados nos últimos 30 dias) e **geral** (desde que ela chegou, ou desde o cadastro). As previsões ("faltam 400 km · ~6 dias") usam a do último mês quando ela cobre 14 dias ou mais; senão, a geral.
 - **Alertas na Garagem** — cada moto mostra quantas trocas estão vencidas/perto, sem precisar abrir o painel.
-- **Histórico em PDF** — relatório A4 da moto (foto de capa, resumo de gastos, situação das peças e todo o histórico de oficina e trocas por conta própria) pra mandar no WhatsApp: pro comprador, pro mecânico ou pra guardar.
+- **Histórico em PDF** — relatório A4 da moto (foto de capa, resumo de gastos, índice de cuidado, situação das peças e todo o histórico de oficina e trocas por conta própria) pra mandar no WhatsApp: pro comprador, pro mecânico ou pra guardar.
 - **Álbum da moto** (aba Fotos) — fotos pela câmera ou galeria (sem pedir permissão: câmera do sistema e seletor de fotos do Android), com legenda, dia e km. A capa aparece na Garagem, no Painel e no PDF. Ficam só no armazenamento privado do app.
 - **Cor da moto** — cada moto tem a sua cor no app (8 opções), usada no painel, no odômetro e no PDF.
 - **Backup** — CSV com motos, trocas, serviços e catálogo, via compartilhar, restaurável em outro celular (as fotos não entram no CSV). O backup automático do Google também fica sem as fotos, pra não passar do teto de 25 MB, acima do qual nada seria salvo; a transferência direta entre celulares leva tudo.
@@ -114,8 +115,8 @@ O público-alvo é quem usa a moto para trabalhar, não quem gosta de tecnologia
 
 - Widget na tela inicial para atualizar o km sem abrir o app.
 - Backup completo em arquivo único (dados + fotos do álbum).
-- Marcos da moto ("passou dos 50.000 km!") e foto do painel junto da atualização de km.
-- Leitura reativa com `Flow`; índice de cuidado.
+- Foto do painel junto da atualização de km.
+- Leitura reativa com `Flow`.
 
 ## Contribuindo
 

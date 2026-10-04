@@ -15,11 +15,13 @@ import androidx.core.content.res.ResourcesCompat
 import com.development.motorlog.R
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.IndiceDeCuidado
 import com.development.motorlog.domain.ItemDoHistorico
 import com.development.motorlog.domain.OrigemItem
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.RelatorioMoto
 import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.calcularIndiceDeCuidado
 import com.development.motorlog.domain.calcularRecomendacoes
 import com.development.motorlog.domain.comRevisao
 import com.development.motorlog.domain.escolherCapa
@@ -46,14 +48,28 @@ suspend fun AppDatabase.gerarHistoricoPdf(contexto: Context, moto: Moto): File =
     val pecas = pecaDao().listarPecas()
     val registros = registroDao().listarRegistros(moto.id)
     val servicos = servicoDao().query(moto.id)
-    val recs = calcularRecomendacoes(moto.kilometragem, pecas, registros)
+    val recs = comRevisao(
+        calcularRecomendacoes(moto.kilometragem, pecas, registros),
+        recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, servicos),
+    )
     val relatorio = montarRelatorio(
         moto = moto,
         pecas = pecas,
         registros = registros,
         servicos = servicos,
-        recomendacoes = comRevisao(recs, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, servicos)),
+        recomendacoes = recs,
         kmRodados = kmRodadosNoApp(historicoKmDao().listarPorMoto(moto.id), moto.kilometragem),
+    ).copy(
+        indice = calcularIndiceDeCuidado(
+            recomendacoes = recs,
+            pecas = pecas,
+            registros = registros,
+            servicos = servicos,
+            cuidados = cuidadoDao().listarPorMoto(moto.id),
+            kmAtual = moto.kilometragem,
+            kmAtualizadoEm = moto.kmAtualizadoEm,
+            hoje = hojeUtcMillis(),
+        ),
     )
     val capa = escolherCapa(fotoMotoDao().listarPorMoto(moto.id), moto.fotoCapaId)
         ?.let { ArmazemDeFotos.carregarParaPdf(contexto, it.arquivo) }
@@ -169,6 +185,11 @@ private class DesenhistaDoHistorico(contexto: Context, private val r: RelatorioM
         add(espaco(16f))
         add(resumo())
         add(espaco(22f))
+        r.indice?.let {
+            add(tituloDeSecao("ÍNDICE DE CUIDADO", "de 0 a 100, calculado pelo app com os registros"))
+            add(indiceDeCuidado(it))
+            add(espaco(22f))
+        }
         if (r.situacao.isNotEmpty()) {
             add(tituloDeSecao("SITUAÇÃO DAS PEÇAS", "com ${formatarKm(r.moto.kilometragem)} no painel"))
             add(cabecalhoDaSituacao())
@@ -217,6 +238,45 @@ private class DesenhistaDoHistorico(contexto: Context, private val r: RelatorioM
                 drawText(caber(par.second, miudo, largura - 20f), x + 10f, y + 50f, miudo)
             }
         }
+    }
+
+    // nota grande + faixa + barra à esquerda; as partes da nota em duas colunas à direita
+    private fun indiceDeCuidado(i: IndiceDeCuidado): Bloco {
+        val xPartes = MARGEM + CONTEUDO * 0.42f
+        val larguraColuna = (LARGURA - MARGEM - xPartes - 12f) / 2
+        val linhas = (i.partes.size + 1) / 2
+        val altura = maxOf(64f, linhas * 22f + 6f)
+        return Bloco(altura) { y ->
+            val cor = corDaNota(i.nota)
+            val nota = "${i.nota}"
+            val grande = pincel(30f, cor, chakra)
+            drawText(nota, MARGEM, y + 30f, grande)
+            drawText("/100", MARGEM + grande.measureText(nota) + 4f, y + 30f, miudo)
+            drawText(i.faixa, MARGEM + grande.measureText(nota) + 34f, y + 30f, textoForte.comCor(cor))
+            val larguraBarra = xPartes - MARGEM - 24f
+            preenchido.color = LINHA
+            drawRoundRect(RectF(MARGEM, y + 40f, MARGEM + larguraBarra, y + 45f), 2.5f, 2.5f, preenchido)
+            preenchido.color = cor
+            drawRoundRect(RectF(MARGEM, y + 40f, MARGEM + larguraBarra * i.nota / 100f, y + 45f), 2.5f, 2.5f, preenchido)
+            drawText("trocas, manutenção, revisão, cuidados e km", MARGEM, y + 58f, miudo)
+            i.partes.forEachIndexed { k, parte ->
+                val x = xPartes + (k % 2) * (larguraColuna + 12f)
+                val base = y + 12f + (k / 2) * 22f
+                drawText(caber(parte.nome, texto, larguraColuna - 30f), x, base, texto)
+                drawText("${parte.nota}", x + larguraColuna, base, valorDireita.comCor(corDaNota(parte.nota)))
+                preenchido.color = LINHA
+                drawRect(x, base + 5f, x + larguraColuna, base + 7f, preenchido)
+                preenchido.color = corDaNota(parte.nota)
+                drawRect(x, base + 5f, x + larguraColuna * parte.nota / 100f, base + 7f, preenchido)
+            }
+        }
+    }
+
+    // mesmas faixas do card do Painel: verde a partir de 70, amarelo a partir de 50
+    private fun corDaNota(nota: Int) = when {
+        nota >= 70 -> COR_OK
+        nota >= 50 -> COR_PERTO
+        else -> COR_VENCIDA
     }
 
     private fun tituloDeSecao(t: String, apoio: String) = Bloco(26f) { y ->
