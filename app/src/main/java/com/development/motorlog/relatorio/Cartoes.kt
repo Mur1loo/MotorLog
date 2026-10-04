@@ -72,6 +72,10 @@ internal fun salvarCartao(contexto: Context, bmp: Bitmap, nome: String): File {
     return arquivo
 }
 
+// texto de um quadro dos cartões (ficha da moto, retrospectiva): "RODAMOS" · "12.400" "km" · "juntos no ano".
+// Uma classe só pro pacote: duas private com o mesmo nome em arquivos diferentes viram a mesma classe na JVM.
+internal data class TextoDoQuadro(val rotulo: String, val valor: String, val unidade: String, val apoio: String)
+
 // quebra por palavras pra caber na largura (o Canvas não quebra texto sozinho)
 internal fun quebrarEmLinhas(texto: String, pincel: Paint, largura: Float): List<String> {
     val linhas = mutableListOf<String>()

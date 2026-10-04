@@ -58,8 +58,6 @@ suspend fun gerarCartaoDaRetrospectiva(contexto: Context, moto: Moto, r: Retrosp
     salvarCartao(contexto, bmp, "motorlog_retrospectiva_${r.ano}.png")
 }
 
-private data class TextoDoQuadro(val rotulo: String, val valor: String, val unidade: String, val apoio: String)
-
 private fun plural(n: Int, um: String, varios: String) = "$n ${if (n == 1) um else varios}"
 
 private fun textoDoQuadro(q: QuadroDaRetrospectiva, r: Retrospectiva): TextoDoQuadro = when (q) {

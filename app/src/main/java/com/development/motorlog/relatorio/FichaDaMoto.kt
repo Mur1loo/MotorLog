@@ -85,8 +85,6 @@ suspend fun gerarFichaDaMoto(contexto: Context, moto: Moto, dados: DadosDaFicha,
     salvarCartao(contexto, bmp, "motorlog_ficha_${moto.id}.png")
 }
 
-private data class TextoDoQuadro(val rotulo: String, val valor: String, val unidade: String, val apoio: String)
-
 private fun textoDoQuadro(q: QuadroDaFicha, d: DadosDaFicha): TextoDoQuadro = when (q) {
     QuadroDaFicha.INDICE -> TextoDoQuadro("ÍNDICE DE CUIDADO", "${d.indice?.nota ?: 0}", "/100", d.indice?.faixa.orEmpty())
     QuadroDaFicha.KM_JUNTOS -> TextoDoQuadro("RODAMOS JUNTOS", formatarNumero(d.kmJuntos ?: 0), "km", "desde que ela chegou")
