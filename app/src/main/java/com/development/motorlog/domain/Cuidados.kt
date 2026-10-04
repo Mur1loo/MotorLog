@@ -2,15 +2,19 @@ package com.development.motorlog.domain
 
 import com.development.motorlog.data.Cuidado
 
-// Diário de cuidados: os rituais de quem trata bem a moto. Lavar e encerar são carinho (sem
-// cobrança); lubrificar a corrente e calibrar os pneus também são segurança, então ganham um
+// Diário de cuidados: os rituais de quem trata bem a moto. Lavar é carinho (sem cobrança):
+// a simples (água, xampu, secar) e a detalhada (com cera, polimento, limpeza da corrente e das
+// rodas). Lubrificar a corrente e calibrar os pneus também são segurança, então ganham um
 // "já está na hora" suave no card — sem notificação (os lembretes são pras trocas).
+// noPainel = false: tipo antigo que não aparece mais no card, mas os registros continuam valendo
+// no diário e na linha do tempo (CERA virou parte da lavagem detalhada).
 
-enum class TipoCuidado(val codigo: String, val acao: String, val nome: String) {
-    LAVAGEM("lavagem", "Lavei", "Lavagem"),
-    CERA("cera", "Encerei", "Cera"),
+enum class TipoCuidado(val codigo: String, val acao: String, val nome: String, val noPainel: Boolean = true) {
+    LAVAGEM("lavagem", "Lavagem simples", "Lavagem simples"),
+    LAVAGEM_DETALHADA("lavagem_detalhada", "Lavagem detalhada", "Lavagem detalhada"),
     CORRENTE("corrente", "Lubrifiquei a corrente", "Corrente lubrificada"),
-    CALIBRAGEM("calibragem", "Calibrei os pneus", "Pneus calibrados");
+    CALIBRAGEM("calibragem", "Calibrei os pneus", "Pneus calibrados"),
+    CERA("cera", "Encerei", "Cera", noPainel = false);
 
     companion object {
         fun doCodigo(codigo: String): TipoCuidado? = entries.find { it.codigo == codigo }
@@ -32,7 +36,7 @@ data class SituacaoCuidado(
 )
 
 fun situacaoDosCuidados(cuidados: List<Cuidado>, kmAtual: Int, hoje: Long): List<SituacaoCuidado> =
-    TipoCuidado.entries.map { tipo ->
+    TipoCuidado.entries.filter { it.noPainel }.map { tipo ->
         val ultimo = cuidados.filter { it.tipo == tipo.codigo }.maxWithOrNull(compareBy({ it.data }, { it.id }))
         if (ultimo == null) {
             SituacaoCuidado(tipo, null, "ainda não registrado", jaEstaNaHora = tipo == TipoCuidado.CORRENTE || tipo == TipoCuidado.CALIBRAGEM)

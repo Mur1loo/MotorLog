@@ -26,7 +26,7 @@ fun iconeDaPeca(nome: String): Int {
 // ícone de cada cuidado do diário (TipoCuidado)
 fun iconeDoCuidado(tipo: TipoCuidado): Int = when (tipo) {
     TipoCuidado.LAVAGEM -> R.drawable.ic_ml_fluid
-    TipoCuidado.CERA -> R.drawable.ic_ml_spark
+    TipoCuidado.LAVAGEM_DETALHADA, TipoCuidado.CERA -> R.drawable.ic_ml_spark
     TipoCuidado.CORRENTE -> R.drawable.ic_ml_chain
     TipoCuidado.CALIBRAGEM -> R.drawable.ic_ml_tire
 }

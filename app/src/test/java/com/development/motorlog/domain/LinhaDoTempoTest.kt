@@ -37,7 +37,7 @@ class LinhaDoTempoTest {
         assertEquals(15000, eventos.last().km)
         assertEquals("Zé · 1 peça trocada", eventos[1].detalhe)
         assertEquals("Troquei: Óleo do motor", eventos[2].titulo)
-        assertEquals("Lavei", eventos[3].titulo)
+        assertEquals("Lavagem simples", eventos[3].titulo)
         assertEquals("a.jpg", eventos[4].foto)
     }
 
