@@ -1,13 +1,22 @@
 package com.development.motorlog.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface HistoricoKmDao {
     @Insert
     suspend fun inserir(ponto: HistoricoKm)
+
+    // correção de um km digitado errado (tela Registros de km)
+    @Update
+    suspend fun atualizar(ponto: HistoricoKm)
+
+    @Delete
+    suspend fun deletar(ponto: HistoricoKm)
 
     // 1 ponto por dia: se já existe o dia, só atualiza o km
     @Query("UPDATE HistoricoKm SET km = :km WHERE motoId = :motoId AND data = :data")

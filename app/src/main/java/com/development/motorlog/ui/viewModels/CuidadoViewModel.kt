@@ -42,6 +42,14 @@ class CuidadoViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    // corrigir tipo, dia, km ou nota (ex.: cuidado feito ontem, anotado hoje)
+    fun atualizar(cuidado: Cuidado) {
+        viewModelScope.launch {
+            dao.atualizar(cuidado.copy(nota = cuidado.nota.trim()))
+            cuidados = dao.listarPorMoto(cuidado.motoId)
+        }
+    }
+
     fun excluir(cuidado: Cuidado) {
         viewModelScope.launch {
             dao.deletar(cuidado)

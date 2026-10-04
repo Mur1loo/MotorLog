@@ -63,9 +63,10 @@ class FotoViewModel(application: Application) : AndroidViewModel(application) {
         pendente = null
     }
 
-    fun atualizarLegenda(foto: FotoMoto, legenda: String) {
+    // legenda, dia e km (a foto antiga, tirada antes de entrar no app, nasce com o dia e o km de hoje)
+    fun atualizar(foto: FotoMoto) {
         viewModelScope.launch {
-            dao.atualizar(foto.copy(legenda = legenda.trim()))
+            dao.atualizar(foto.copy(legenda = foto.legenda.trim()))
             fotos = dao.listarPorMoto(foto.motoId)
         }
     }

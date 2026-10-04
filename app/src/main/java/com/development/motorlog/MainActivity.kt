@@ -66,6 +66,7 @@ import com.development.motorlog.ui.screens.HistoricoScreen
 import com.development.motorlog.ui.screens.LinhaDoTempoScreen
 import com.development.motorlog.ui.screens.PainelScreen
 import com.development.motorlog.ui.screens.RegistroScreen
+import com.development.motorlog.ui.screens.RegistrosDeKmScreen
 import com.development.motorlog.ui.screens.RevisaoDetailScreen
 import com.development.motorlog.ui.screens.TrocasScreen
 import com.development.motorlog.ui.theme.MotorLogTheme
@@ -164,13 +165,14 @@ class MainActivity : ComponentActivity() {
                     "DiarioCuidados" -> "Diário de cuidados"
                     "LinhaDoTempo" -> "Linha do tempo"
                     "Despedida" -> "Despedida"
+                    "RegistrosKm" -> "Registros de km"
                     "Abastecimento" -> if (abastecimentoId != null) "Editar abastecimento" else "Abasteci"
                     else -> "Garagem"
                 }
                 val subtitulo = when (telaAtual) {
                     "Painel" -> motoSelecionada?.let { juntarComPonto(if (it.apelido.isNotBlank()) it.modelo else "", it.anoFabricacao.toString(), it.placa) }
                     "Trocas" -> motoSelecionada?.let { "${nomeDaMoto(it)} · ${formatarKm(it.kilometragem)}" }
-                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento", "DiarioCuidados", "LinhaDoTempo", "Despedida" -> motoSelecionada?.let(::nomeDaMoto)
+                    "Historico", "RevisaoDetail", "Registro", "RegistrarServico", "EditarServico", "Fotos", "Combustivel", "Abastecimento", "DiarioCuidados", "LinhaDoTempo", "Despedida", "RegistrosKm" -> motoSelecionada?.let(::nomeDaMoto)
                     "Cadastro" -> "Cadastre sua motocicleta"
                     else -> null
                 }
@@ -494,6 +496,20 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        "RegistrosKm" -> {
+                            val motoSel = motoSelecionada
+                            if (motoSel != null) {
+                                RegistrosDeKmScreen(
+                                    moto = motoSel,
+                                    pontos = motoViewModel.historicos[motoSel.id].orEmpty(),
+                                    modifier = Modifier.padding(innerPadding),
+                                    onCorrigir = { ponto, novoKm ->
+                                        motoViewModel.corrigirRegistroDeKm(motoSel, ponto, novoKm)
+                                        mensagem = if (novoKm == null) "Registro apagado. Médias recalculadas." else "Km corrigido. Médias recalculadas."
+                                    },
+                                )
+                            }
+                        }
                         "Despedida" -> {
                             val motoSel = motoSelecionada
                             if (motoSel != null) {
@@ -572,6 +588,7 @@ class MainActivity : ComponentActivity() {
                     AtualizarKmSheet(
                         moto = motoKm,
                         onFechar = { mostrarKm = false },
+                        onCorrigirAntigos = { mostrarKm = false; abrirTela("RegistrosKm") },
                         onSalvo = { km ->
                             mostrarKm = false
                             mensagem = "Km atualizado: ${formatarKm(km)}"

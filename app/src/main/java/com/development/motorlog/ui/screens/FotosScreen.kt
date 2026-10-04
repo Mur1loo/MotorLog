@@ -39,6 +39,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,6 +63,7 @@ import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
 import com.development.motorlog.domain.AntesEDepois
 import com.development.motorlog.domain.descreverIntervalo
+import com.development.motorlog.domain.erroDeKm
 import com.development.motorlog.domain.escolherCapa
 import com.development.motorlog.domain.montarAntesEDepois
 import com.development.motorlog.domain.nomeDaMoto
@@ -72,6 +74,7 @@ import com.development.motorlog.relatorio.gerarAntesEDepois
 import com.development.motorlog.ui.components.BikeBadge
 import com.development.motorlog.ui.components.BotaoPrimario
 import com.development.motorlog.ui.components.BotaoSecundario
+import com.development.motorlog.ui.components.CampoData
 import com.development.motorlog.ui.components.ConfirmarExclusaoDialog
 import com.development.motorlog.ui.components.FotoArquivo
 import com.development.motorlog.ui.components.MlCard
@@ -296,7 +299,7 @@ fun FotosScreen(
             ehCapa = aberta.id == capa?.id,
             onFechar = { abertaId = null },
             onDefinirCapa = { onDefinirCapa(aberta); onMensagem("Essa agora é a capa da moto.") },
-            onSalvarLegenda = { fotoViewModel.atualizarLegenda(aberta, it) },
+            onSalvar = { editada -> fotoViewModel.atualizar(editada); onMensagem("Foto atualizada.") },
             onExcluir = { fotoViewModel.excluir(aberta) { abertaId = null } },
         )
     }
@@ -325,6 +328,36 @@ private fun NovaFotoDialog(arquivo: String, primeira: Boolean, onGuardar: (Strin
         },
         confirmButton = { TextButton(onClick = { onGuardar(legenda) }) { Text("Guardar no álbum") } },
         dismissButton = { TextButton(onClick = onDescartar) { Text("Descartar") } },
+    )
+}
+
+// Editar a foto: legenda, dia e km. A foto que entrou pela galeria nasce com o dia e o km de hoje;
+// aqui a pessoa conta quando ela foi tirada de verdade (e a linha do tempo e o antes e depois acertam).
+@Composable
+private fun EditarFotoDialog(foto: FotoMoto, onSalvar: (FotoMoto) -> Unit, onCancelar: () -> Unit) {
+    var legenda by rememberSaveable { mutableStateOf(foto.legenda) }
+    var data by rememberSaveable { mutableLongStateOf(foto.data) }
+    var km by rememberSaveable { mutableStateOf(foto.km.toString()) }
+    var tentou by rememberSaveable { mutableStateOf(false) }
+    val erroKm = erroDeKm(km)
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        title = { Text("Editar foto", style = MaterialTheme.typography.titleLarge) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                MlTextField(legenda, { legenda = it.take(60) }, "Legenda (ex.: Viagem pra praia)")
+                CampoData(data, { data = it }, rotulo = "Dia da foto", cor = MaterialTheme.colorScheme.surfaceContainerHighest)
+                MlTextField(km, { km = it }, "Km no dia da foto", icone = R.drawable.ic_ml_gauge, numerico = true, ajuda = erroKm.takeIf { tentou })
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                tentou = true
+                if (erroKm == null) onSalvar(foto.copy(legenda = legenda, data = data, km = km.trim().toInt()))
+            }) { Text("Salvar") }
+        },
+        dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } },
     )
 }
 
@@ -369,17 +402,17 @@ private fun AntesEDepoisDialog(par: AntesEDepois, gerando: Boolean, onCompartilh
     )
 }
 
-// Foto em tela cheia, com legenda, dia/km e as ações (capa, legenda, excluir)
+// Foto em tela cheia, com legenda, dia/km e as ações (capa, editar, excluir)
 @Composable
 private fun VisualizadorDeFoto(
     foto: FotoMoto,
     ehCapa: Boolean,
     onFechar: () -> Unit,
     onDefinirCapa: () -> Unit,
-    onSalvarLegenda: (String) -> Unit,
+    onSalvar: (FotoMoto) -> Unit,
     onExcluir: () -> Unit,
 ) {
-    var editandoLegenda by rememberSaveable { mutableStateOf(false) }
+    var editando by rememberSaveable { mutableStateOf(false) }
     var confirmarExclusao by rememberSaveable { mutableStateOf(false) }
     Dialog(onDismissRequest = onFechar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -399,7 +432,7 @@ private fun VisualizadorDeFoto(
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (ehCapa) Text("É a capa", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(horizontal = 12.dp))
                     else TextButton(onClick = onDefinirCapa) { Text("Usar como capa") }
-                    TextButton(onClick = { editandoLegenda = true }) { Text("Legenda") }
+                    TextButton(onClick = { editando = true }) { Text("Editar") }
                     Spacer(Modifier.weight(1f))
                     TextButton(onClick = { confirmarExclusao = true }) { Text("Excluir", color = MaterialTheme.colorScheme.error) }
                 }
@@ -407,16 +440,8 @@ private fun VisualizadorDeFoto(
         }
     }
 
-    if (editandoLegenda) {
-        var texto by rememberSaveable { mutableStateOf(foto.legenda) }
-        AlertDialog(
-            onDismissRequest = { editandoLegenda = false },
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            title = { Text("Legenda", style = MaterialTheme.typography.titleLarge) },
-            text = { MlTextField(texto, { texto = it.take(60) }, "Ex.: Viagem pra praia") },
-            confirmButton = { TextButton(onClick = { onSalvarLegenda(texto); editandoLegenda = false }) { Text("Salvar") } },
-            dismissButton = { TextButton(onClick = { editandoLegenda = false }) { Text("Cancelar") } },
-        )
+    if (editando) {
+        EditarFotoDialog(foto, onSalvar = { onSalvar(it); editando = false }, onCancelar = { editando = false })
     }
     if (confirmarExclusao) {
         ConfirmarExclusaoDialog(
