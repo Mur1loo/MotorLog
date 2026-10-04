@@ -355,6 +355,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(innerPadding),
                                     moto = motoSel,
                                     ritmoKmMes = motoViewModel.ritmos[motoSel.id],
+                                    medias = motoViewModel.medias[motoSel.id],
                                     kmRodados = motoViewModel.kmRodados[motoSel.id] ?: 0,
                                     historicoKm = motoViewModel.historicos[motoSel.id].orEmpty(),
                                     lembretesLigados = lembretesLigados.value,

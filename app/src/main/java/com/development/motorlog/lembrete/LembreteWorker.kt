@@ -24,8 +24,8 @@ import com.development.motorlog.MainActivity
 import com.development.motorlog.R
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.Moto
+import com.development.motorlog.domain.calcularMediasDeKm
 import com.development.motorlog.domain.calcularRecomendacoes
-import com.development.motorlog.domain.calcularRitmoKmMes
 import com.development.motorlog.domain.comRevisao
 import com.development.motorlog.domain.montarLembrete
 import com.development.motorlog.domain.nomeDaMoto
@@ -59,7 +59,7 @@ class LembreteWorker(context: Context, params: WorkerParameters) : CoroutineWork
         db.motoDao().listarTodas().forEach { moto ->
             val recsPecas = calcularRecomendacoes(moto.kilometragem, pecas, db.registroDao().listarRegistros(moto.id))
             val recs = comRevisao(recsPecas, recomendacaoDeRevisao(moto.kilometragem, moto.intervaloRevisaoKm, db.servicoDao().query(moto.id)))
-            val ritmo = calcularRitmoKmMes(db.historicoKmDao().listarPorMoto(moto.id), hoje)
+            val ritmo = calcularMediasDeKm(db.historicoKmDao().listarPorMoto(moto.id), moto.chegouEm, moto.kmChegada, hoje).paraPrevisao
             val texto = montarLembrete(nomeDaMoto(moto), moto.kmAtualizadoEm, hoje, recs, ritmo, ::formatarData, lembrarKmParado = turnoDaNoite)
                 ?: return@forEach
             // ex.: "Óleo vencido" às 7h não se repete às 19h; se à noite entrou o km parado, o texto muda e avisa

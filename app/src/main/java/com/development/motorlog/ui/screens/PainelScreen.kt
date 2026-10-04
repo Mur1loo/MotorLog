@@ -51,6 +51,7 @@ import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Servico
 import com.development.motorlog.domain.Confianca
 import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
+import com.development.motorlog.domain.MediasDeKm
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
 import com.development.motorlog.domain.TipoMarco
@@ -114,6 +115,8 @@ fun PainelScreen(
     modifier: Modifier = Modifier,
     moto: Moto,
     ritmoKmMes: Int?,
+    // média do último mês e geral, mostradas lado a lado (a previsão usa ritmoKmMes)
+    medias: MediasDeKm?,
     kmRodados: Int,
     historicoKm: List<HistoricoKm>,
     lembretesLigados: Boolean,
@@ -256,7 +259,9 @@ fun PainelScreen(
                 BotaoSecundario("Abasteci", onAbasteci, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_fuel)
                 Spacer(Modifier.height(10.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (ritmoKmMes != null) PillNeutra("${formatarNumero(ritmoKmMes)} km/mês", icone = R.drawable.ic_ml_road)
+                    // as duas médias com nome: o ritmo de agora e o de sempre
+                    medias?.ultimoMes?.let { PillNeutra("${formatarNumero(it)} km/mês no último mês", icone = R.drawable.ic_ml_road) }
+                    medias?.geral?.let { PillNeutra("${formatarNumero(it)} km/mês ${if (medias.geralDesdeAChegada) "desde que chegou" else "desde o cadastro"}", icone = R.drawable.ic_ml_road) }
                     when {
                         vencidas > 0 -> Pill("$vencidas vencida${if (vencidas > 1) "s" else ""}", StatusTroca.VENCIDA.cor(), icone = R.drawable.ic_ml_bell)
                         perto > 0 -> Pill("$perto perto de vencer", StatusTroca.PERTO.cor(), icone = R.drawable.ic_ml_wrench)

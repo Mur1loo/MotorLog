@@ -1,11 +1,11 @@
 package com.development.motorlog.ui.viewModels
 
 import android.app.Application
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.data.HistoricoKm
 import com.development.motorlog.data.Moto
@@ -13,21 +13,21 @@ import com.development.motorlog.data.ResumoImportacao
 import com.development.motorlog.data.atualizarKm
 import com.development.motorlog.data.importar
 import com.development.motorlog.domain.DadosImportados
-import com.development.motorlog.domain.lerExportacao
-import com.development.motorlog.ui.util.lerData
+import com.development.motorlog.domain.MediasDeKm
 import com.development.motorlog.domain.ResumoAlertas
+import com.development.motorlog.domain.calcularMediasDeKm
 import com.development.motorlog.domain.calcularRecomendacoes
-import com.development.motorlog.domain.calcularRitmoKmMes
 import com.development.motorlog.domain.comRevisao
-import com.development.motorlog.domain.recomendacaoDeRevisao
-import com.development.motorlog.domain.kmRodadosNoApp
-import com.development.motorlog.domain.montarExportacao
-import com.development.motorlog.ui.util.formatarData
-import com.development.motorlog.domain.resumirAlertas
 import com.development.motorlog.domain.escolherCapa
+import com.development.motorlog.domain.kmRodadosNoApp
+import com.development.motorlog.domain.lerExportacao
+import com.development.motorlog.domain.montarExportacao
+import com.development.motorlog.domain.recomendacaoDeRevisao
+import com.development.motorlog.domain.resumirAlertas
 import com.development.motorlog.fotos.ArmazemDeFotos
+import com.development.motorlog.ui.util.formatarData
 import com.development.motorlog.ui.util.hojeUtcMillis
-
+import com.development.motorlog.ui.util.lerData
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -55,7 +55,10 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
     // motoId -> pontos (dia, km) registrados: base dos marcos ("Passou dos 50.000 km!")
     var historicos by mutableStateOf<Map<Long, List<HistoricoKm>>>(emptyMap())
         private set
-    // motoId -> km/mês estimado pelo HistoricoKm (null = ainda sem dados suficientes)
+    // motoId -> média do último mês e média geral (domain/Ritmo.kt), mostradas no Painel
+    var medias by mutableStateOf<Map<Long, MediasDeKm>>(emptyMap())
+        private set
+    // motoId -> km/mês usado nas previsões ("vence em ~6 dias"); null = ainda sem dados suficientes
     var ritmos by mutableStateOf<Map<Long, Int?>>(emptyMap())
         private set
 
@@ -89,7 +92,8 @@ class MotoViewModel(application : Application) : AndroidViewModel(application = 
             val hoje = hojeUtcMillis()
             val historicos = lista.associate { moto -> moto.id to historicoDao.listarPorMoto(moto.id) }
             this@MotoViewModel.historicos = historicos
-            ritmos = lista.associate { moto -> moto.id to calcularRitmoKmMes(historicos.getValue(moto.id), hoje) }
+            medias = lista.associate { moto -> moto.id to calcularMediasDeKm(historicos.getValue(moto.id), moto.chegouEm, moto.kmChegada, hoje) }
+            ritmos = medias.mapValues { it.value.paraPrevisao }
             kmRodados = lista.associate { moto -> moto.id to kmRodadosNoApp(historicos.getValue(moto.id), moto.kilometragem) }
             capas = lista.mapNotNull { moto -> escolherCapa(fotoDao.listarPorMoto(moto.id), moto.fotoCapaId)?.let { moto.id to it.arquivo } }.toMap()
             motos = lista
