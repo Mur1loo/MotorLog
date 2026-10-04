@@ -51,6 +51,7 @@ import com.development.motorlog.data.Peca
 import com.development.motorlog.data.Servico
 import com.development.motorlog.domain.Confianca
 import com.development.motorlog.domain.DIAS_PARA_LEMBRAR_KM
+import com.development.motorlog.domain.DadosDaFicha
 import com.development.motorlog.domain.MediasDeKm
 import com.development.motorlog.domain.Recomendacao
 import com.development.motorlog.domain.StatusTroca
@@ -72,6 +73,7 @@ import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.domain.situacaoDosCuidados
 import com.development.motorlog.relatorio.compartilharCartao
 import com.development.motorlog.relatorio.gerarCartaoDoMarco
+import com.development.motorlog.relatorio.gerarFichaDaMoto
 import com.development.motorlog.ui.components.AcaoDeSecao
 import com.development.motorlog.ui.components.BarraDeProgresso
 import com.development.motorlog.ui.components.BotaoHistoricoPdf
@@ -179,6 +181,7 @@ fun PainelScreen(
         )
     }
     var indiceAberto by rememberSaveable { mutableStateOf(false) }
+    var gerandoFicha by remember { mutableStateOf(false) }
 
     // marcos ("Passou dos 50.000 km!", "1 ano com a Pretinha"): o mais recente ainda não visto
     val contexto = LocalContext.current
@@ -441,6 +444,27 @@ fun PainelScreen(
         // não no fim da tela (antes vinha depois de cinco blocos)
         // a biografia da moto: fotos, trocas, cuidados e marcos numa linha só
         BotaoSecundario("A história da ${nomeDaMoto(moto)}", onAbrirHistoria, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_clock)
+        // a ficha: imagem com foto, km e os quadros de orgulho (índice, km juntos, manutenção, consumo)
+        BotaoSecundario(
+            if (gerandoFicha) "Montando a ficha…" else "Compartilhar a ficha da moto", {
+                gerandoFicha = true
+                escopo.launch {
+                    val dados = DadosDaFicha(
+                        indice = indice,
+                        kmJuntos = kmJuntos(moto.kmChegada, moto.kilometragem),
+                        kmPorLitro = consumo?.media?.kmPorLitro,
+                        trocas = registroViewModel.registrosDaMoto.size,
+                        visitas = servicos.size,
+                        cuidados = cuidadoViewModel.cuidados.size,
+                    )
+                    val arquivo = runCatching { gerarFichaDaMoto(contexto, moto, dados, capa?.arquivo) }.getOrNull()
+                    gerandoFicha = false
+                    if (arquivo != null) compartilharCartao(contexto, arquivo, "${nomeDaMoto(moto)} 🏍️")
+                    else onMensagem("Não consegui montar a ficha. Tente de novo.")
+                }
+            },
+            Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_share, enabled = !gerandoFicha,
+        )
         BotaoHistoricoPdf(moto, onMensagem, Modifier.fillMaxWidth())
 
         // ── Card: últimas visitas à oficina ──
