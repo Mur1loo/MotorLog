@@ -12,7 +12,9 @@ import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.data.Moto
 import com.development.motorlog.fotos.ArmazemDeFotos
 import com.development.motorlog.ui.util.hojeUtcMillis
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // Álbum da moto aberta: lista, adicionar (arquivo já salvo → linha no banco), legenda, excluir.
 // A capa é decidida em escolherCapa(fotos, moto.fotoCapaId); trocar a capa é atualizar a Moto.
@@ -54,6 +56,8 @@ class FotoViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             dao.inserir(FotoMoto(motoId = moto.id, arquivo = nome, data = hojeUtcMillis(), km = moto.kilometragem, legenda = legenda.trim()))
             fotos = dao.listarPorMoto(moto.id)
+            // já entra no backup do Google (o orçamento é conferido na próxima abertura do app)
+            withContext(Dispatchers.IO) { ArmazemDeFotos.criarCopiaReduzida(getApplication<Application>(), nome) }
             aoSalvar()
         }
     }

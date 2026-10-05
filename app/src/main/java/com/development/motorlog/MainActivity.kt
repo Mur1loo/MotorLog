@@ -39,6 +39,7 @@ import com.development.motorlog.data.AppDatabase
 import com.development.motorlog.domain.deveMostrarPedidoDeApoio
 import com.development.motorlog.domain.estaVendida
 import com.development.motorlog.domain.nomeDaMoto
+import com.development.motorlog.fotos.sincronizarFotosDoBackup
 import com.development.motorlog.lembrete.LembreteWorker
 import com.development.motorlog.ui.components.AbaMoto
 import com.development.motorlog.ui.components.BarraInferior
@@ -247,6 +248,8 @@ class MainActivity : ComponentActivity() {
                     if (motoId == null && mostrarKm && motoViewModel.carregou && ativas.isEmpty()) mostrarKm = false
                     motoId?.let { id -> prefs.edit { putLong(PREF_ULTIMA_MOTO, id) } }
                 }
+                // backup do Google: fotos restauradas voltam pro álbum e as cópias reduzidas ficam em dia
+                LaunchedEffect(Unit) { AppDatabase.getDatabase(this@MainActivity).sincronizarFotosDoBackup(this@MainActivity) }
                 // só pra quem já usa o app de verdade (dias com km registrado), no máximo 1x por mês
                 LaunchedEffect(Unit) {
                     if (!podePedirApoio) return@LaunchedEffect

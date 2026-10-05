@@ -1,5 +1,6 @@
 package com.development.motorlog.ui.screens
 
+import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,6 +39,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.development.motorlog.R
 import com.development.motorlog.data.Moto
@@ -48,6 +51,7 @@ import com.development.motorlog.domain.kmJuntos
 import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.domain.separarGaragem
 import com.development.motorlog.ui.components.AvatarDaMoto
+import com.development.motorlog.ui.components.BackupDoGoogleDialog
 import com.development.motorlog.ui.components.BotaoSecundario
 import com.development.motorlog.ui.components.IconBox
 import com.development.motorlog.ui.components.LinhaDeTiles
@@ -70,6 +74,9 @@ import com.development.motorlog.ui.util.hojeUtcMillis
 import com.development.motorlog.ui.util.juntarComPonto
 import com.development.motorlog.ui.viewModels.MotoViewModel
 import com.development.motorlog.ui.viewModels.RegistroViewModel
+
+// já tocou em "Já está ligado" no aviso do backup do Google
+private const val PREF_BACKUP_CONFERIDO = "backup_google_conferido"
 
 @Composable
 fun GaragemScreen(
@@ -102,6 +109,11 @@ fun GaragemScreen(
     }
     var mostrarSobre by rememberSaveable { mutableStateOf(false) }
     if (mostrarSobre) SobreDialog(onFechar = { mostrarSobre = false }, onMensagem = onMensagem)
+    // backup automático do Google: o app não vê se está ligado, então pergunta uma vez e explica
+    val prefs = remember { contexto.getSharedPreferences("motorlog", Context.MODE_PRIVATE) }
+    var backupConferido by remember { mutableStateOf(prefs.getBoolean(PREF_BACKUP_CONFERIDO, false)) }
+    var mostrarBackup by rememberSaveable { mutableStateOf(false) }
+    if (mostrarBackup) BackupDoGoogleDialog(onFechar = { mostrarBackup = false })
     val pendente = viewModel.importacaoPendente
     if (pendente != null) {
         AlertDialog(
@@ -175,6 +187,31 @@ fun GaragemScreen(
                 MotoCard(moto, alertas[moto.id], ritmos[moto.id], viewModel.capas[moto.id]) { onEditarMoto(moto) }
             }
             if (viewModel.carregou) item { AdicionarMotoCard(onAdicionar) }
+            // uma vez, depois que já existe histórico pra proteger
+            if (viewModel.motos.isNotEmpty() && !backupConferido) {
+                item {
+                    MlCard(borda = StatusTroca.PERTO.cor().copy(alpha = 0.5f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            IconBox(R.drawable.ic_ml_doc, cor = StatusTroca.PERTO.cor())
+                            Column(Modifier.weight(1f)) {
+                                Text("Seu histórico está protegido?", style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    "Se o celular for roubado ou trocado, o backup do Google traz tudo de volta, fotos inclusive. Confira se ele está ligado.",
+                                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            BotaoSecundario("Como conferir", { mostrarBackup = true }, Modifier.weight(1f))
+                            TextButton(onClick = {
+                                backupConferido = true
+                                prefs.edit { putBoolean(PREF_BACKUP_CONFERIDO, true) }
+                            }) { Text("Já está ligado") }
+                        }
+                    }
+                }
+            }
             if (garagem.lembrancas.isNotEmpty()) {
                 item { SectionLabel("Lembranças", Modifier.padding(top = 8.dp)) }
                 items(garagem.lembrancas, key = { it.id }) { moto ->
@@ -208,6 +245,9 @@ fun GaragemScreen(
             )
         }
         // discreto, no fim da tela: quem é o app e como apoiar (opcional)
+        TextButton(onClick = { mostrarBackup = true }, modifier = Modifier.fillMaxWidth()) {
+            Text("Backup automático do Google · como funciona", style = MaterialTheme.typography.labelMedium, color = MlTextFaint)
+        }
         TextButton(onClick = { mostrarSobre = true }, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
             Text("Sobre o MotorLog · apoiar o projeto", style = MaterialTheme.typography.labelMedium, color = MlTextFaint)
         }
