@@ -2,7 +2,9 @@
    Backup do Android 12+ (API 31+). Ver https://developer.android.com/about/versions/12/backup-restore
    O backup na nuvem do Google tem teto de 25 MB por app: se passar, NADA é salvo — nem o banco.
    Por isso as fotos do álbum (filesDir/fotos, ~300-600 KB cada) ficam de fora da nuvem e o banco
-   (motos, trocas, serviços, km) sempre cabe. Na restauração, foto sem arquivo mostra só o fundo.
+   (motos, trocas, serviços, km) sempre cabe. No lugar delas entra filesDir/fotos_nuvem: uma cópia
+   reduzida de cada foto, até 15 MB (domain/BackupDeFotos.kt); num celular novo, o app devolve
+   essas cópias pro álbum ao abrir (fotos/BackupDasFotos.kt).
    A transferência direta entre celulares (cabo/Wi-Fi na configuração do aparelho novo) não tem
    esse teto: sem <device-transfer> aqui, ela leva tudo, fotos inclusive.
 -->

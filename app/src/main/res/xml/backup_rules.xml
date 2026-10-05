@@ -2,7 +2,8 @@
    Backup do Android 11 e anteriores (API ≤ 30; o 12+ usa data_extraction_rules.xml).
    Ver https://developer.android.com/guide/topics/data/autobackup
    Mesmo motivo: a nuvem tem teto de 25 MB e, se passar, não salva nada. As fotos do álbum ficam de
-   fora pra o banco (o histórico da moto) sempre entrar. Limitação do formato antigo: aqui a regra
+   fora pra o banco (o histórico da moto) sempre entrar; a cópia reduzida delas (fotos_nuvem, até
+   15 MB) entra. Limitação do formato antigo: aqui a regra
    vale também pra transferência entre celulares.
 -->
 <full-backup-content>

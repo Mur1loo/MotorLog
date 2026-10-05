@@ -20,4 +20,8 @@ interface FotoMotoDao {
     // mais recente primeiro (é a ordem do álbum)
     @Query("SELECT * FROM FotoMoto WHERE motoId = :motoId ORDER BY data DESC, id DESC")
     suspend fun listarPorMoto(motoId: Long): List<FotoMoto>
+
+    // todas as motos: sincronização das cópias que entram no backup do Google
+    @Query("SELECT * FROM FotoMoto")
+    suspend fun listarTodas(): List<FotoMoto>
 }

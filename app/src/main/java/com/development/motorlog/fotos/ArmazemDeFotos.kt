@@ -8,7 +8,9 @@ import android.media.ExifInterface
 import android.net.Uri
 import android.util.LruCache
 import androidx.core.content.FileProvider
+import com.development.motorlog.data.FotoMoto
 import com.development.motorlog.domain.fatorDeAmostragem
+import com.development.motorlog.domain.fotosNoBackup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -19,12 +21,18 @@ import kotlin.math.max
 // precisam de permissão e saem junto quando o app é desinstalado. Cada foto é salva já reduzida
 // (lado maior ≤ 1920 px, JPEG 85 — ~300-600 KB) e já girada conforme o EXIF da câmera, então quem
 // lê não precisa se preocupar com orientação.
+// Backup: fotos/ fica fora do backup do Google (teto de 25 MB); cada foto ganha uma cópia reduzida
+// em fotos_nuvem/, que entra (domain/BackupDeFotos.kt). Num celular novo, sincronizarBackup
+// devolve pra fotos/ as que faltam.
 object ArmazemDeFotos {
     private const val PASTA = "fotos"
+    private const val PASTA_NUVEM = "fotos_nuvem"
     private const val LADO_MAX_SALVO = 1920
+    private const val LADO_NUVEM = 1024
     const val AUTORIDADE_SUFIXO = ".arquivos"   // FileProvider (AndroidManifest + xml/arquivos_compartilhados)
 
     fun arquivo(contexto: Context, nome: String): File = File(File(contexto.filesDir, PASTA), nome)
+    private fun copiaNaNuvem(contexto: Context, nome: String): File = File(File(contexto.filesDir, PASTA_NUVEM), nome)
 
     // Arquivo temporário onde o app da câmera grava a foto (cache/camera) + a Uri que ele recebe
     fun novaUriDaCamera(contexto: Context): Uri {
@@ -70,7 +78,47 @@ object ArmazemDeFotos {
 
     fun apagar(contexto: Context, nome: String) {
         arquivo(contexto, nome).delete()
+        copiaNaNuvem(contexto, nome).delete()
         cache.snapshot().keys.filter { it.startsWith("$nome@") }.forEach { cache.remove(it) }
+    }
+
+    // ── backup: cópias reduzidas que entram no backup automático do Google ──
+
+    // Cópia reduzida (lado maior ≤ 1024 px, JPEG 70, ~100-200 KB) de uma foto do álbum. Chamar fora da main thread.
+    fun criarCopiaReduzida(contexto: Context, nome: String): Boolean = runCatching {
+        val original = arquivo(contexto, nome)
+        if (!original.exists()) return@runCatching false
+        val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(original.path, limites)
+        val opcoes = BitmapFactory.Options().apply { inSampleSize = fatorDeAmostragem(limites.outWidth, limites.outHeight, LADO_NUVEM) }
+        val lida = BitmapFactory.decodeFile(original.path, opcoes) ?: return@runCatching false
+        val escala = LADO_NUVEM.toFloat() / max(lida.width, lida.height)
+        val pronta = if (escala < 1f) Bitmap.createScaledBitmap(lida, (lida.width * escala).toInt(), (lida.height * escala).toInt(), true).also { if (it !== lida) lida.recycle() }
+            else lida
+        val destino = copiaNaNuvem(contexto, nome).apply { parentFile?.mkdirs() }
+        destino.outputStream().use { pronta.compress(Bitmap.CompressFormat.JPEG, 70, it) }
+        pronta.recycle()
+        true
+    }.getOrDefault(false)
+
+    // Ao abrir o app (e depois de restaurar o backup num celular novo):
+    // 1. foto do álbum sem o arquivo original, mas com cópia no backup → a cópia volta pro álbum;
+    // 2. as fotos escolhidas (capas, depois as mais recentes, até o orçamento) ganham cópia;
+    // 3. cópias que saíram da escolha (ou de fotos apagadas) são removidas.
+    suspend fun sincronizarBackup(contexto: Context, fotos: List<FotoMoto>, capas: Set<Long>): Unit = withContext(Dispatchers.IO) {
+        fotos.forEach { f ->
+            val original = arquivo(contexto, f.arquivo)
+            val copia = copiaNaNuvem(contexto, f.arquivo)
+            if (!original.exists() && copia.exists()) {
+                runCatching { copia.copyTo(original.apply { parentFile?.mkdirs() }) }
+            }
+        }
+        val pasta = File(contexto.filesDir, PASTA_NUVEM)
+        val tamanhos = pasta.listFiles().orEmpty().associate { it.name to it.length() }
+        val escolhidas = fotosNoBackup(fotos, capas, tamanhos)
+        escolhidas.filter { it !in tamanhos }.forEach { criarCopiaReduzida(contexto, it) }
+        // lista vazia: não apaga nada (melhor sobrar cópia do que perder uma por leitura incompleta)
+        if (fotos.isNotEmpty()) pasta.listFiles().orEmpty().filter { it.name !in escolhidas }.forEach { it.delete() }
     }
 
     // ── leitura com cache: a mesma miniatura aparece na Garagem, no Painel e no álbum ──
