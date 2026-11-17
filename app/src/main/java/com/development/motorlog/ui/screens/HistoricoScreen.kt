@@ -65,7 +65,7 @@ import com.development.motorlog.ui.util.juntarComPonto
 
 private enum class Filtro(val rotulo: String) { TODAS("Tudo"), SERVICOS("Oficina"), AVULSAS("Por conta") }
 
-// Histórico da moto no estilo do protótipo: tiles (registros/total), filtro em chips, o PDF pra
+// Histórico da moto: tiles (registros/total), filtro em chips, o PDF pra
 // compartilhar e uma linha do tempo com nó-ícone à esquerda. Serviço abre o detalhe; troca feita
 // por conta própria abre a edição (km, valor, dia) com a opção de excluir.
 @Composable

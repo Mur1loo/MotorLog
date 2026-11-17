@@ -3,7 +3,7 @@ package com.development.motorlog.ui.theme
 import androidx.compose.ui.graphics.Color
 import com.development.motorlog.data.Moto
 
-// Paleta do protótipo (MotorLog_design2/theme.jsx) — tema dark, accent laranja
+// Paleta — tema dark, accent laranja
 val MlBg = Color(0xFF0E1014)
 val MlBgElev = Color(0xFF14171D)
 val MlSurface = Color(0xFF181B22)
@@ -29,7 +29,7 @@ val MlSoon = Color(0xFFFFC24B)
 val MlOver = Color(0xFFFF6B6B)
 
 // accent por moto: o dono escolhe no cadastro (Moto.cor = índice aqui). As 4 primeiras são as
-// ACCENTS do protótipo e continuam sendo a cor automática (pelo id) de quem não escolheu — não
+// originais e continuam sendo a cor automática (pelo id) de quem não escolheu — não
 // mude a ordem delas, senão a moto de quem já usa o app troca de cor sozinha.
 val MlAccentsMoto = listOf(
     MlAccent, Color(0xFF23E0C8), Color(0xFFB6FF3D), Color(0xFFFF3B3B),

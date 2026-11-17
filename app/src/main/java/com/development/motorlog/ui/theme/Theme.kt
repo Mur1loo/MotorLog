@@ -7,14 +7,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-// Esquema fixo dark, espelhando os tokens do protótipo.
+// Esquema fixo dark.
 // (o design é dark-only; sem dynamic color, sem alternância clara/escura)
 private val MotorLogColorScheme = darkColorScheme(
     primary = MlAccent,
     onPrimary = MlOnAccent,
     secondary = MlAccent,
     onSecondary = MlOnAccent,
-    // FilterChip selecionado, indicadores: accent sólido com texto escuro (como no protótipo)
+    // FilterChip selecionado, indicadores: accent sólido com texto escuro
     secondaryContainer = MlAccent,
     onSecondaryContainer = MlOnAccent,
     primaryContainer = MlAccent,

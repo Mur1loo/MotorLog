@@ -5,7 +5,7 @@ import com.development.motorlog.domain.EventoDaHistoria
 import com.development.motorlog.domain.TipoCuidado
 import com.development.motorlog.domain.TipoEvento
 
-// Nome da peça → ícone do protótipo (partIcon do data.jsx), por palavra-chave. Sem campo no banco.
+// Nome da peça → ícone, por palavra-chave. Sem campo no banco.
 fun iconeDaPeca(nome: String): Int {
     val n = semAcento(nome).lowercase()
     return when {

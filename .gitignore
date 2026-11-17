@@ -23,3 +23,6 @@ keystore.properties
 *.keystore
 # APKs gerados (pesados; gere com ./gradlew assembleRelease)
 loja/*.apk
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/misc.xml

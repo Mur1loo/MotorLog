@@ -41,7 +41,7 @@ enum class TamanhoOdometro(val altura: Dp, val largura: Dp, val fonte: Int, val 
 }
 
 // Odômetro de painel: um dígito por célula escura, ponto de milhar apagado, "KM" em accent.
-// É o elemento-herói do app (Odometer do protótipo).
+// É o elemento-herói do app.
 @Composable
 fun Odometer(km: Int, modifier: Modifier = Modifier, tamanho: TamanhoOdometro = TamanhoOdometro.GRANDE, accent: Color = MlAccent) {
     val digitos = formatarNumero(km)

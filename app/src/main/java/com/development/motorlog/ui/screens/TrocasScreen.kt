@@ -50,7 +50,7 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 import com.development.motorlog.ui.components.ConfirmarEstimativaDialog
 import com.development.motorlog.ui.components.CardNaoLembra
 
-// "Quando troca cada peça" — variante 'grupos' do protótipo (RecsGrupos): resumo em 3 cards,
+// "Quando troca cada peça" — variante 'grupos': resumo em 3 cards,
 // depois grupos por urgência que mapeiam 1:1 no StatusTroca, + "Nunca registrei" recolhido (D6).
 private data class Grupo(val status: StatusTroca, val titulo: String, val subtitulo: String)
 

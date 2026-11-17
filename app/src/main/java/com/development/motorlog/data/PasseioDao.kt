@@ -17,7 +17,6 @@ interface PasseioDao {
     @Delete
     suspend fun deletar(passeio: Passeio)
 
-    // mais recente primeiro
     @Query("SELECT * FROM Passeio WHERE motoId = :motoId ORDER BY data DESC, id DESC")
     suspend fun listarPorMoto(motoId: Long): List<Passeio>
 

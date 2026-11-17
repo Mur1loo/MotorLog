@@ -15,7 +15,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.development.motorlog.ui.theme.MlBordaCampo
 import com.development.motorlog.ui.theme.MlFormas
 
-// Campo do protótipo (Field): raio 13, borda sutil, accent no foco, ícone opcional à esquerda.
+// Campo: raio 13, borda sutil, accent no foco, ícone opcional à esquerda.
 @Composable
 fun MlTextField(
     valor: String,

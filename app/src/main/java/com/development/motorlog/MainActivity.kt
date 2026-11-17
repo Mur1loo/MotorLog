@@ -274,8 +274,7 @@ class MainActivity : ComponentActivity() {
                             grande = telaAtual == "Garagem",
                             onVoltar = if (pilha.podeVoltar) irParaTras else null,
                             acoes = when {
-                                // catálogo de peças e intervalos: chave + texto. A engrenagem antiga
-                                // (círculo com raios) era confundida com o botão de tema claro/escuro.
+                                // catálogo de peças e intervalos: chave + texto
                                 telaAtual == "Garagem" -> {
                                     { BotaoDeCabecalho("Peças", R.drawable.ic_ml_wrench, "Peças e intervalos") { abrirTela("GerenciarPecas") } }
                                 }

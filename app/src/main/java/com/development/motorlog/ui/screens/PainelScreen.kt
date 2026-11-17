@@ -119,7 +119,7 @@ import com.development.motorlog.ui.viewModels.RegistroViewModel
 import com.development.motorlog.ui.viewModels.RoleViewModel
 import kotlinx.coroutines.launch
 
-// Painel da moto — variante "Foco no km" do protótipo (DashFoco): herói com odômetro e brilho,
+// Painel da moto — variante "Foco no km": herói com odômetro e brilho,
 // ação protagonista, pills de contexto, tiles, próximas trocas e últimas visitas à oficina.
 @Composable
 fun PainelScreen(
@@ -413,7 +413,6 @@ fun PainelScreen(
                     Text("nenhuma registrada", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            // dois tiles bastam: "Visitas" era redundante com a aba Histórico (o Gasto já leva pra lá)
             StatTile("Gasto · ${servicos.size} visita${if (servicos.size == 1) "" else "s"}", formatarReais(total), Modifier.weight(1f), icone = R.drawable.ic_ml_dollar, onClick = onVerHistorico) {
                 Spacer(Modifier.height(6.dp))
                 Text(
@@ -437,7 +436,6 @@ fun PainelScreen(
             BotaoSecundario("Fui à oficina", onRegistrarServico, Modifier.weight(1f), icone = R.drawable.ic_ml_pin)
         }
 
-        // ── Card: próximas trocas ──
         MlCard {
             SectionLabel("Próximas trocas", direita = { AcaoDeSecao("Ver todas", onVerTrocas) })
             if (proximasTrocas.isEmpty()) {
@@ -542,8 +540,7 @@ fun PainelScreen(
             }
         }
 
-        // o PDF é o que a pessoa mostra pro comprador e pro mecânico: logo depois das trocas,
-        // não no fim da tela (antes vinha depois de cinco blocos)
+        // o PDF é o que a pessoa mostra pro comprador e pro mecânico: logo depois das trocas
         // a biografia da moto: fotos, trocas, cuidados e marcos numa linha só
         BotaoSecundario("A história da ${nomeDaMoto(moto)}", onAbrirHistoria, Modifier.fillMaxWidth(), icone = R.drawable.ic_ml_clock)
         // a ficha: imagem com foto, km e os quadros de orgulho (índice, km juntos, manutenção, consumo)
@@ -569,7 +566,6 @@ fun PainelScreen(
         )
         BotaoHistoricoPdf(moto, onMensagem, Modifier.fillMaxWidth())
 
-        // ── Card: últimas visitas à oficina ──
         MlCard {
             SectionLabel("Últimas visitas à oficina", direita = { AcaoDeSecao("Histórico", onVerHistorico) })
             val ultimos = servicos.sortedByDescending { it.data }.take(3)
@@ -634,7 +630,7 @@ fun PainelScreen(
 
 }
 
-// Linha de alerta do protótipo (AlertRow): caixinha com ícone da peça na cor do status,
+// Linha de alerta: caixinha com ícone da peça na cor do status,
 // nome, "faltam X km · ~N dias" e pill "Trocar"/"Em breve"/"Em dia".
 @Composable
 fun LinhaDeAlerta(rec: Recomendacao, ritmoKmMes: Int?, onClick: () -> Unit) {

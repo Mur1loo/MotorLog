@@ -254,7 +254,7 @@ fun GaragemScreen(
     }
 }
 
-// Card de moto do protótipo (BikeCard): foto de capa (ou o badge), nome em Chakra, ano · placa,
+// Card de moto: foto de capa (ou o badge), nome em Chakra, ano · placa,
 // odômetro pequeno, pills de alerta e ritmo.
 @Composable
 fun MotoCard(moto: Moto, alertas: ResumoAlertas?, ritmoKmMes: Int?, capa: String?, onClick: () -> Unit) {
@@ -313,7 +313,7 @@ private fun LembrancaCard(moto: Moto, capa: String?, onClick: () -> Unit) {
     }
 }
 
-// Botão "Adicionar moto" do protótipo: borda tracejada, caixinha com "+" em accent
+// Botão "Adicionar moto": borda tracejada, caixinha com "+" em accent
 @Composable
 private fun AdicionarMotoCard(onAdicionar: () -> Unit) {
     val borda = MlBorderHi

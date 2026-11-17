@@ -19,7 +19,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.development.motorlog.R
 import com.development.motorlog.data.Peca
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.hojeUtcMillis

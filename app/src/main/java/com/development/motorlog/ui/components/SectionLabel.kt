@@ -14,7 +14,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.development.motorlog.ui.theme.MlTextFaint
 
-// Rótulo de seção: MAIÚSCULO, espaçado, apagado — SectionLabel do protótipo, com slot à direita.
+// Rótulo de seção: MAIÚSCULO, espaçado, apagado, com slot à direita.
 @Composable
 fun SectionLabel(
     texto: String,

@@ -6,9 +6,7 @@ const val MILLIS_POR_DIA = 86_400_000L
 fun diasEntre(de: Long, ate: Long): Int = ((ate - de) / MILLIS_POR_DIA).toInt()
 
 // Resumo do que exige atenção numa moto: base dos alertas da Garagem e da notificação.
-data class ResumoAlertas(val vencidas: Int, val perto: Int) {
-    val temAlerta: Boolean get() = vencidas > 0 || perto > 0
-}
+data class ResumoAlertas(val vencidas: Int, val perto: Int)
 
 fun resumirAlertas(recomendacoes: List<Recomendacao>) = ResumoAlertas(
     vencidas = recomendacoes.count { it.statusTroca == StatusTroca.VENCIDA },

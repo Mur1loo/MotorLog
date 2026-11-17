@@ -21,8 +21,6 @@ class AlertasTest {
     fun `resumirAlertas conta vencidas e perto`() {
         val r = resumirAlertas(listOf(rec("a", StatusTroca.VENCIDA), rec("b", StatusTroca.PERTO), rec("c", StatusTroca.OK), rec("d", StatusTroca.NUNCA_TROCADA)))
         assertEquals(ResumoAlertas(vencidas = 1, perto = 1), r)
-        assertEquals(true, r.temAlerta)
-        assertEquals(false, resumirAlertas(listOf(rec("c", StatusTroca.OK))).temAlerta)
     }
 
     @Test

@@ -1,7 +1,7 @@
 package com.development.motorlog.domain
 
 // Validação dos formulários, campo a campo: cada erro diz O QUE corrigir e aparece embaixo do
-// próprio campo (antes era uma frase genérica no rodapé, sem dizer qual campo). null = campo ok.
+// próprio campo. null = campo ok.
 // Placa (moto) e nome da oficina (visita) são opcionais: não travam um registro rápido.
 
 const val ANO_MINIMO = 1900

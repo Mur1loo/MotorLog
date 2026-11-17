@@ -31,6 +31,13 @@ fun faixaDoIndice(nota: Int): String = when {
     else -> "Precisa de cuidado"
 }
 
+// a cor da nota (card do Painel, ficha e PDF): verde a partir de "Bem cuidada", amarelo em "Pede atenção"
+fun statusDoIndice(nota: Int): StatusTroca = when {
+    nota >= 70 -> StatusTroca.OK
+    nota >= 50 -> StatusTroca.PERTO
+    else -> StatusTroca.VENCIDA
+}
+
 // nota de uma recomendação: vencida perde pontos conforme o atraso (meio intervalo atrasado = 0)
 private fun notaDaRecomendacao(r: Recomendacao): Int = when (r.statusTroca) {
     StatusTroca.OK -> 100

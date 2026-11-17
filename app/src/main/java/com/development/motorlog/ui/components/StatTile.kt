@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.development.motorlog.ui.theme.MlTextFaint
 import com.development.motorlog.ui.theme.chakra
 
-// Tile de estatística do protótipo: rótulo apagado + ícone à direita + número em Chakra Petch.
+// Tile de estatística: rótulo apagado + ícone à direita + número em Chakra Petch.
 @Composable
 fun StatTile(
     rotulo: String,
@@ -65,7 +65,7 @@ fun StatTile(
     }
 }
 
-// Linha de estatísticas com espaçamento do protótipo
+// Linha de estatísticas
 @Composable
 fun LinhaDeTiles(modifier: Modifier = Modifier, content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
     Row(modifier = modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp), content = content)

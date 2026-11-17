@@ -7,8 +7,7 @@ import com.development.motorlog.data.HistoricoKm
 //  - geral: desde que ela chegou (dia e km da chegada, do cadastro) — ou desde o cadastro no app,
 //    quando a chegada não foi informada.
 // Ex.: chegou há 6 meses e rodou 10.000 km → geral ~1.667 km/mês; se nas últimas semanas rodou
-// menos, o último mês mostra isso. Antes o app só tinha a média recente (90 dias, só com km
-// registrado no app) e não dizia de onde vinha o número.
+// menos, o último mês mostra isso.
 
 const val JANELA_ULTIMO_MES_DIAS = 30
 // abaixo disso a estimativa é ruído (2 pontos no mesmo fim de semana)

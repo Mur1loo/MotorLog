@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// Barra do protótipo (ProgressBar): fina, arredondada, sem o stop indicator do M3, e que
+// Barra: fina, arredondada, sem o stop indicator do M3, e que
 // PREENCHE ao entrar na tela (de 0 até o valor) — sensação de instrumento acordando.
 @Composable
 fun BarraDeProgresso(pct: Float, cor: Color, modifier: Modifier = Modifier, altura: Dp = 7.dp) {

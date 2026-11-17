@@ -57,7 +57,7 @@ import com.development.motorlog.ui.viewModels.MotoViewModel
 private val ATALHOS_KM = listOf(50, 100, 250, 500)
 private val TECLAS = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "del")
 
-// A ação nº 1 do app, como folha inferior (UpdateKmSheet do protótipo): número grande no
+// A ação nº 1 do app, como folha inferior: número grande no
 // visor escuro, delta colorido, atalhos e teclado próprio — nada de teclado do sistema.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +113,6 @@ fun AtualizarKmSheet(
             }
             Spacer(Modifier.height(12.dp))
 
-            // visor
             Column(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MlOdoBg).padding(vertical = 18.dp, horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -147,7 +146,6 @@ fun AtualizarKmSheet(
             }
             Spacer(Modifier.height(12.dp))
 
-            // atalhos
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ATALHOS_KM.forEach { passo ->
                     Tecla("+$passo", Modifier.weight(1f), altura = 48.dp, fonte = 15.sp) {
@@ -159,7 +157,6 @@ fun AtualizarKmSheet(
             }
             Spacer(Modifier.height(12.dp))
 
-            // teclado 3×4
             TECLAS.chunked(3).forEach { linha ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
                     linha.forEach { k ->

@@ -17,7 +17,6 @@ interface CuidadoDao {
     @Delete
     suspend fun deletar(cuidado: Cuidado)
 
-    // mais recente primeiro
     @Query("SELECT * FROM Cuidado WHERE motoId = :motoId ORDER BY data DESC, id DESC")
     suspend fun listarPorMoto(motoId: Long): List<Cuidado>
 

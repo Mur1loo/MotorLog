@@ -46,7 +46,7 @@ enum class AbaMoto(val rotulo: String, val icone: Int) {
     FOTOS("Fotos", R.drawable.ic_ml_camera),
 }
 
-// Barra inferior do protótipo (BottomNav): 2 abas + FAB "+KM" central + 2 abas.
+// Barra inferior: 2 abas + FAB "+KM" central + 2 abas.
 // Só aparece no contexto de uma moto; o FAB é a ação nº 1 do app. A Garagem virou o ícone de
 // moto no cabeçalho, pra dar lugar à aba Fotos (o álbum merece destaque, não o fim do Painel).
 // mostrarAtualizarKm = false na aba Painel: lá o "Atualizar km" grande já é a ação principal, e dois
@@ -92,7 +92,7 @@ fun BarraInferior(ativa: AbaMoto, aoNavegar: (AbaMoto) -> Unit, aoAtualizarKm: (
 private fun ItemAba(aba: AbaMoto, ativa: Boolean, onClick: () -> Unit) {
     val cor = if (ativa) MaterialTheme.colorScheme.primary else MlTextFaint
     Column(
-        // aba: o leitor de tela anuncia "Painel, aba, selecionada" (antes lia o nome duas vezes)
+        // aba: o leitor de tela anuncia "Painel, aba, selecionada"
         modifier = Modifier.clip(RoundedCornerShape(12.dp)).selectable(selected = ativa, role = Role.Tab, onClick = onClick).padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

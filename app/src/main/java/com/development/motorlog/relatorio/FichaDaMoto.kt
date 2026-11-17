@@ -12,10 +12,9 @@ import com.development.motorlog.domain.QuadroDaFicha
 import com.development.motorlog.domain.descreverTempoJuntos
 import com.development.motorlog.domain.nomeDaMoto
 import com.development.motorlog.domain.quadrosDaFicha
-import com.development.motorlog.ui.theme.MlOk
-import com.development.motorlog.ui.theme.MlOver
-import com.development.motorlog.ui.theme.MlSoon
+import com.development.motorlog.domain.statusDoIndice
 import com.development.motorlog.ui.theme.accentDaMoto
+import com.development.motorlog.ui.theme.cor
 import com.development.motorlog.ui.util.formatarKm
 import com.development.motorlog.ui.util.formatarMesAno
 import com.development.motorlog.ui.util.formatarNumero
@@ -96,9 +95,4 @@ private fun textoDoQuadro(q: QuadroDaFicha, d: DadosDaFicha): TextoDoQuadro = wh
     QuadroDaFicha.CUIDADOS -> TextoDoQuadro("CUIDADOS", formatarNumero(d.cuidados), "", "anotados no diário")
 }
 
-// mesmas faixas do card do Painel (ui/components/CardIndiceDeCuidado.kt)
-private fun corDaNota(nota: Int): Int = when {
-    nota >= 70 -> MlOk
-    nota >= 50 -> MlSoon
-    else -> MlOver
-}.toArgb()
+private fun corDaNota(nota: Int): Int = statusDoIndice(nota).cor().toArgb()

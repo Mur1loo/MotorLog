@@ -1,8 +1,6 @@
 package com.development.motorlog.ui.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -11,7 +9,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.development.motorlog.R
 
-// Chakra Petch (OFL, embutida em res/font): a fonte dos NÚMEROS e títulos do protótipo — cara de
+// Chakra Petch (OFL, embutida em res/font): a fonte dos NÚMEROS e títulos — cara de
 // instrumento de painel. Texto corrido continua na fonte do sistema (Roboto), como no design.
 val ChakraPetch = FontFamily(
     Font(R.font.chakra_petch_regular, FontWeight.Normal),
@@ -25,7 +23,7 @@ fun chakra(tamanho: TextUnit, peso: FontWeight = FontWeight.Bold, lineHeight: Te
     TextStyle(fontFamily = ChakraPetch, fontWeight = peso, fontSize = tamanho, lineHeight = lineHeight)
 
 val Typography = Typography(
-    // títulos de tela / cabeçalhos (Header do protótipo: 19 normal, 27 "big")
+    // títulos de tela / cabeçalhos (19 normal, 27 "big")
     headlineMedium = chakra(27.sp, lineHeight = 31.sp),
     titleLarge = chakra(19.sp, lineHeight = 23.sp),
     // títulos de card
@@ -41,6 +39,3 @@ val Typography = Typography(
     labelSmall = TextStyle(fontWeight = FontWeight.Bold, fontSize = 11.5.sp, lineHeight = 15.sp, letterSpacing = 0.9.sp),
 )
 
-@Composable
-@ReadOnlyComposable
-fun numeroGrande() = chakra(25.sp)

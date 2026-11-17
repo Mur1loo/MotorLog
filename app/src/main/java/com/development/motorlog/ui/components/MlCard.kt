@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.development.motorlog.ui.theme.MlFormas
 
-// Card do protótipo: surface + borda 1px + raio 18. Clicável quando onClick != null.
+// Card: surface + borda 1px + raio 18. Clicável quando onClick != null.
 @Composable
 fun MlCard(
     modifier: Modifier = Modifier,

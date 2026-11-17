@@ -16,7 +16,7 @@ import com.development.motorlog.ui.util.formatarKm
 
 // "Não lembra quando trocou?": marca todas as peças sem registro como trocadas no km atual. É o
 // atalho que tira o app do vazio no primeiro uso — por isso aparece no Painel vazio e no grupo
-// "Nunca registrei" da tela Trocas (antes, só lá no fim de Trocas, onde quase ninguém chegava).
+// "Nunca registrei" da tela Trocas.
 @Composable
 fun CardNaoLembra(quantidade: Int, kmAtual: Int, onMarcar: () -> Unit, modifier: Modifier = Modifier) {
     MlCard(modifier = modifier, pad = 14.dp, cor = MaterialTheme.colorScheme.surfaceContainerHigh, borda = Color.Transparent) {

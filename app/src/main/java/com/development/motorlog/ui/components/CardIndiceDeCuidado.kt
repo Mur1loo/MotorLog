@@ -16,16 +16,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.development.motorlog.domain.IndiceDeCuidado
-import com.development.motorlog.domain.StatusTroca
+import com.development.motorlog.domain.statusDoIndice
 import com.development.motorlog.ui.theme.chakra
 import com.development.motorlog.ui.theme.cor
 
-// cor da nota: verde a partir de "Bem cuidada", amarelo em "Pede atenção", vermelho abaixo
-fun corDoIndice(nota: Int): Color = when {
-    nota >= 70 -> StatusTroca.OK.cor()
-    nota >= 50 -> StatusTroca.PERTO.cor()
-    else -> StatusTroca.VENCIDA.cor()
-}
+fun corDoIndice(nota: Int): Color = statusDoIndice(nota).cor()
 
 // Card do índice de cuidado no Painel: a nota, a faixa, a barra e o que fazer pra subir.
 // Tocar abre as partes da nota (domain/IndiceDeCuidado.kt).

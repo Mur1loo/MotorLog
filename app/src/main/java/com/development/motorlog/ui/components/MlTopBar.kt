@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.development.motorlog.R
 import com.development.motorlog.ui.theme.MlFormas
 
-// Cabeçalho do protótipo (Header): título em Chakra Petch (27 "big" na Garagem, 19 nas outras),
+// Cabeçalho: título em Chakra Petch (27 "big" na Garagem, 19 nas outras),
 // subtítulo apagado, seta de voltar e ações à direita.
 @Composable
 fun MlTopBar(

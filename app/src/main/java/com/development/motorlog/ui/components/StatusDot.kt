@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// Bolinha de status com halo translúcido (StatusDot do protótipo). A cor vem de StatusTroca.cor().
+// Bolinha de status com halo translúcido. A cor vem de StatusTroca.cor().
 @Composable
 fun StatusDot(cor: Color, modifier: Modifier = Modifier, tamanho: Dp = 9.dp) {
     Box(

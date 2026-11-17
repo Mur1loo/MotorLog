@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.development.motorlog.ui.theme.MlBgElev
 import com.development.motorlog.ui.theme.MlBorder
 
-// Rodapé fixo dos formulários (protótipo CadastroScreen): faixa elevada com borda em cima e o
+// Rodapé fixo dos formulários: faixa elevada com borda em cima e o
 // botão principal; a mensagem de erro aparece logo acima do botão, onde o olho já está.
 @Composable
 fun RodapeDeForm(textoBotao: String, onClick: () -> Unit, erro: String? = null, enabled: Boolean = true, icone: Int? = null) {

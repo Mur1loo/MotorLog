@@ -201,12 +201,6 @@ class RegistroViewModel(application: Application): AndroidViewModel(application)
         }
     }
 
-    fun inserirServico(servico: Servico){
-        viewModelScope.launch {
-            servicoDao.inserir(servico = servico)
-        }
-    }
-
     fun carregarServicos(moto: Moto){
         viewModelScope.launch {
             servicos = servicoDao.query(moto.id)

@@ -45,7 +45,7 @@ import com.development.motorlog.ui.util.formatarReais
 import com.development.motorlog.ui.util.iconeDaPeca
 import com.development.motorlog.ui.viewModels.RegistroViewModel
 
-// Detalhe da visita à oficina (RevisaoDetailScreen do protótipo): resumo em 3 colunas com ícones,
+// Detalhe da visita à oficina: resumo em 3 colunas com ícones,
 // peças com ícone e preço em Chakra, e o card escuro de custo com o total em accent.
 @Composable
 fun RevisaoDetailScreen(
@@ -73,7 +73,6 @@ fun RevisaoDetailScreen(
             .padding(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // ── resumo: km · data · oficina ──
         MlCard {
             Row(Modifier.fillMaxWidth()) {
                 ColunaResumo(R.drawable.ic_ml_gauge, formatarNumero(servico.kilometragem), "km", accent, Modifier.weight(1f), numero = true)
@@ -82,7 +81,6 @@ fun RevisaoDetailScreen(
             }
         }
 
-        // ── peças trocadas ──
         Column {
             SectionLabel("Peças trocadas · ${registros.size}")
             MlCard(pad = 4.dp) {

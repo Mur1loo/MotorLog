@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.development.motorlog.ui.theme.MlFormas
 import com.development.motorlog.ui.theme.chakra
 
-// Botão de ação principal do protótipo: accent, raio 15, Chakra Petch, brilho laranja por baixo.
+// Botão de ação principal: accent, raio 15, Chakra Petch, brilho laranja por baixo.
 @Composable
 fun BotaoPrimario(
     texto: String,

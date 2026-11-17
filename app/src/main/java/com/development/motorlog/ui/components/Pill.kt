@@ -18,7 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.development.motorlog.ui.theme.MlFormas
 
-// Etiqueta do protótipo: fundo = a própria cor com alpha (ok/soon/over) ou surfaceAlt (neutra).
+// Etiqueta: fundo = a própria cor com alpha (ok/soon/over) ou surfaceAlt (neutra).
 @Composable
 fun Pill(
     texto: String,

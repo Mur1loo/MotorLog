@@ -29,6 +29,7 @@ import com.development.motorlog.domain.kmRodadosNoApp
 import com.development.motorlog.domain.montarRelatorio
 import com.development.motorlog.domain.nomeDoArquivoPdf
 import com.development.motorlog.domain.recomendacaoDeRevisao
+import com.development.motorlog.domain.statusDoIndice
 import com.development.motorlog.fotos.ArmazemDeFotos
 import com.development.motorlog.ui.theme.accentDaMoto
 import com.development.motorlog.ui.util.formatarData
@@ -272,10 +273,9 @@ private class DesenhistaDoHistorico(contexto: Context, private val r: RelatorioM
         }
     }
 
-    // mesmas faixas do card do Painel: verde a partir de 70, amarelo a partir de 50
-    private fun corDaNota(nota: Int) = when {
-        nota >= 70 -> COR_OK
-        nota >= 50 -> COR_PERTO
+    private fun corDaNota(nota: Int) = when (statusDoIndice(nota)) {
+        StatusTroca.OK -> COR_OK
+        StatusTroca.PERTO -> COR_PERTO
         else -> COR_VENCIDA
     }
 
@@ -330,17 +330,14 @@ private class DesenhistaDoHistorico(contexto: Context, private val r: RelatorioM
         val altura = 10f + linhasTitulo.size * 13f + 12f + linhasPecas.size * 11.5f + 10f
         return Bloco(altura) { y ->
             var yy = y + 10f + 9f
-            // coluna da esquerda: dia e km
             drawText(item.data?.let(::formatarData) ?: "dia não informado", MARGEM, yy, if (item.data != null) texto else miudo)
             drawText(formatarKm(item.km), MARGEM, yy + 12f, miudo)
-            // meio: o que foi feito
             linhasTitulo.forEach { drawText(it, xMeio, yy, textoForte); yy += 13f }
             // marcador de origem: quadradinho na cor da moto (oficina) ou cinza (por conta)
             preenchido.color = if (item.origem == OrigemItem.OFICINA) destaque else APAGADO
             drawRect(xMeio - 10f, y + 12.5f, xMeio - 5f, y + 17.5f, preenchido)
             drawText(detalhe, xMeio, yy - 1f, miudo); yy += 12f
             linhasPecas.forEach { drawText(it, xMeio + 4f, yy - 1f, miudo); yy += 11.5f }
-            // direita: valor
             drawText(if (item.valor > 0) formatarReais(item.valor) else "—", xValor, y + 19f, valorDireita)
             preenchido.color = LINHA
             drawRect(MARGEM, y + altura - 0.6f, LARGURA - MARGEM, y + altura, preenchido)
@@ -375,15 +372,7 @@ private class DesenhistaDoHistorico(contexto: Context, private val r: RelatorioM
 
     // quebra em linhas pela largura (palavra inteira; palavra gigante é cortada)
     private fun quebrar(t: String, p: Paint, largura: Float): List<String> {
-        val linhas = mutableListOf<String>()
-        var atual = ""
-        t.split(' ').forEach { palavra ->
-            val tentativa = if (atual.isEmpty()) palavra else "$atual $palavra"
-            if (p.measureText(tentativa) <= largura || atual.isEmpty()) atual = tentativa
-            else { linhas += atual; atual = palavra }
-        }
-        if (atual.isNotEmpty()) linhas += atual
-        return linhas.map { caber(it, p, largura) }.ifEmpty { listOf("") }
+        return quebrarEmLinhas(t, p, largura).map { caber(it, p, largura) }.ifEmpty { listOf("") }
     }
 
     private fun escurecer(cor: Int, fator: Float): Int {
